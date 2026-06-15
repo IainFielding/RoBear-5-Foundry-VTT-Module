@@ -1,0 +1,112 @@
+{
+  "id": "sogrom-robear-e",
+  "title": "RoBear-E",
+  "version": "#{VERSION}#",
+  "manifest": "#{MANIFEST}#",
+  "download": "#{DOWNLOAD}#",
+  "url": "#{URL}#",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "authors": [
+    {
+      "name": "Sogrom",
+      "email": "iain@iainfielding.com",
+      "discord": "Sogrom",
+      "flags": {}
+    }
+  ],
+  "packs": [
+    {
+      "name": "content",
+      "label": "Journal (RoBear-E)",
+      "path": "packs/content",
+      "type": "JournalEntry",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "system": "dnd5e",
+      "flags": {}
+    },
+		{
+			"name": "spells",
+			"label": "Spells (RoBear-E)",
+			"path": "packs/spells",
+			"type": "Item",
+			"system": "dnd5e",
+			"ownership": {
+				"PLAYER": "OBSERVER",
+				"ASSISTANT": "OWNER"
+			}
+		},
+		{
+			"name": "classes",
+			"label": "Classes & Subclasses (RoBear-E)",
+			"path": "packs/classes",
+			"type": "Item",
+			"system": "dnd5e",
+			"ownership": {
+				"PLAYER": "OBSERVER",
+				"ASSISTANT": "OWNER"
+			}
+		},
+		{
+			"name": "macros",
+			"label": "Macros (RoBear-E)",
+			"path": "packs/macros",
+			"type": "Macro",
+			"ownership": {
+				"PLAYER": "OBSERVER",
+				"ASSISTANT": "OWNER"
+			},
+			"system": "dnd5e"
+		},
+    {
+      "name": "items",
+      "label": "Items (RoBear-E)",
+      "path": "packs/items",
+      "type": "Item",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "system": "dnd5e",
+      "flags": {}
+    }
+  ],
+    "packFolders": [
+		{
+			"name": "RoBear-E",
+			"color": "#a428e6",
+			"sorting": "m",
+			"packs": [
+				"content",
+				"items",
+        "spells",
+        "classes",
+        "macros"
+			]
+		}
+	],
+  "flags": {
+		"canUpload": true,
+		"dnd5e": {
+			"sourceBooks": {
+				"RoBear-E": "RoBear-E"
+			},
+			"spellLists": [
+				"Compendium.sogrom-robear-e.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.bImL7vkD6p05UE9X",
+				"Compendium.sogrom-robear-e.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.XlIOhDZWq3po3hT5",
+				"Compendium.sogrom-robear-e.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.M78U0z79t54vzSdy",
+				"Compendium.sogrom-robear-e.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.X0YM0cUzKInXaa7i",
+				"Compendium.sogrom-robear-e.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.00hMjSUA251pU50q",
+				"Compendium.sogrom-robear-e.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.og5rxvDeGCRDA8KX",
+				"Compendium.sogrom-robear-e.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.XYN1xJTgMwu4GnKi",
+				"Compendium.sogrom-robear-e.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.8HiOb6JiMZk2YRtY",
+				"Compendium.sogrom-robear-e.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.IdRSkW0OTFd7xi8P"
+	   ]
+		}
+	}
+}
