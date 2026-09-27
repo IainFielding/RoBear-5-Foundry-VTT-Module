@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/IainFielding/RoBear-5-Foundry-VTT-Module#readme
+    about: What's in the module and how the RoBear-E Cards work — check here before filing an issue.
+  - name: Support the module
+    url: https://ko-fi.com/sogrom
+    about: If the module saved you some time, you can buy me a coffee.

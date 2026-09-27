@@ -1,0 +1,6 @@
+# Dev tooling — not part of the shipped module archive.
+node_modules/
+
+# Editor / OS cruft
+.DS_Store
+Thumbs.db

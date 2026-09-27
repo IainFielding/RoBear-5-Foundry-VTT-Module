@@ -1,0 +1,178 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Spectral:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap');
+
+/* -------------------------------------------- */
+/*  Chat Card Button                            */
+/* -------------------------------------------- */
+
+.chat-message .robear-card-button {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  border-color: #a428e6;
+}
+
+.chat-message .robear-card-button.icon {
+  display: inline-flex;
+  width: auto;
+  margin-top: 0;
+  flex: none;
+}
+
+.chat-message .robear-card-log {
+  margin-top: 4px;
+}
+
+/* -------------------------------------------- */
+/*  Card Dialog — "Arcane Midnight", the theme  */
+/*  of the Simple D&D 5e Character Creator's    */
+/*  windowed mode. Teal asks, brass is chosen.  */
+/* -------------------------------------------- */
+
+.robear-card-dialog {
+  --cc-settled:        #c9a227;
+  --cc-settled-bright: #e3bf4b;
+  --cc-settled-glow:   rgba(201, 162, 39, 0.30);
+  --cc-open:           #4fb3a8;
+  --cc-open-soft:      rgba(79, 179, 168, 0.14);
+  --cc-open-glow:      rgba(79, 179, 168, 0.32);
+  --cc-bg:             #15161a;
+  --cc-panel-2:        #2a2e35;
+  --cc-line:           #474d57;
+  --cc-line-2:         #656e7b;
+  --cc-text:           #d9d5cc;
+  --cc-muted:          #9a978f;
+  --cc-bright:         #f2eee5;
+  --cc-panel-grad:     linear-gradient(180deg, #2a2e35, #1c1f24);
+  --cc-chrome-grad:    linear-gradient(180deg, #1b1d22, #101116);
+  --cc-sheen:          inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --cc-ease:           cubic-bezier(0.32, 0.72, 0, 1);
+  --cc-font-heading:   'Cinzel', 'Palatino Linotype', Georgia, serif;
+  --cc-font-body:      'Spectral', 'Palatino Linotype', Georgia, serif;
+
+  background: var(--cc-bg);
+  border: 1px solid var(--cc-line-2);
+  border-radius: 0;
+  color: var(--cc-text);
+  font-family: var(--cc-font-body);
+}
+
+.robear-card-dialog .window-header {
+  background: var(--cc-chrome-grad);
+  border-bottom: 1px solid var(--cc-line);
+  color: var(--cc-text);
+}
+
+.robear-card-dialog .window-title {
+  color: var(--cc-text);
+  font-family: var(--cc-font-heading);
+  letter-spacing: 0.02em;
+}
+
+.robear-card-dialog .window-content {
+  position: relative;
+  background: var(--cc-bg);
+  color: var(--cc-text);
+}
+
+/* Ambience — soft teal auras top and bottom over a faint brass core. */
+.robear-card-dialog .window-content::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(79, 179, 168, 0.10), transparent 52%),
+    radial-gradient(100% 60% at 50% 115%, rgba(79, 179, 168, 0.07), transparent 52%),
+    radial-gradient(60% 40% at 50% 50%,   rgba(201, 162, 39, 0.035), transparent 70%);
+}
+
+.robear-card-dialog .window-content > * {
+  position: relative;
+}
+
+.robear-card-dialog .robear-card-hint {
+  margin: 0 0 12px;
+  color: var(--cc-muted);
+  font-style: italic;
+  text-align: center;
+}
+
+/* Card choices */
+.robear-card-dialog .robear-card-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+}
+
+.robear-card-dialog .robear-card-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 110px;
+  height: auto;
+  margin: 0;
+  padding: 6px 6px 8px;
+  background: var(--cc-panel-grad);
+  border: 1px solid var(--cc-line-2);
+  border-radius: 0;
+  box-shadow: var(--cc-sheen);
+  color: var(--cc-text);
+  cursor: pointer;
+  transition: border-color 0.25s var(--cc-ease), box-shadow 0.25s var(--cc-ease), transform 0.25s var(--cc-ease);
+}
+
+.robear-card-dialog .robear-card-choice img {
+  width: 96px;
+  aspect-ratio: 240 / 365;
+  object-fit: cover;
+  border: 1px solid var(--cc-line);
+  border-radius: 0;
+}
+
+.robear-card-dialog .robear-card-choice span {
+  font-family: var(--cc-font-heading);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cc-settled);
+  text-align: center;
+}
+
+.robear-card-dialog .robear-card-choice:hover {
+  border-color: var(--cc-open);
+  box-shadow: var(--cc-sheen), 0 0 0 1px var(--cc-open-soft), 0 4px 14px var(--cc-open-glow);
+  transform: translateY(-2px);
+}
+
+.robear-card-dialog .robear-card-choice:hover span {
+  color: var(--cc-settled-bright);
+}
+
+.robear-card-dialog .robear-card-choice:active {
+  transform: scale(0.98);
+}
+
+.robear-card-dialog .robear-card-choice:focus-visible {
+  outline: 2px solid var(--cc-open);
+  outline-offset: 2px;
+}
+
+/* Footer — the creator's base .creator-btn look */
+.robear-card-dialog .form-footer button {
+  border: 1px solid var(--cc-line);
+  border-radius: 0;
+  background: var(--cc-panel-2);
+  color: var(--cc-text);
+  font-family: var(--cc-font-body);
+  box-shadow: var(--cc-sheen);
+  transition: filter 0.25s var(--cc-ease), border-color 0.25s var(--cc-ease);
+}
+
+.robear-card-dialog .form-footer button:hover {
+  filter: brightness(1.15);
+  border-color: var(--cc-line-2);
+}

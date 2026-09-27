@@ -1,0 +1,36 @@
+# Continuous integration: manifest validation and lint.
+#
+# Runs on every push and pull request. This is separate from the release workflow
+# (main.yml), which only fires when a GitHub release is published.
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      # Fail fast if the manifest isn't valid JSON or names a script, stylesheet or pack that
+      # doesn't exist — Foundry parses it at load and there is no build step to catch either.
+      - name: Validate Manifest
+        run: npm run validate:json
+
+      - name: Lint
+        run: npm run lint

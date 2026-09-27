@@ -1,0 +1,59 @@
+name: Feature request
+description: Suggest a new card, automation or improvement for RoBear-E.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideas are welcome. The guiding principle for this module is that playing a card
+        should feel like playing a card: **one click, clear on the chat card, and never
+        slowing the game down**.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's the problem?
+      description: What are you trying to do that the module makes hard or impossible today?
+      placeholder: >-
+        When a player plays Charger we have to remember to double their speed by hand,
+        and it's easy to forget to put it back at the end of their turn.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to happen?
+      description: Describe the feature or change. If it's about a specific card, say which one.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of the module?
+      options:
+        - Card automation (a card that isn't automated yet)
+        - Card picker window
+        - Chat card button and notes
+        - Compendium content (items, spells, journal)
+        - Card art
+        - Compatibility with another module
+        - Something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you've considered
+      description: Any workarounds you're using now, or other ways this could be solved.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Confirmations
+      options:
+        - label: I searched the existing issues and this hasn't already been suggested.
+          required: true
