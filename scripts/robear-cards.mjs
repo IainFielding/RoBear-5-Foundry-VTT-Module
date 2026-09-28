@@ -346,7 +346,7 @@ function createCardButton(message, { compact=false }={}) {
   button.type = "button";
   button.className = compact ? "robear-card-button icon" : "robear-card-button";
   button.dataset.tooltip = "Use a RoBear-E Card on this roll";
-  button.innerHTML = `<i class="fa-solid fa-clone" inert></i>${compact ? "" : " RoBear-E Card"}`;
+  button.innerHTML = `<i class="fa-solid fa-anchor fa-rotate-90" inert></i>${compact ? "" : " RoBear-E Card"}`;
   button.addEventListener("click", event => {
     event.preventDefault();
     event.stopPropagation();
@@ -403,8 +403,11 @@ async function promptCard(message, button) {
  * @returns {Promise<object|void>}  The chosen option.
  */
 async function chooseCard(options, hint) {
+  // The tooltip shows the card art at full size so its rules text is readable.
   const cards = options.map((o, i) => `
-    <button type="button" class="robear-card-choice" data-index="${i}" data-tooltip="${o.label}">
+    <button type="button" class="robear-card-choice" data-index="${i}"
+            data-tooltip-html="${foundry.utils.escapeHTML(`<img src="${o.img}" alt="${o.label}">`)}"
+            data-tooltip-class="robear-card-tooltip" data-tooltip-direction="UP">
       <img src="${o.img}" alt="${o.label}">
       <span>${o.label}</span>
     </button>
@@ -414,7 +417,7 @@ async function chooseCard(options, hint) {
   let chosen;
   await foundry.applications.api.DialogV2.wait({
     classes: ["robear-card-dialog"],
-    window: { title: "Use a RoBear-E Card", icon: "fa-solid fa-clone" },
+    window: { title: "Use a RoBear-E Card", icon: "fa-solid fa-anchor fa-rotate-90" },
     position: { width: Math.clamp(48 + (options.length * 124), 340, 792) },
     content: `
       <p class="robear-card-hint">${hint}</p>
