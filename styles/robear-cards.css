@@ -76,6 +76,26 @@
   }
 }
 
+/* A natural 1: a dull red ring and a faint red wash, held still. It marks the roll without celebrating it. */
+.chat-message .robear-natural-1,
+:is(.chat-message, .robear-request-popup) .robear-request-result.fumble {
+  position: relative;
+  overflow: visible;
+  color: #c96a5a;
+  background-color: rgba(201, 106, 90, 0.16);
+  box-shadow: 0 0 6px 1px rgba(201, 106, 90, 0.45);
+}
+
+.chat-message .robear-natural-1::before,
+:is(.chat-message, .robear-request-popup) .robear-request-result.fumble::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  border: 2px solid #8f3b2e;
+  pointer-events: none;
+}
+
 /* -------------------------------------------- */
 /*  Card Dialog — "Arcane Midnight", the theme  */
 /*  of the Simple D&D 5e Character Creator's    */

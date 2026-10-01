@@ -8,7 +8,7 @@
     "Settings": {
       "LockNaturals": {
         "Name": "Natural 1s and 20s lock RoBear-E Cards",
-        "Hint": "No RoBear-E Card can be played on a roll whose d20 shows a natural 1 or 20, Indomitable included. Turn this off to allow them, though Luck still can't be played on a natural 1 or 20."
+        "Hint": "No RoBear-E Card can be played on a roll whose d20 shows a natural 1 or 20. Turn this off to allow Advantage and Inspiration on them. A natural 1 is fixed either way: Luck, Indomitable and Relentless never reroll one, and Luck can't be played on a natural 20."
       },
       "ShowPlayedCards": {
         "Name": "Show played cards on screen",

@@ -428,6 +428,7 @@
 }
 
 :is(.chat-message, .robear-request-popup) .robear-request-result.fumble {
+  /* Ringed in red in robear-cards.css, as a natural 1 in chat is. */
   color: var(--cc-fail);
 }
 

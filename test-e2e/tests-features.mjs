@@ -131,6 +131,17 @@ test("indomitable (2014): rerolls a failed save from the right-click menu, with 
     .waitFor({ timeout: 5000 });
 });
 
+// A natural 1 is fixed in RoBear-E, so the feature can't reroll one, though the save failed.
+test("indomitable: not offered on a natural 1", async ({ gm, player }) => {
+  await giveIndomitable(gm);
+  await forceDice(player, [d20(1)]);
+  const id = await save(player, "Aria", 15);
+  assert(!(await contextEntries(player, id)).includes("Use Indomitable"), "Offered on a natural 1.");
+  await closeContextMenu(player);
+  assertEqual(await player.page.locator(`#chat .chat-log li[data-message-id="${id}"] .robear-feature-button`).count(), 0,
+    "Use Indomitable buttons on a natural 1");
+});
+
 test("indomitable: offered only on a failed save, with uses left", async ({ gm, player }) => {
   await giveIndomitable(gm);
   await forceDice(player, [d20(16)]);
