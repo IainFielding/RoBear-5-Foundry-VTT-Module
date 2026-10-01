@@ -49,5 +49,18 @@ export default [
       sourceType: "module",
       globals: { ...globals.node }
     }
+  },
+  {
+    // Tests run in Node, but set up Foundry's globals (unit tests) or pass functions into the page to run in the
+    // live world (end-to-end tests), so both sets of globals are in scope.
+    files: ["test/**/*.mjs", "test-e2e/**/*.mjs", "vitest.config.mjs"],
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: "module",
+      globals: { ...globals.node, ...globals.browser, ...foundryGlobals, Combat: "readonly", Scene: "readonly", User: "readonly" }
+    },
+    rules: {
+      "no-unused-vars": ["warn", { argsIgnorePattern: "^_", args: "after-used" }]
+    }
   }
 ];

@@ -30,10 +30,13 @@
     }
   ],
   "esmodules": [
-    "scripts/robear-cards.mjs"
+    "scripts/robear-cards.mjs",
+    "scripts/roll-requests.mjs",
+    "scripts/roll-request-popup.mjs"
   ],
   "styles": [
-    "styles/robear-cards.css"
+    "styles/robear-cards.css",
+    "styles/roll-requests.css"
   ],
   "packs": [
     {
@@ -75,7 +78,7 @@
   "packFolders": [
     {
       "name": "RoBear-E",
-      "color": "#a428e6",
+      "color": "#392046",
       "sorting": "m",
       "packs": [
         "content",

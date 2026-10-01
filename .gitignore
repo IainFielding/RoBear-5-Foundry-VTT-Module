@@ -4,3 +4,8 @@ node_modules/
 # Editor / OS cruft
 .DS_Store
 Thumbs.db
+
+# End-to-end harness: machine-specific paths and run output.
+test-e2e/config.mjs
+test-e2e/*.log
+test-e2e/*.png

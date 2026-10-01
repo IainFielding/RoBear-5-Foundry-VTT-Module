@@ -27,10 +27,16 @@ This module includes the following compendium packs, organized under the "RoBear
 Give a character the **RoBear-E Cards** feature from the Items compendium. Each card can be
 played once, and comes back after a long rest.
 
+However a card is played, its art appears in the middle of everyone's screen for a moment, with
+who played it. Click it to dismiss it early. Chat keeps a short record of it. The GM can turn the
+on-screen card off with **Show played cards on screen** in **Configure Settings → RoBear-E**.
+
 ### Playing a card from the character sheet
 
 Click the RoBear-E Cards feature on the sheet. A window opens showing every card you still
-have, and clicking one plays it: its card is posted to chat and its use is spent.
+have, and clicking one plays it: its use is spent, and a short record goes to chat with the
+card's description folded away. Click the record's header to open it, or hover the small card art
+to see it full size.
 Shift-click the feature to get the standard D&D 5e list instead.
 
 Playing **Advantage** this way gives advantage on your next attack roll, ability check or
@@ -41,8 +47,9 @@ saving throw.
 Your attack, damage, ability check, saving throw and initiative rolls get a
 **RoBear-E Card** button in chat. Click it to see only the cards that can be played on that
 roll. The chat card then updates to show the new total, and hit or miss against the target,
-or the save's success or failure, is worked out again. A note on the card records which
-card was played and what it changed.
+or the save's success or failure, is worked out again. A note on the roll records which
+card was played and what it changed, with a thumbnail of the card; no separate message is posted,
+so the roll stays where it is in chat.
 
 | Card | What it does to the roll |
 |---|---|
@@ -57,10 +64,55 @@ sheet. Divine Intervention's chat card has a button to roll its 1d100.
 
 A few things to know:
 
+- **Natural 1s and 20s lock the cards.** By default no card can be played on a roll whose d20 shows a
+  natural 1 or 20. The GM can turn this off in **Configure Settings → RoBear-E**; Luck still can't be
+  played on a natural 1 or 20 either way. Rolls without a d20, such as damage, aren't affected.
 - Cards can only be played on your own rolls.
 - Death saving throws can't be changed, because D&D 5e has already applied the result.
 - Play a card on a damage roll **before** applying the damage — damage that's already been
   applied isn't changed.
+
+## Asking for Rolls (GM)
+
+As GM, click the **anchor** button in the chat controls, or **Request RoBear-E Rolls** in the
+token controls. Pick the kind of roll, the roll and DC, and who rolls. Actors of any selected
+tokens are ticked for you; otherwise the player characters are. A macro can open the same
+window with `game.modules.get("sogrom-robear-e").api.requestRolls()`.
+
+The request is posted to chat. Each player gets a **Roll** button for their own characters, and
+the GM can roll for anyone. The rolls are ordinary D&D 5e rolls, so they get the
+**RoBear-E Card** button too, and the request updates as soon as a card changes a roll. You can
+also play a card from the anchor button next to a result on the request.
+
+| Kind | How it works |
+|---|---|
+| **Standard Roll** | Each actor rolls once against the DC: a d20 by default, or a d6, d8, d10, d12 or d100, or any check, save or tool. Only the GM sees who passed and how many succeeded until they click **Show to players** (and they can hide it again). The DC isn't sent with the rolls, so dnd5e doesn't show it on them either. |
+| **Skill Challenge** | Three rolls in turn, each with its own roll and DC. Choose how many successes are needed (2 of 3 by default). An actor stops as soon as they have passed or failed. Only the GM sees who passed until they click **Show to players**; players see "Done" once they have finished. |
+| **Team Challenge** | Everyone rolls, and the average (rounded down) is compared to the DC. Only the GM sees the result, and which rolls were removed, until they click **Show to players**. Each natural 1 removes the highest roll from the pool, and each natural 20 removes the lowest. If that would leave no rolls, 1s and 20s cancel out in pairs, and at least one roll always stays in the pool. |
+| **Roll-Off** | Pick a Challenger and an Opponent, player characters or NPCs, and a roll for each: a d20 (the default for both), a d6, d8, d10, d12 or d100, or any check, save or tool. The higher total wins, and an equal total is a tie. An NPC's roll is a private GM roll: players see "?" until the GM clicks **Show NPC roll** on the request (and they can hide it again). |
+| **Team vs Team** | Pick a Players team and an NPCs team, and a roll for each (a d20 by default, or any check, save or tool). Each team's rolls are pooled like a Team Challenge, 1s and 20s included, and the higher average wins. |
+| **Divine Intervention** | Set how many numbers each player picks, from 1 to 50 (16 by default). When a player clicks **Roll**, they pick that many numbers in a row from 1 to 100, then roll a d100, and must roll one of their numbers. **Advantage** rolls a second d100 and keeps whichever lands in their numbers, and **Luck** rerolls the d100. |
+
+The actor lists offer the selected tokens, the player characters and the tokens on the current
+scene.
+
+A few things to know:
+
+- To let someone roll again, delete their roll message and the **Roll** button comes back.
+- With **Show DC to Players** off, players see "DC ?", and the DC is kept off their roll so
+  D&D 5e doesn't show success or failure on it. It starts off for each new request; the GM can
+  make it start on with **Show the DC to players by default** in **Configure Settings → RoBear-E**.
+- With **Private GM Roll**, each player sees only their own results.
+- **Attached rolls.** By default the rolls made for a request don't get messages of their own: they show on
+  the request card, as dnd5e does for an item's saves. Click a result to see its dice; notes on any cards
+  played show under the row. Turn off **Attach rolls to the request card** in **Configure Settings →
+  RoBear-E** to give each roll its own message again.
+- **Pop-ups.** Two settings in **Configure Settings → RoBear-E**, both off by default, open a window
+  when a request is posted. **Pop up roll requests for players** gives each player a window with a
+  **Roll** button for each of their characters in the request. **Pop up roll requests for the GM**
+  does the same for the GM, for NPCs and any other actor no player owns. The window closes once
+  everything in it is rolled. A player who joins within 30 minutes of a request they still need to
+  roll for gets its window too. The chat card works either way.
 
 ## Credits
 
