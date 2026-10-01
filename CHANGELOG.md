@@ -25,8 +25,9 @@ All notable changes to RoBear-E.
     chooses how many), then rolls a d100 and must roll one of them. The Advantage and Luck
     cards can be played on the d100.
 
-  A macro can post a request with `createRequest`. Anything it leaves out is filled in as the
-  window would, and a request that can't be rolled is refused with a message saying why.
+  A macro can post a request with `game.modules.get("sogrom-robear-e").api.createRequest()`.
+  Anything it leaves out is filled in as the window would, and a request that can't be rolled,
+  such as one naming a skill D&D 5e doesn't know, is refused with a message saying why.
 - **Fighter's Indomitable on a failed save.** A Use Indomitable button on a failed saving throw
   spends a use of the class feature and rerolls it, adding the Fighter level under the 2024 rules.
 - **Add another feature's die to a roll.** Right-click a die rolled by a feature such as Bardic

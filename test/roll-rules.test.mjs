@@ -286,6 +286,17 @@ describe("Checking a request before it is posted", () => {
     expect(errorFor({ ...valid.standard, parts: [{ type: "d20", dc: "hard" }] })).not.toBeNull();
     expect(errorFor({ ...valid.standard, rollMode: "blind" })).not.toBeNull();
   });
+
+  it("refuses a skill, check, save or tool that dnd5e doesn't know, which would only fail once someone rolled it", () => {
+    expect(errorFor({ ...valid.standard, parts: [{ type: "skill", key: "athletics", dc: 15 }] }))
+      .toBe("Unknown skill for a roll: athletics. Use one of: ath, acr.");
+    expect(errorFor({ ...valid.standard, parts: [{ type: "save", key: "strength", dc: 15 }] })).not.toBeNull();
+    expect(errorFor({ ...valid.standard, parts: [{ type: "check", dc: 15 }] })).not.toBeNull();
+    expect(errorFor({ ...valid.standard, parts: [{ type: "tool", key: "lute", dc: 15 }] })).not.toBeNull();
+    for ( const part of [{ type: "check", key: "dex" }, { type: "save", key: "wis" }, { type: "tool", key: "thief" }] ) {
+      expect(errorFor({ ...valid.standard, parts: [{ ...part, dc: 15 }] })).toBeNull();
+    }
+  });
 });
 
 /* -------------------------------------------- */

@@ -705,6 +705,12 @@
 /*  Attached Rolls                              */
 /* -------------------------------------------- */
 
+/* A roll attached to its request card is shown there, so its own message is hidden. A class rather than the hidden
+   attribute, which Foundry carries over when it redraws a message, so the message could never be shown again. */
+.chat-message.robear-attached-roll {
+  display: none;
+}
+
 /* The details under a row take a line of their own. */
 :is(.chat-message, .robear-request-popup) .robear-request-actor {
   flex-wrap: wrap;

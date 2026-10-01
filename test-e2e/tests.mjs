@@ -48,6 +48,33 @@ test("the API opens the request window for the GM only", async ({ gm, player }) 
   assertEqual(await open(player), false, "player window rendered");
 });
 
+test("the API posts a request from a macro, filling in what it leaves out, and refuses one it can't roll", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const id = await gm.eval(async ({ moduleId, aria }) => {
+    const { createRequest } = game.modules.get(moduleId).api;
+    return (await createRequest({ mode: "standard", parts: [{ type: "skill", key: "ath", dc: 12 }], actors: [aria] })).id;
+  }, { moduleId: MODULE_ID, aria: ids.aria });
+  const card = await waitForCard(player, id, c => row(c, "Aria"), "the macro's request");
+  assertEqual(card.title, "Athletics Check", "the title");
+  const request = await gm.eval(({ moduleId, id }) => game.messages.get(id).getFlag(moduleId, "request"), { moduleId: MODULE_ID, id });
+  assertEqual({ rollMode: request.rollMode, showDC: request.showDC }, { rollMode: "public", showDC: false }, "the defaults");
+
+  const refused = await gm.eval(async ({ moduleId, aria }) => {
+    const before = game.messages.size;
+    try {
+      await game.modules.get(moduleId).api.createRequest({
+        mode: "standard", parts: [{ type: "skill", key: "athletics", dc: 12 }], actors: [aria]
+      });
+    } catch ( err ) {
+      return { message: err.message, posted: game.messages.size !== before };
+    }
+    return null;
+  }, { moduleId: MODULE_ID, aria: ids.aria });
+  assert(refused, "The request with an unknown skill was posted.");
+  assertEqual(refused.posted, false, "a message posted for the refused request");
+  assert(refused.message.startsWith("Unknown skill for a roll: athletics."), `Unexpected refusal: ${refused.message}`);
+});
+
 /* -------------------------------------------- */
 /*  Request Window                              */
 /* -------------------------------------------- */
@@ -930,7 +957,7 @@ test("cards: Indomitable is offered on a failed requested save once the GM shows
 function rollMessageShown(session, id) {
   return session.eval(id => {
     const li = document.querySelector(`#chat .chat-log li.chat-message[data-message-id="${id}"]`);
-    return !!li && !li.hidden;
+    return !!li && li.checkVisibility();
   }, id);
 }
 
@@ -966,6 +993,39 @@ test("attached rolls: on by default, the rolls are hidden from chat and shown on
     .textContent();
   assertEqual(note.replace(/\s+/g, " ").trim(), "Luck: rerolled the d20 (4 → 13): 4 → 13", "the card's note, with no RoBear-E label");
   assertEqual(await detail.count(), 1, "the dice breakdown after the redraw");
+});
+
+test("attached rolls: deleting the request card shows its rolls in chat again", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const id = await postRequest(ctx, { mode: "standard", parts: [athletics(12)], actors: [ids.aria] });
+  await forceDice(player, [d20(4)]);
+  await clickRoll(player, id, "Aria", { fastForward: true });
+  const roll = await waitForRoll(gm, id, ids.aria);
+  await waitForCard(player, id, c => row(c, "Aria").results.length, "Aria's result");
+  await gm.eval(id => game.messages.get(id).delete(), id);
+  for ( const session of [gm, player] ) {
+    await waitFor(session, id => {
+      const li = document.querySelector(`#chat .chat-log li.chat-message[data-message-id="${id}"]`);
+      return !!li && li.checkVisibility();
+    }, roll.id, "Aria's roll message to show in chat");
+  }
+});
+
+test("attached rolls: turning the setting off shows rolls already attached", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const id = await postRequest(ctx, { mode: "standard", parts: [athletics(12)], actors: [ids.aria] });
+  await forceDice(player, [d20(4)]);
+  await clickRoll(player, id, "Aria", { fastForward: true });
+  const roll = await waitForRoll(gm, id, ids.aria);
+  await waitForCard(player, id, c => row(c, "Aria").results.length, "Aria's result");
+  assertEqual(await rollMessageShown(gm, roll.id), false, "Aria's roll message while attached");
+  await gm.eval(moduleId => game.settings.set(moduleId, "attachRolls", false), MODULE_ID);
+  for ( const session of [gm, player] ) {
+    await waitFor(session, id => {
+      const li = document.querySelector(`#chat .chat-log li.chat-message[data-message-id="${id}"]`);
+      return !!li && li.checkVisibility();
+    }, roll.id, "Aria's roll message to show in chat");
+  }
 });
 
 test("attached rolls: turned off, each roll keeps its own chat message", async (ctx) => {

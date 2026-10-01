@@ -205,6 +205,7 @@
         "SideNotActor": "Everyone on a side of a contest must also be in the request's actors.",
         "RollMode": "Unknown roll visibility: {rollMode}. Use \"public\" or \"gm\".",
         "Roll": "Unknown kind of roll: {type}.",
+        "Key": "Unknown {type} for a roll: {key}. Use one of: {keys}.",
         "DC": "A DC must be a number, or null for none: {dc}.",
         "Successes": "A skill challenge needs from 1 to {total} successes, not {successes}.",
         "Range": "Divine Intervention needs from {min} to {max} numbers to pick, not {range}."

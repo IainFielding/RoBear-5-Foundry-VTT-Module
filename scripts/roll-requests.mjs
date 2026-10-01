@@ -108,7 +108,7 @@ let rollIndex = null;
 
 Hooks.once("init", () => {
   registerSettings();
-  game.modules.get(MODULE_ID).api = { requestRolls: openRollRequest };
+  game.modules.get(MODULE_ID).api = { requestRolls: openRollRequest, createRequest };
 });
 Hooks.on("renderChatInput", onRenderChatInput);
 Hooks.on("getSceneControlButtons", onGetSceneControlButtons);
@@ -241,6 +241,11 @@ function onCreateChatMessage(message) {
  */
 function onDeleteChatMessage(message) {
   expandedRolls.delete(message.id);
+  // A deleted request's rolls have no card to show them any more, so they are drawn again as messages of their own.
+  // This must come before the request is dropped from the index, which is how its rolls are found.
+  if ( message.getFlag(MODULE_ID, "request") ) {
+    for ( const roll of getRollMessages(message.id) ) ui.chat?.updateMessage(roll);
+  }
   if ( rollIndex ) {
     rollIndex.rolls.delete(message.id);
     const requestId = message.getFlag(MODULE_ID, "requestRoll")?.request;
@@ -355,6 +360,8 @@ export function validateRequest(request) {
   check(parts.length >= count, "ROBEAR.Request.Invalid.MissingRoll");
   for ( const part of parts ) {
     check((part?.type in DICE) || PART_TYPES.includes(part?.type), "ROBEAR.Request.Invalid.Roll", { type: part?.type });
+    const keys = getPartKeys(part.type);
+    if ( keys ) check(keys.includes(part.key), "ROBEAR.Request.Invalid.Key", { type: part.type, key: part.key, keys: keys.join(", ") });
     check((part.dc ?? null) === null || Number.isNumeric(part.dc), "ROBEAR.Request.Invalid.DC", { dc: part.dc });
   }
 
@@ -367,6 +374,21 @@ export function validateRequest(request) {
     const { range } = request;
     const { min, max } = DIVINE_RANGE;
     check(between(range, min, max), "ROBEAR.Request.Invalid.Range", { range, min, max });
+  }
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {string} type  A request part's type.
+ * @returns {string[]|void}  The keys a part of this type may name, or nothing for a plain die, which takes no key.
+ */
+function getPartKeys(type) {
+  switch ( type ) {
+    case "skill": return Object.keys(CONFIG.DND5E.skills);
+    case "check":
+    case "save": return Object.keys(CONFIG.DND5E.abilities);
+    case "tool": return Object.keys(CONFIG.DND5E.tools);
   }
 }
 
@@ -645,10 +667,11 @@ function isSettled(group) {
  */
 function onRenderChatMessage(message, html) {
   // A roll attached to its request card is shown there, so its own message is hidden, as dnd5e does for the rolls
-  // it summarises inside their item's card.
+  // it summarises inside their item's card. It is hidden by a class, not the hidden attribute: Foundry keeps a
+  // message's hidden attribute when redrawing it, so it would stay hidden once its request is deleted.
   const requestRoll = message.getFlag(MODULE_ID, "requestRoll");
   if ( requestRoll && game.messages.has(requestRoll.request) && game.settings.get(MODULE_ID, "attachRolls") ) {
-    html.hidden = true;
+    html.classList.add("robear-attached-roll");
     return;
   }
   const request = message.getFlag(MODULE_ID, "request");
