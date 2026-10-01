@@ -3,11 +3,11 @@
  * are applied here as a RoBear-E Card would be: the roll is rewritten in place and noted.
  *
  * Fighter's Indomitable rerolls a failed saving throw, and the new roll must be used. Under the 2024 rules the reroll
- * also adds the Fighter's level.
+ * also adds the Fighter's level. A natural 1 is fixed in RoBear-E, so Indomitable can't reroll one.
  */
 
 import {
-  MODULE_ID, describeD20s, finalize, getRollKind, getRollTarget, isKnownFailure, localize, rerollD20
+  MODULE_ID, describeD20s, finalize, getNatural, getRollKind, getRollTarget, isKnownFailure, localize, rerollD20
 } from "./robear-cards.mjs";
 
 /**
@@ -67,12 +67,14 @@ function findIndomitable(actor) {
 
 /**
  * The Indomitable feature that could be used on this roll right now, if any: the roll is a saving throw this user can
- * see failed, they may change it, and its actor has a use of Indomitable left.
+ * see failed, not on a natural 1, they may change it, and its actor has a use of Indomitable left.
  * @param {ChatMessage5e|void} message
  * @returns {Item5e|void}
  */
 export function getIndomitable(message) {
   if ( !message || (getRollKind(message) !== "save") || !message.isContentVisible ) return;
+  // A natural 1 is fixed in RoBear-E: nothing rerolls it.
+  if ( getNatural(message.rolls[0]) === 1 ) return;
   if ( !message.canUserModify(game.user, "update") ) return;
   const actor = message.getAssociatedActor();
   const item = findIndomitable(actor);

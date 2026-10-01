@@ -10,7 +10,8 @@ const IMAGE_PATH = `modules/${MODULE_ID}/assets/images`;
 
 /**
  * Card activities that can change a roll, keyed by activity ID with the activity name as a fallback.
- * `appliesTo` lists the roll kinds (see getRollKind) the card may be spent on.
+ * `appliesTo` lists the roll kinds (see getRollKind) the card may be spent on. `rerolls` marks a card that rerolls the
+ * d20, which can never be played on a natural 1.
  */
 const CARDS = {
   inspiration: {
@@ -21,7 +22,8 @@ const CARDS = {
   luck: {
     ids: ["uPqHABvpmYZr0ASg"],
     names: ["luck"],
-    appliesTo: ["attack", "damage", "check", "save", "initiative", "divine"]
+    appliesTo: ["attack", "damage", "check", "save", "initiative", "divine"],
+    rerolls: true
   },
   advantage: {
     ids: ["OkUWoFMxuyT5TxX7"],
@@ -31,12 +33,14 @@ const CARDS = {
   indomitable: {
     ids: ["aE8dyIQUgvXfcu3M"],
     names: ["indomitable"],
-    appliesTo: ["save"]
+    appliesTo: ["save"],
+    rerolls: true
   },
   relentless: {
     ids: ["28kjjOyF9Suf3hkq"],
     names: ["relentless"],
-    appliesTo: ["initiative"]
+    appliesTo: ["initiative"],
+    rerolls: true
   }
 };
 
@@ -151,7 +155,7 @@ function wrapItemUse() {
 function onRenderChatMessage(message, html) {
   // The notes on cards already played stay, even once no card is left to play on the roll.
   const content = html.querySelector(".message-content");
-  if ( message.isContentVisible ) markNatural20s(message, html);
+  if ( message.isContentVisible ) markNaturals(message, html);
   content?.append(...renderLog(message));
   if ( getCardOptions(message).length ) content?.append(createCardButton(message));
 
@@ -172,19 +176,22 @@ function onRenderChatMessage(message, html) {
 /* -------------------------------------------- */
 
 /**
- * Ring the total of each of the message's d20 rolls that shows a natural 20 in gold, like the Character Creator's
- * Level Up button once the XP is there.
+ * Mark the total of each of the message's d20 rolls that shows a natural 1 or 20: a natural 20 is ringed in gold, like
+ * the Character Creator's Level Up button once the XP is there, and a natural 1 in a dull red.
  * @param {ChatMessage5e} message
  * @param {HTMLElement} html
  */
-function markNatural20s(message, html) {
+function markNaturals(message, html) {
   // Rolls of other messages, summarised inside this one, aren't this message's rolls.
   const rolls = [...html.querySelectorAll(".message-content .dice-roll")]
     .filter(el => !el.closest(".card-summary, .robear-request"));
   if ( rolls.length !== message.rolls.length ) return;
   message.rolls.forEach((roll, i) => {
     // The classic layout's total, or the whole roll in dnd5e's compact layout, which has no separate total.
-    if ( getNatural(roll) === 20 ) (rolls[i].querySelector(".dice-total") ?? rolls[i]).classList.add("robear-natural-20");
+    const natural = getNatural(roll);
+    if ( [1, 20].includes(natural) ) {
+      (rolls[i].querySelector(".dice-total") ?? rolls[i]).classList.add(`robear-natural-${natural}`);
+    }
   });
 }
 
@@ -424,6 +431,8 @@ export function getCardOptions(message) {
       if ( !card?.appliesTo.includes(kind) ) continue;
       if ( !hasUsesLeft(activity) ) continue;
       if ( locked ) continue;
+      // A natural 1 is fixed in RoBear-E: nothing rerolls it, whatever the Natural 1s and 20s setting.
+      if ( card.rerolls && (natural === 1) ) continue;
 
       switch ( key ) {
         case "inspiration":

@@ -30,6 +30,7 @@ All notable changes to RoBear-E.
   such as one naming a skill D&D 5e doesn't know, is refused with a message saying why.
 - **Fighter's Indomitable on a failed save.** A Use Indomitable button on a failed saving throw
   spends a use of the class feature and rerolls it, adding the Fighter level under the 2024 rules.
+  A natural 1 is fixed, so it isn't offered on one.
 - **Add another feature's die to a roll.** Right-click a die rolled by a feature such as Bardic
   Inspiration or Cutting Words, and choose Add to a roll or Subtract from a roll. Its total goes onto
   the roll you pick, which updates, with a note of what changed. The GM applies it to rolls that
@@ -51,15 +52,16 @@ All notable changes to RoBear-E.
   the NPCs. The window closes once everything in it is rolled.
 - **Natural 20s are ringed in gold.** A roll in chat whose d20 shows a natural 20, and its result
   on a roll request card, gets a turning gold ring and glow, like the Character Creator's Level Up
-  button. Under reduced motion the ring holds still.
+  button. Under reduced motion the ring holds still. A natural 1 gets a still, dull red ring.
 - **Ready for translation.** Every string the module shows is now in `lang/en.json`.
 
 ### Changed
 
 - **Natural 1s and 20s lock RoBear-E Cards.** A new setting, **on by default**, so existing worlds
-  change when they update: no card can be played on a roll whose d20 shows a natural 1 or 20,
-  Indomitable included. Turn the setting off to allow them; Luck still can't be played on a
-  natural 1 or 20.
+  change when they update: no card can be played on a roll whose d20 shows a natural 1 or 20.
+  Turn the setting off to allow Advantage and Inspiration on them. Either way, Luck can't be
+  played on a natural 20, and a natural 1 is fixed: nothing rerolls it, so Luck, Indomitable and
+  Relentless can't be played on one.
 - **The RoBear-E Card button has a new icon**, the anchor also used for roll requests.
 - **Corn Liquor uses Foundry's own jug icon.** The item and its effect now use an icon that ships
   with Foundry VTT, in place of the art added in 1.0.0, which is no longer included.

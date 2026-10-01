@@ -57,18 +57,21 @@ so the roll stays where it is in chat.
 | **Inspiration + 1d6 / 1d8 / 1d10** | Adds the die to the roll. |
 | **Luck** | Rerolls the dice and you must use the new result: the d20 (both d20s with advantage or disadvantage), or all the damage dice. Can't be played on a natural 1 or 20. |
 | **Advantage** | Rolls a second d20 and keeps the higher. On a roll with disadvantage, the two cancel out and the roll becomes a straight roll. |
-| **Indomitable** | Rerolls a failed saving throw, and you must use the new result. |
-| **Relentless** | Rerolls initiative at the start of combat and keeps the higher total, and updates the combat tracker. |
+| **Indomitable** | Rerolls a failed saving throw, and you must use the new result. Can't be played on a natural 1. |
+| **Relentless** | Rerolls initiative at the start of combat and keeps the higher total, and updates the combat tracker. Can't be played on a natural 1. |
 
 Charger, Reaction Surge, Extra Strike, Mind's Eye and Divine Intervention are played from the
 sheet. Divine Intervention's chat card has a button to roll its 1d100.
 
 A few things to know:
 
+- **A natural 1 is fixed.** Nothing rerolls it: not Luck, Indomitable or Relentless, and not the
+  Fighter's Indomitable feature either.
 - **Natural 1s and 20s lock the cards.** By default no card can be played on a roll whose d20 shows a
-  natural 1 or 20, Indomitable included. A natural 20 is ringed in gold in chat. The GM can turn the
-  lock off in **Configure Settings → RoBear-E**; Luck still can't be played on a natural 1 or 20 either
-  way. Rolls without a d20, such as damage, aren't affected.
+  natural 1 or 20. A natural 20 is ringed in gold in chat, and a natural 1 in red. The GM can turn
+  the lock off in **Configure Settings → RoBear-E** to allow Advantage and Inspiration on them; Luck
+  still can't be played on a natural 20, and nothing rerolls a natural 1 either way. Rolls without a
+  d20, such as damage, aren't affected.
 - Cards can only be played on your own rolls.
 - Death saving throws can't be changed, because D&D 5e has already applied the result.
 - Play a card on a damage roll **before** applying the damage — damage that's already been
@@ -95,8 +98,9 @@ roll request's card updates too.
 A Fighter with the **Indomitable** feature from D&D 5e's compendiums can use it on a saving throw
 they failed. A **Use Indomitable** button appears on the failed save, and on its row of a roll
 request's card. It's also in the save's right-click menu. Using it spends one use of the feature
-and rerolls the d20, and the new roll stands. A save rolled with no DC can't be known to have
-failed, so the button is offered on it either way, and asks you to confirm before spending a use.
+and rerolls the d20, and the new roll stands. A natural 1 is fixed, so it isn't offered on one. A save
+rolled with no DC can't be known to have failed, so the button is offered on it either way, and asks
+you to confirm before spending a use.
 If the reroll can't be saved, the use is given back. Under the 2024 rules the reroll also adds the
 Fighter's level; under the 2014 rules it doesn't. The save notes what happened, e.g.
 "Indomitable: rerolled the d20 (6 → 8) + 9 (Fighter level): 6 → 17".
@@ -105,9 +109,8 @@ Indomitable, the feature or the RoBear-E card, is only offered once the player c
 failed. On a roll request whose result the GM hasn't shown yet, it appears when the GM clicks
 **Show to players**, since offering it any sooner would tell the player they failed.
 
-This is the class feature. The RoBear-E **Indomitable** card is separate and works as before. Unlike
-the feature, the card can't be played on a natural 1 while **Natural 1s and 20s lock RoBear-E Cards**
-is on.
+This is the class feature. The RoBear-E **Indomitable** card is separate and works as before. Neither
+can reroll a natural 1.
 
 ## Asking for Rolls (GM)
 

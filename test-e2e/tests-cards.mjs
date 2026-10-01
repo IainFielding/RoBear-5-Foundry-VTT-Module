@@ -209,14 +209,14 @@ test("natural 1s and 20s: the lock applies on a request card too", async (ctx) =
   assertEqual(card.rows[0].cardButton, false, "a card button beside a natural 20");
 });
 
-test("natural 20s: the total is ringed in gold, and no other roll's is", async ({ player }) => {
-  for ( const [natural, kind] of [[20, "save"], [20, "skill"], [19, "save"], [1, "save"]] ) {
+test("natural 1s and 20s: the total is ringed, in red or gold, and no other roll's is", async ({ player }) => {
+  for ( const [natural, kind] of [[20, "save"], [20, "skill"], [1, "save"], [1, "skill"], [19, "save"], [2, "save"]] ) {
     await forceDice(player, [d20(natural)]);
     const id = await roll(player, "Aria", kind);
     const dice = player.page.locator(`#chat .chat-log [data-message-id="${id}"] .message-content .dice-roll`);
     await dice.waitFor({ timeout: 5000 });
-    assertEqual(await dice.evaluate(el => el.matches(".robear-natural-20, :has(.robear-natural-20)")), natural === 20,
-      `gold ring on a ${kind} showing a natural ${natural}`);
+    const marks = await dice.evaluate(el => [1, 20].filter(n => el.matches(`.robear-natural-${n}, :has(.robear-natural-${n})`)));
+    assertEqual(marks, [1, 20].includes(natural) ? [natural] : [], `ring on a ${kind} showing a natural ${natural}`);
   }
 });
 
@@ -302,6 +302,22 @@ test("indomitable: rerolls a failed saving throw only", async ({ player }) => {
   const result = await afterCard(player, failed);
   assertEqual(result.total, 18, "save after Indomitable");
   assertEqual(await player.eval(id => game.messages.get(id).rolls[0].isSuccess, failed), true, "the save now passes");
+});
+
+// A natural 1 is fixed: with the lock off, cards that add to the roll can be played on it, but nothing rerolls it.
+test("natural 1s: nothing rerolls one, even with the lock setting off", async ({ gm, player }) => {
+  await setLockNaturals(gm, player, false);
+  await forceDice(player, [d20(1)]);
+  const save = await roll(player, "Aria", "save", { config: { target: 15 } });
+  const offered = await cardsOffered(player, save);
+  assert(offered.includes("Advantage"), `Advantage was not offered on a natural 1 save: ${offered.join(", ")}`);
+  for ( const card of ["Luck", "Indomitable"] ) assert(!offered.includes(card), `${card} was offered on a natural 1 save.`);
+
+  await startCombat(gm, 1);
+  await waitFor(player, () => !!game.combat?.combatants.size, null, "the combat to reach the player");
+  await forceDice(player, [d20(1)]);
+  const initiative = await roll(player, "Aria", "initiative");
+  assert(!(await cardsOffered(player, initiative)).includes("Relentless"), "Relentless was offered on a natural 1.");
 });
 
 // The natural 1s and 20s lock keeps Indomitable off a natural 1 too, with or without a DC.
