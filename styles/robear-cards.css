@@ -322,3 +322,81 @@
 .chat-message.robear-card-usage .activity-icon img {
   cursor: zoom-in;
 }
+
+/* -------------------------------------------- */
+/*  Bonus Rolls                                 */
+/* -------------------------------------------- */
+
+.robear-card-log .robear-card-log-icon {
+  flex: none;
+  width: 22px;
+  text-align: center;
+  color: var(--cc-open, #4fb3a8);
+}
+
+.chat-message .robear-bonus-used {
+  margin-top: 4px;
+  color: var(--cc-muted, #9a978f);
+  font-style: italic;
+}
+
+.chat-message .robear-bonus-used i {
+  margin-right: 6px;
+  color: #4fb3a8;
+}
+
+/* The roll chooser: one row per roll, teal on hover as in the card picker. */
+.robear-bonus-dialog .robear-bonus-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.robear-bonus-dialog .robear-bonus-choice {
+  justify-content: flex-start;
+  height: auto;
+  margin: 0;
+  padding: 8px 10px;
+  background: var(--cc-panel-grad);
+  border: 1px solid var(--cc-line-2);
+  border-radius: 0;
+  box-shadow: var(--cc-sheen);
+  color: var(--cc-text);
+  font-family: var(--cc-font-body);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.25s var(--cc-ease), box-shadow 0.25s var(--cc-ease);
+}
+
+.robear-bonus-dialog .robear-bonus-choice:hover,
+.robear-bonus-dialog .robear-bonus-choice:focus-visible {
+  border-color: var(--cc-open);
+  box-shadow: var(--cc-sheen), 0 0 0 1px var(--cc-open-soft), 0 4px 14px var(--cc-open-glow);
+  outline: none;
+}
+
+/* -------------------------------------------- */
+/*  Class Features on Rolls                     */
+/* -------------------------------------------- */
+
+/* Use Indomitable on a failed save: in teal, as an action the roll invites, where the card button is purple. */
+:is(.chat-message, .robear-request-popup) .robear-feature-button {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  border-color: #4fb3a8;
+}
+
+:is(.chat-message, .robear-request-popup) .robear-feature-button.icon {
+  display: inline-flex;
+  width: auto;
+  height: 24px;
+  min-height: 0;
+  margin: 0;
+  flex: none;
+  background: var(--cc-panel-2, #2a2e35);
+  border-radius: 0;
+  color: #4fb3a8;
+}

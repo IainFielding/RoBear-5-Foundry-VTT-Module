@@ -72,6 +72,35 @@ A few things to know:
 - Play a card on a damage roll **before** applying the damage — damage that's already been
   applied isn't changed.
 
+## Adding Another Feature's Die to a Roll
+
+Some features roll a die to change someone else's roll, like **Bardic Inspiration** or **Cutting
+Words**. Roll the die as usual, then right-click its message in chat and choose **Add to a roll…**
+or **Subtract from a roll…**. Pick the roll from the list, newest first, and the die's total is
+added or taken off. The roll updates its total and, where it can, whether it hits or saves. A
+roll request's card updates too.
+
+- The roll changed gets a note, such as "Bardic Inspiration: added 1d6 (4): 9 → 13", and the die's
+  own message says which roll it went to. A die can only be used once.
+- Any roll you can see can be chosen. If it isn't yours to change, such as a monster's roll for
+  Cutting Words, the GM's Foundry applies it, so a GM needs to be logged in.
+- Checks, saves, attacks and damage can't be used as the die.
+
+## Fighter's Indomitable
+
+A Fighter with the **Indomitable** feature from D&D 5e's compendiums can use it on a saving throw
+they failed. A **Use Indomitable** button appears on the failed save, and on its row of a roll
+request's card. It's also in the save's right-click menu. Using it spends one use of the feature
+and rerolls the d20, and the new roll stands. Under the 2024 rules the reroll also adds the
+Fighter's level; under the 2014 rules it doesn't. The save notes what happened, e.g.
+"Indomitable: rerolled the d20 (6 → 8) + 9 (Fighter level): 6 → 17".
+
+Indomitable, the feature or the RoBear-E card, is only offered once the player can see the save
+failed. On a roll request whose result the GM hasn't shown yet, it appears when the GM clicks
+**Show to players**, since offering it any sooner would tell the player they failed.
+
+This is the class feature. The RoBear-E **Indomitable** card is separate and works as before.
+
 ## Asking for Rolls (GM)
 
 As GM, click the **anchor** button in the chat controls, or **Request RoBear-E Rolls** in the

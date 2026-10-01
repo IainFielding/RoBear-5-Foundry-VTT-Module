@@ -54,6 +54,10 @@ the end of both consoles.
   rolls to the request card.
 - `tests-popup.mjs`: the roll request pop-ups for players and for the GM: who gets one, rolling from it,
   when it closes, and getting it back after a reload.
+- `tests-bonus.mjs`: adding another feature's die to a roll, or subtracting it, from the chat right-click menu,
+  including through the GM when the roll isn't yours.
+- `tests-features.mjs`: Fighter's Indomitable from dnd5e's compendiums under both sets of rules: rerolling a
+  failed save, the 2024 Fighter-level bonus, and when it is offered.
 - `tests-cards.mjs`: RoBear-E Cards on rolls already in chat, and from the sheet. This covers who can play
   them, and Inspiration, Luck, Advantage, Indomitable and Relentless, including when each is offered.
   It also covers spent uses, death saves, the card window's art, Advantage on the next roll, the "no cards

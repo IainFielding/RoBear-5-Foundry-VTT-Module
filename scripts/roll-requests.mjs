@@ -6,6 +6,7 @@
  */
 
 import { MODULE_ID, createCardButton, getCardOptions, renderLog } from "./robear-cards.mjs";
+import { createIndomitableButton } from "./class-features.mjs";
 import RollRequestConfig from "./roll-request-config.mjs";
 
 /**
@@ -184,10 +185,18 @@ function onGetSceneControlButtons(controls) {
 /* -------------------------------------------- */
 
 /**
- * Redraw the request card when one of its rolls is made, changed by a card, or deleted.
+ * Redraw the request card when one of its rolls is made, changed by a card, or deleted, and its rolls when its result
+ * is shown or hidden.
  * @param {ChatMessage5e} message
+ * @param {object} [changes]  For an update, what changed.
  */
-function refreshRequest(message) {
+function refreshRequest(message, changes) {
+  // Showing or hiding a request's result changes what its rolls offer, such as Indomitable on a failed save.
+  if ( changes?.flags?.[MODULE_ID] && ("revealed" in changes.flags[MODULE_ID]) ) {
+    for ( const roll of game.messages ) {
+      if ( roll.getFlag(MODULE_ID, "requestRoll")?.request === message.id ) ui.chat?.updateMessage(roll);
+    }
+  }
   const requestId = message.getFlag(MODULE_ID, "requestRoll")?.request;
   const request = game.messages.get(requestId);
   if ( request ) ui.chat?.updateMessage(request);
@@ -653,6 +662,8 @@ export function renderActorRow(message, request, uuid, results, { team=null, sid
 
   const latest = results.findLast(r => r);
   if ( latest && getCardOptions(latest.message).length ) slots.append(createCardButton(latest.message, { compact: true }));
+  const indomitable = latest ? createIndomitableButton(latest.message, { compact: true }) : null;
+  if ( indomitable ) slots.append(indomitable);
 
   if ( challenge ) {
     const { passed, success } = getChallengeState(results, request.successes);

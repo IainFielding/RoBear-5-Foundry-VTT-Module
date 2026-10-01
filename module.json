@@ -32,8 +32,11 @@
   "esmodules": [
     "scripts/robear-cards.mjs",
     "scripts/roll-requests.mjs",
-    "scripts/roll-request-popup.mjs"
+    "scripts/roll-request-popup.mjs",
+    "scripts/bonus-rolls.mjs",
+    "scripts/class-features.mjs"
   ],
+  "socket": true,
   "styles": [
     "styles/robear-cards.css",
     "styles/roll-requests.css"

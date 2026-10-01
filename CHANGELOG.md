@@ -25,6 +25,12 @@ All notable changes to RoBear-E.
     chooses how many), then rolls a d100 and must roll one of them. The Advantage and Luck
     cards can be played on the d100.
 
+- **Fighter's Indomitable on a failed save.** A Use Indomitable button on a failed saving throw
+  spends a use of the class feature and rerolls it, adding the Fighter level under the 2024 rules.
+- **Add another feature's die to a roll.** Right-click a die rolled by a feature such as Bardic
+  Inspiration or Cutting Words, and choose Add to a roll or Subtract from a roll. Its total goes onto
+  the roll you pick, which updates, with a note of what changed. The GM applies it to rolls that
+  aren't yours to change.
 - **Played cards appear on screen.** However a card is played, its art appears in the middle of
   everyone's screen for a moment. Chat keeps a short record: a card played on a roll is noted on
   the roll with a thumbnail, instead of posting a message that pushed the roll out of view, and a

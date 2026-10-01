@@ -6,7 +6,7 @@
  *   HEADED=1 npm run test:e2e         # watch the browsers
  *
  * Starts the harness's own Foundry on the configured port with the test world, joins as the GM and as a
- * player in two browsers, and runs tests.mjs, tests-cards.mjs and tests-popup.mjs.
+ * player in two browsers, and runs tests.mjs, tests-cards.mjs, tests-popup.mjs and tests-bonus.mjs.
  */
 
 import { GM_USER, MODULE_ID, PLAYER_USER, WORLD } from "./config.mjs";
@@ -17,6 +17,8 @@ import { enableModules, ensureWorld, resetFixtures } from "./lib/world.mjs";
 import "./tests.mjs";
 import "./tests-cards.mjs";
 import "./tests-popup.mjs";
+import "./tests-bonus.mjs";
+import "./tests-features.mjs";
 
 const filter = process.argv.slice(2).find(a => !a.startsWith("--"));
 
@@ -91,6 +93,8 @@ async function resetBetweenTests(gm, player) {
     await session.eval(async () => {
       if ( globalThis.__robearDice ) globalThis.__robearDice.length = 0;
       document.getElementById("robear-played-card")?.remove();
+      if ( ui.menu?.rendered ) await ui.menu.close();
+      ui.context?.close?.();
       for ( const app of foundry.applications.instances.values() ) {
         if ( app.rendered && (app.options.window?.frame !== false) && app.id !== "sidebar" && app.hasFrame ) await app.close();
       }

@@ -8,7 +8,7 @@
 
 import { MODULE_ID } from "./config.mjs";
 import {
-  assert, assertEqual, clickRoll, forceDice, playCard, postRequest, readCard, rollButton, test, unusedDice,
+  assert, assertEqual, cardsOnRow, clickRoll, forceDice, playCard, postRequest, readCard, rollButton, test, unusedDice,
   waitFor, waitForCard, waitForRoll
 } from "./lib/harness.mjs";
 
@@ -828,19 +828,31 @@ test("cards: Advantage on a failed check updates the request card", async (ctx) 
   assertEqual(row(card, "Aria").results[0].classes, ["success"], "Aria's result after Advantage");
 });
 
-test("cards: Indomitable is offered on a requested save that failed its DC, and not on one that passed", async (ctx) => {
-  const { player, ids } = ctx;
+test("cards: Indomitable is offered on a failed requested save once the GM shows the result, and never on a pass", async (ctx) => {
+  const { gm, player, ids } = ctx;
   const id = await postRequest(ctx, { mode: "standard", parts: [{ type: "save", key: "wis", dc: 15 }], actors: [ids.aria] });
   await forceDice(player, [d20(16)]);
   await clickRoll(player, id, "Aria", { fastForward: true });
   await waitForCard(player, id, c => row(c, "Aria").results.length, "the passed save");
+  // Advantage's second d20 is forced too, and waited for, so it cannot take a die meant for the next roll.
+  await forceDice(player, [d20(3)]);
   const offered = await playCard(player, id, "Aria", "Advantage");
   assert(!offered.includes("Indomitable"), `Indomitable was offered on a passed save: ${offered.join(", ")}`);
+  await waitFor(player, ({ id, moduleId }) => game.messages.find(m => m.getFlag(moduleId, "requestRoll")?.request === id)
+    ?.getFlag(moduleId, "log")?.length, { id, moduleId: MODULE_ID }, "Advantage to be recorded");
 
   const failed = await postRequest(ctx, { mode: "standard", parts: [{ type: "save", key: "wis", dc: 15 }], actors: [ids.aria] });
   await forceDice(player, [d20(6)]);
   await clickRoll(player, failed, "Aria", { fastForward: true });
   await waitForCard(player, failed, c => row(c, "Aria").results.length, "the failed save");
+
+  // Before the GM shows the result, offering Indomitable would tell the player they failed.
+  const notYet = await cardsOnRow(player, failed, "Aria");
+  assert(notYet.includes("Luck"), `The card chooser did not open: ${notYet.join(", ")}`);
+  assert(!notYet.includes("Indomitable"), `Indomitable was offered before the result was shown: ${notYet.join(", ")}`);
+
+  await gm.page.locator(`#chat .chat-log [data-message-id="${failed}"] .robear-request-reveal`).click();
+  await waitForCard(player, failed, c => c.summary, "the result to be shown");
   await forceDice(player, [d20(19)]);
   await playCard(player, failed, "Aria", "Indomitable");
   await waitForCard(player, failed, c => row(c, "Aria").results[0].text === "19", "Indomitable's reroll");

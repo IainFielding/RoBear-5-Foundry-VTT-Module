@@ -402,11 +402,9 @@ export function getCardOptions(message) {
         case "advantage":
           if ( kind === "divine" ? roll.options.robearAdvantage : (!d20 || roll.hasAdvantage) ) continue;
           break;
-        case "indomitable": {
-          const target = getRollTarget(message, roll);
-          if ( !d20 || (Number.isNumeric(target) && (roll.total >= target)) ) continue;
+        case "indomitable":
+          if ( !d20 || !isKnownFailure(message) ) continue;
           break;
-        }
         case "relentless":
           if ( !d20 || !findCombatant(message) || (game.combat.round > 1) ) continue;
           break;
@@ -420,13 +418,33 @@ export function getCardOptions(message) {
 /* -------------------------------------------- */
 
 /**
+ * Whether this user may treat a saving throw as failed, for a card or feature that rerolls a failed save. Offering one
+ * would tell them it failed, so it waits until they can see that: for a roll request's roll, until the GM shows the
+ * result; otherwise, whenever dnd5e shows them the roll's outcome. A save with no DC to judge it by is left to them.
+ * @param {ChatMessage5e} message
+ * @returns {boolean}
+ */
+export function isKnownFailure(message) {
+  const roll = message.rolls[0];
+  const target = getRollTarget(message, roll);
+  if ( !Number.isNumeric(target) ) return true;
+  if ( roll.total >= target ) return false;
+  if ( game.user.isGM ) return true;
+  const request = message.getFlag(MODULE_ID, "requestRoll")?.request;
+  if ( request ) return !!game.messages.get(request)?.getFlag(MODULE_ID, "revealed");
+  return message.shouldDisplayChallenge ?? true;
+}
+
+/* -------------------------------------------- */
+
+/**
  * The DC a roll is made against. A roll made for a roll request may not carry its DC, so dnd5e does not show the
  * result early, in which case it is read from the request.
  * @param {ChatMessage5e} message
  * @param {D20Roll} roll
  * @returns {number|null}
  */
-function getRollTarget(message, roll) {
+export function getRollTarget(message, roll) {
   if ( Number.isNumeric(roll.options.target) ) return roll.options.target;
   const { request, part } = message.getFlag(MODULE_ID, "requestRoll") ?? {};
   return game.messages.get(request)?.getFlag(MODULE_ID, "request")?.parts[part]?.dc ?? null;
@@ -438,7 +456,7 @@ function getRollTarget(message, roll) {
  * @param {ChatMessage5e} message  An initiative roll message.
  * @returns {Combatant|void}
  */
-function findCombatant(message) {
+export function findCombatant(message) {
   const { actor, token } = message.speaker;
   return game.combat?.combatants.find(c => token ? c.tokenId === token : c.actorId === actor);
 }
@@ -486,23 +504,32 @@ export function renderLog(message) {
   return (message.getFlag(MODULE_ID, "log") ?? []).map(entry => {
     const p = document.createElement("p");
     p.className = "supplement robear-card-log";
-    // The card's thumbnail says it was a RoBear-E Card, so only older, text-only notes need the label.
-    if ( !entry?.img ) {
+    // Notes written before 1.1.0 are plain text, so they need a label to say where they came from.
+    if ( typeof entry === "string" ) {
       const strong = document.createElement("strong");
       strong.textContent = "RoBear-E:";
       p.append(strong, " ", entry);
       return p;
     }
-    const art = document.createElement("img");
-    art.className = "robear-card-log-art";
-    art.src = entry.img;
-    art.alt = entry.card;
-    art.dataset.tooltipHtml = `<img src="${entry.img}" alt="${foundry.utils.escapeHTML(entry.card)}">`;
-    art.dataset.tooltipClass = "robear-card-tooltip";
-    art.dataset.tooltipDirection = "UP";
+    // A card's note leads with a thumbnail of the card; a bonus roll's, with an icon.
+    if ( entry.img ) {
+      const art = document.createElement("img");
+      art.className = "robear-card-log-art";
+      art.src = entry.img;
+      art.alt = entry.card;
+      art.dataset.tooltipHtml = `<img src="${entry.img}" alt="${foundry.utils.escapeHTML(entry.card)}">`;
+      art.dataset.tooltipClass = "robear-card-tooltip";
+      art.dataset.tooltipDirection = "UP";
+      p.append(art);
+    } else if ( entry.icon ) {
+      const icon = document.createElement("i");
+      icon.className = `${entry.icon} robear-card-log-icon`;
+      icon.inert = true;
+      p.append(icon);
+    }
     const text = document.createElement("span");
     text.textContent = entry.text;
-    p.append(art, text);
+    p.append(text);
     return p;
   });
 }
@@ -684,7 +711,7 @@ async function applyCard(message, { key, activity, label }) {
  * Recompute a roll's formula and total after its terms were changed.
  * @param {Roll} roll
  */
-function finalize(roll) {
+export function finalize(roll) {
   roll.resetFormula();
   roll._total = roll._evaluateTotal();
 }
@@ -746,7 +773,7 @@ function getLiveResults(roll) {
  * @param {ChatMessage5e} message
  * @returns {Promise<[number[], number[]]>}  The old and new results.
  */
-async function rerollD20(roll, message) {
+export async function rerollD20(roll, message) {
   const live = getLiveResults(roll);
   const [values] = await rollFresh([{ number: live.length, faces: 20 }], message);
   for ( const r of live ) {

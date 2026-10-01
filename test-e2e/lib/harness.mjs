@@ -276,6 +276,28 @@ export function waitForRoll(session, id, uuid, part = 0) {
 }
 
 /**
+ * Open the RoBear-E Card chooser from the card button beside an actor's result, list what it offers, and cancel.
+ * @param {import("./session.mjs").Session} session
+ * @param {string} id
+ * @param {string} name  The actor's name.
+ * @returns {Promise<string[]>}  Every card offered.
+ */
+export async function cardsOnRow(session, id, name) {
+  const button = session.page.locator(`#chat .chat-log [data-message-id="${id}"] `
+    + `li.robear-request-actor:has(.robear-request-name:text-is("${name}")) .robear-card-button`);
+  assertEqual(await button.count(), 1, `card buttons for ${name}`);
+  await button.click();
+  const dialog = session.page.locator(".robear-card-dialog.application").last();
+  await dialog.locator(".robear-card-choice").first().waitFor({ timeout: 10_000 });
+  const offered = (await dialog.locator(".robear-card-choice span").allTextContents()).map(t => t.trim());
+  await dialog.locator('button[data-action="cancel"]').click();
+  await dialog.waitFor({ state: "detached", timeout: 5000 }).catch(() => {});
+  return offered;
+}
+
+/* -------------------------------------------- */
+
+/**
  * Open the RoBear-E Card chooser from the card button beside an actor's result, and play a card.
  * @param {import("./session.mjs").Session} session
  * @param {string} id
