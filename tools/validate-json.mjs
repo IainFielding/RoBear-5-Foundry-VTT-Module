@@ -33,7 +33,8 @@ if ( manifest ) {
   const paths = [
     ...(manifest.esmodules ?? []),
     ...(manifest.styles ?? []).map(s => (typeof s === "string" ? s : s.src)),
-    ...(manifest.packs ?? []).map(p => p.path),
+    // Packs are built from their YAML source at release, so it's the source that must exist.
+    ...(manifest.packs ?? []).map(p => `src/packs/${p.name}`),
     ...(manifest.languages ?? []).map(l => l.path)
   ];
   for ( const rel of paths ) {

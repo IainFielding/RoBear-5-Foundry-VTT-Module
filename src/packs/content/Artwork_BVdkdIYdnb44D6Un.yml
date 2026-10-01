@@ -1,0 +1,524 @@
+name: Artwork
+_id: BVdkdIYdnb44D6Un
+pages:
+  - sort: 475000
+    name: Advantage
+    type: image
+    _id: kUmJLCna5paHGXPb
+    system: {}
+    title:
+      show: true
+      level: 2
+    image:
+      caption: >-
+        Player's next attack roll, ability check, or saving throw can be rolled
+        with advantage
+    text:
+      format: 1
+    video:
+      controls: true
+      volume: 0.5
+    src: modules/sogrom-robear-e/assets/images/advantagedc20.webp
+    category: null
+    ownership:
+      default: -1
+      aIghMfAvO7zq37fB: 3
+    flags: {}
+    _stats:
+      compendiumSource: null
+      duplicateSource: null
+      exportSource: null
+      coreVersion: '13.344'
+      systemId: dnd5e
+      systemVersion: 5.0.3
+      createdTime: 1748779485784
+      modifiedTime: 1748780594545
+      lastModifiedBy: aIghMfAvO7zq37fB
+    _key: '!journal.pages!BVdkdIYdnb44D6Un.kUmJLCna5paHGXPb'
+  - sort: 275000
+    name: Charger
+    type: image
+    system: {}
+    title:
+      show: true
+      level: 2
+    image:
+      caption: A player can double their movement speed for one turn.
+    text:
+      format: 1
+    video:
+      controls: true
+      volume: 0.5
+    src: modules/sogrom-robear-e/assets/images/chargerdc20.webp
+    category: null
+    ownership:
+      default: -1
+      aIghMfAvO7zq37fB: 3
+    flags: {}
+    _stats:
+      compendiumSource: null
+      duplicateSource: Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.kUmJLCna5paHGXPb
+      exportSource: null
+      coreVersion: '13.344'
+      systemId: dnd5e
+      systemVersion: 5.0.3
+      createdTime: 1748779520407
+      modifiedTime: 1748780521558
+      lastModifiedBy: aIghMfAvO7zq37fB
+    _id: 1olSJkroTSqTWdey
+    _key: '!journal.pages!BVdkdIYdnb44D6Un.1olSJkroTSqTWdey'
+  - sort: 225000
+    name: Relentless
+    type: image
+    _id: 3UmjWskjiAhYvXmo
+    system: {}
+    title:
+      show: true
+      level: 2
+    image:
+      caption: >-
+        The player may reroll their inititive at the start of combat, they must
+        use the new roll
+    text:
+      format: 1
+    video:
+      controls: true
+      volume: 0.5
+    src: modules/sogrom-robear-e/assets/images/relentlessdc20.webp
+    category: null
+    ownership:
+      default: -1
+      aIghMfAvO7zq37fB: 3
+    flags: {}
+    _stats:
+      compendiumSource: null
+      duplicateSource: null
+      exportSource: null
+      coreVersion: '13.344'
+      systemId: dnd5e
+      systemVersion: 5.0.3
+      createdTime: 1748779772411
+      modifiedTime: 1748780527815
+      lastModifiedBy: aIghMfAvO7zq37fB
+    _key: '!journal.pages!BVdkdIYdnb44D6Un.3UmjWskjiAhYvXmo'
+  - sort: 200000
+    name: Cards
+    type: text
+    _id: TKduCleiAuAiBrvi
+    system: {}
+    title:
+      show: true
+      level: 1
+    image: {}
+    text:
+      format: 1
+      content: >-
+        <ul><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.3UmjWskjiAhYvXmo]{Relentless}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.Lhs0clYrsIkgrpsE]{Reaction
+        Surge}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.vT9f82NznQJpiQFP]{Indomitable}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.TTBtpUOLQvWTpd47]{Extra
+        Strike}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.1olSJkroTSqTWdey]{Charger}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.kUmJLCna5paHGXPb]{Advantage}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.LiLYG9ekrRw3bQph]{Luck}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.LiLYG9ekrRw3bQph]{Luck}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.gFZbWI3XhrnvwFxk]{Mind's
+        Eye}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.gFZbWI3XhrnvwFxk]{Mind's
+        Eye}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.DTI3JvisO4gEuo8j]{Inspiration
+        -
+        1d6}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.5xzTWpbOHtp9sFos]{Inspiration
+        -
+        1d8}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.SMKq7WxgtybcFQv7]{Inspiration
+        -
+        1d10}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.1dKe60pvTreDPlyu]{Divine
+        Intervention}</p></li></ul>
+    video:
+      controls: true
+      volume: 0.5
+    src: null
+    category: null
+    ownership:
+      default: -1
+      aIghMfAvO7zq37fB: 3
+    flags: {}
+    _stats:
+      compendiumSource: null
+      duplicateSource: null
+      exportSource: null
+      coreVersion: '13.346'
+      systemId: dnd5e
+      systemVersion: 5.0.3
+      createdTime: 1748780424808
+      modifiedTime: 1751576558992
+      lastModifiedBy: aIghMfAvO7zq37fB
+    _key: '!journal.pages!BVdkdIYdnb44D6Un.TKduCleiAuAiBrvi'
+  - sort: 237500
+    name: Reaction Surge
+    type: image
+    _id: Lhs0clYrsIkgrpsE
+    system: {}
+    title:
+      show: true
+      level: 2
+    image:
+      caption: A player may take a second reaction during a single round of combat.
+    text:
+      format: 1
+    video:
+      controls: true
+      volume: 0.5
+    src: modules/sogrom-robear-e/assets/images/reactionsurge.webp
+    category: null
+    ownership:
+      default: -1
+      aIghMfAvO7zq37fB: 3
+    flags: {}
+    _stats:
+      compendiumSource: null
+      duplicateSource: null
+      exportSource: null
+      coreVersion: '13.344'
+      systemId: dnd5e
+      systemVersion: 5.0.3
+      createdTime: 1748780475148
+      modifiedTime: 1748780529987
+      lastModifiedBy: aIghMfAvO7zq37fB
+    _key: '!journal.pages!BVdkdIYdnb44D6Un.Lhs0clYrsIkgrpsE'
+  - sort: 256250
+    name: Indomitable
+    type: image
+    _id: vT9f82NznQJpiQFP
+    system: {}
+    title:
+      show: true
+      level: 2
+    image:
+      caption: >-
+        A player can reroll a failed saving throw, they must use the new roll.
+        It can't be used against natural is.
+    text:
+      format: 1
+    video:
+      controls: true
+      volume: 0.5
+    src: modules/sogrom-robear-e/assets/images/indomitabledc20.webp
+    category: null
+    ownership:
+      default: -1
+      aIghMfAvO7zq37fB: 3
+    flags: {}
+    _stats:
+      compendiumSource: null
+      duplicateSource: null
+      exportSource: null
+      coreVersion: '13.344'
+      systemId: dnd5e
+      systemVersion: 5.0.3
+      createdTime: 1748780540385
+      modifiedTime: 1748780596069
+      lastModifiedBy: aIghMfAvO7zq37fB
+    _key: '!journal.pages!BVdkdIYdnb44D6Un.vT9f82NznQJpiQFP'
+  - sort: 265625
+    name: Extra Strike
+    type: image
+    _id: TTBtpUOLQvWTpd47
+    system: {}
+    title:
+      show: true
+      level: 2
+    image:
+      caption: Player may take one additional melee, ranged, or cantrip strike.
+    text:
+      format: 1
+    video:
+      controls: true
+      volume: 0.5
+    src: modules/sogrom-robear-e/assets/images/extrastrikedc20.webp
+    category: null
+    ownership:
+      default: -1
+      aIghMfAvO7zq37fB: 3
+    flags: {}
+    _stats:
+      compendiumSource: null
+      duplicateSource: null
+      exportSource: null
+      coreVersion: '13.344'
+      systemId: dnd5e
+      systemVersion: 5.0.3
+      createdTime: 1748780608848
+      modifiedTime: 1748780643137
+      lastModifiedBy: aIghMfAvO7zq37fB
+    _key: '!journal.pages!BVdkdIYdnb44D6Un.TTBtpUOLQvWTpd47'
+  - sort: 575000
+    name: Luck
+    type: image
+    _id: LiLYG9ekrRw3bQph
+    system: {}
+    title:
+      show: true
+      level: 2
+    image:
+      caption: >-
+        A player can reroll anything except for a natural 1 or 20, they must use
+        the new roll.
+    text:
+      format: 1
+    video:
+      controls: true
+      volume: 0.5
+    src: modules/sogrom-robear-e/assets/images/luckdc20.webp
+    category: null
+    ownership:
+      default: -1
+      aIghMfAvO7zq37fB: 3
+    flags: {}
+    _stats:
+      compendiumSource: null
+      duplicateSource: null
+      exportSource: null
+      coreVersion: '13.344'
+      systemId: dnd5e
+      systemVersion: 5.0.3
+      createdTime: 1748780658484
+      modifiedTime: 1748780678182
+      lastModifiedBy: aIghMfAvO7zq37fB
+    _key: '!journal.pages!BVdkdIYdnb44D6Un.LiLYG9ekrRw3bQph'
+  - sort: 675000
+    name: Mind's Eye
+    type: image
+    _id: gFZbWI3XhrnvwFxk
+    system: {}
+    title:
+      show: true
+      level: 2
+    image:
+      caption: >-
+        Player must describe a flashback or dream sequence of an impactful event
+        in their character's life
+    text:
+      format: 1
+    video:
+      controls: true
+      volume: 0.5
+    src: modules/sogrom-robear-e/assets/images/mindseye.webp
+    category: null
+    ownership:
+      default: -1
+      aIghMfAvO7zq37fB: 3
+    flags: {}
+    _stats:
+      compendiumSource: null
+      duplicateSource: null
+      exportSource: null
+      coreVersion: '13.344'
+      systemId: dnd5e
+      systemVersion: 5.0.3
+      createdTime: 1748780701107
+      modifiedTime: 1748780735034
+      lastModifiedBy: aIghMfAvO7zq37fB
+    _key: '!journal.pages!BVdkdIYdnb44D6Un.gFZbWI3XhrnvwFxk'
+  - sort: 775000
+    name: Inspiration - 1d6
+    type: image
+    _id: DTI3JvisO4gEuo8j
+    system: {}
+    title:
+      show: true
+      level: 2
+    image:
+      caption: Grant one character a 1d6 inspiration die.
+    text:
+      format: 1
+    video:
+      controls: true
+      volume: 0.5
+    src: modules/sogrom-robear-e/assets/images/inspiration-1d6-dc20.webp
+    category: null
+    ownership:
+      default: -1
+      aIghMfAvO7zq37fB: 3
+    flags: {}
+    _stats:
+      compendiumSource: null
+      duplicateSource: null
+      exportSource: null
+      coreVersion: '13.344'
+      systemId: dnd5e
+      systemVersion: 5.0.3
+      createdTime: 1748780762300
+      modifiedTime: 1748780871210
+      lastModifiedBy: aIghMfAvO7zq37fB
+    _key: '!journal.pages!BVdkdIYdnb44D6Un.DTI3JvisO4gEuo8j'
+  - sort: 875000
+    name: Inspiration - 1d8
+    type: image
+    _id: 5xzTWpbOHtp9sFos
+    system: {}
+    title:
+      show: true
+      level: 2
+    image:
+      caption: Grant one character a 1d8 inspiration die.
+    text:
+      format: 1
+    video:
+      controls: true
+      volume: 0.5
+    src: modules/sogrom-robear-e/assets/images/inspiration-1d8-dc20.webp
+    category: null
+    ownership:
+      default: -1
+      aIghMfAvO7zq37fB: 3
+    flags: {}
+    _stats:
+      compendiumSource: null
+      duplicateSource: null
+      exportSource: null
+      coreVersion: '13.344'
+      systemId: dnd5e
+      systemVersion: 5.0.3
+      createdTime: 1748780892257
+      modifiedTime: 1748780908810
+      lastModifiedBy: aIghMfAvO7zq37fB
+    _key: '!journal.pages!BVdkdIYdnb44D6Un.5xzTWpbOHtp9sFos'
+  - sort: 975000
+    name: Inspiration - 1d10
+    type: image
+    _id: SMKq7WxgtybcFQv7
+    system: {}
+    title:
+      show: true
+      level: 2
+    image:
+      caption: Grant one character a 1d10 inspiration die.
+    text:
+      format: 1
+    video:
+      controls: true
+      volume: 0.5
+    src: modules/sogrom-robear-e/assets/images/inspiration-1d10-dc20.webp
+    category: null
+    ownership:
+      default: -1
+      aIghMfAvO7zq37fB: 3
+    flags: {}
+    _stats:
+      compendiumSource: null
+      duplicateSource: null
+      exportSource: null
+      coreVersion: '13.344'
+      systemId: dnd5e
+      systemVersion: 5.0.3
+      createdTime: 1748780921172
+      modifiedTime: 1748780937701
+      lastModifiedBy: aIghMfAvO7zq37fB
+    _key: '!journal.pages!BVdkdIYdnb44D6Un.SMKq7WxgtybcFQv7'
+  - sort: 1075000
+    name: Divine Intervention
+    type: image
+    _id: 1dKe60pvTreDPlyu
+    system: {}
+    title:
+      show: true
+      level: 2
+    image:
+      caption: A player can attempt to call on a deity to aid them.
+    text:
+      format: 1
+    video:
+      controls: true
+      volume: 0.5
+    src: modules/sogrom-robear-e/assets/images/divineintervention.webp
+    category: null
+    ownership:
+      default: -1
+      aIghMfAvO7zq37fB: 3
+    flags: {}
+    _stats:
+      compendiumSource: null
+      duplicateSource: null
+      exportSource: null
+      coreVersion: '13.344'
+      systemId: dnd5e
+      systemVersion: 5.0.3
+      createdTime: 1748780952353
+      modifiedTime: 1748781009857
+      lastModifiedBy: aIghMfAvO7zq37fB
+    _key: '!journal.pages!BVdkdIYdnb44D6Un.1dKe60pvTreDPlyu'
+  - sort: 1175000
+    name: Campaigns
+    type: text
+    _id: cwUj2iZGd4TDUwQ0
+    system: {}
+    title:
+      show: true
+      level: 1
+    image: {}
+    text:
+      format: 1
+    video:
+      controls: true
+      volume: 0.5
+    src: null
+    category: null
+    ownership:
+      default: -1
+      aIghMfAvO7zq37fB: 3
+    flags: {}
+    _stats:
+      compendiumSource: null
+      duplicateSource: null
+      exportSource: null
+      coreVersion: '13.346'
+      systemId: dnd5e
+      systemVersion: 5.0.4
+      createdTime: 1751576451140
+      modifiedTime: 1751576451140
+      lastModifiedBy: aIghMfAvO7zq37fB
+    _key: '!journal.pages!BVdkdIYdnb44D6Un.cwUj2iZGd4TDUwQ0'
+  - sort: 1275000
+    name: Vecna - Eve of Ruin
+    type: image
+    _id: 899fbozg59zsI0i6
+    system: {}
+    title:
+      show: true
+      level: 2
+    image:
+      caption: ''
+    text:
+      format: 1
+    video:
+      controls: true
+      volume: 0.5
+    src: modules/sogrom-robear-e/assets/artwork/vecna_party_upscale.webp
+    category: null
+    ownership:
+      default: -1
+      aIghMfAvO7zq37fB: 3
+    flags: {}
+    _stats:
+      compendiumSource: null
+      duplicateSource: null
+      exportSource: null
+      coreVersion: '13.346'
+      systemId: dnd5e
+      systemVersion: 5.0.4
+      createdTime: 1751576471435
+      modifiedTime: 1751576535773
+      lastModifiedBy: aIghMfAvO7zq37fB
+    _key: '!journal.pages!BVdkdIYdnb44D6Un.899fbozg59zsI0i6'
+folder: null
+categories: []
+sort: 0
+ownership:
+  default: 0
+  aIghMfAvO7zq37fB: 3
+flags:
+  core:
+    sheetClass: dnd-monster-manual.MMJournalSheet
+_stats:
+  compendiumSource: null
+  duplicateSource: null
+  exportSource: null
+  coreVersion: '13.345'
+  systemId: dnd5e
+  systemVersion: 5.0.3
+  createdTime: 1748779479368
+  modifiedTime: 1749601726985
+  lastModifiedBy: aIghMfAvO7zq37fB
+_key: '!journal!BVdkdIYdnb44D6Un'

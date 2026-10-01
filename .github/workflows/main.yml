@@ -112,6 +112,21 @@ jobs:
         run: jq empty module.json
 
 
+      # The compendium packs are committed as YAML in src/packs/, and built into the LevelDB
+      # databases Foundry reads here, so the archive's packs/ matches the commit being released.
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Compendium Packs
+        run: npm run build:packs
+
+
       # Create a "module.zip" archive containing all the module's required files.
       # If you have other directories or files that will need to be added to
       # your packaged module, add them here.

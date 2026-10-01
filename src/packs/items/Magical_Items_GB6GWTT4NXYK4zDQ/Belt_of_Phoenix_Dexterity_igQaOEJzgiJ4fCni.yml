@@ -1,0 +1,83 @@
+folder: GB6GWTT4NXYK4zDQ
+name: Belt of Phoenix Dexterity
+type: equipment
+img: icons/equipment/waist/sash-cloth-gold-pink.webp
+system:
+  activities: {}
+  uses:
+    spent: 0
+    recovery: []
+    max: ''
+  description:
+    value: >-
+      <p><em>Wondrous Item, Rarity Varies (Requires Attunement)</em></p><p>While
+      wearing this belt, your Dexterity changes to a score granted by the belt.
+      The type of phoenix determines the score (see the table below). The item
+      has no effect on you if your Dexterity without the belt is equal to or
+      greater than the belt’s
+      score.</p><table><thead><tr><td>Belt</td><td>Dex.</td><td>Rarity</td></tr></thead><tbody><tr><td><em>Belt
+      of Phoenix Dexterity</em>
+      (@UUID[Compendium.sogrom-robear-e.items.Item.Hx713Y5wUnBJ1SMu]{hill})</td><td>21</td><td>Rare</td></tr><tr><td><em>Belt
+      of Phoenix Dexterity</em>
+      (@UUID[Compendium.sogrom-robear-e.items.Item.IOAZ5DcLI4QHa640]{frost} or
+      @UUID[Compendium.sogrom-robear-e.items.Item.VKRX3Yh2Eafbgx6i]{stone})</td><td>23</td><td>Very
+      Rare</td></tr><tr><td><em>Belt of Phoenix Dexterity</em>
+      (@UUID[Compendium.sogrom-robear-e.items.Item.DgvvrpSPOsV6cGvV]{fire})</td><td>25</td><td>Very
+      Rare</td></tr><tr><td><em>Belt of Phoenix Dexterity</em>
+      (@UUID[Compendium.sogrom-robear-e.items.Item.aZyiNxkKi0v8m8ih]{cloud})</td><td>27</td><td>Legendary</td></tr><tr><td><em>Belt
+      of Phoenix Dexterity</em>
+      (@UUID[Compendium.sogrom-robear-e.items.Item.uhk0yCUz3ifyNGlu]{storm})</td><td>29</td><td>Legendary</td></tr></tbody></table>
+    chat: ''
+  identifier: belt-of-phoenix-dexterity
+  source:
+    revision: 1
+    rules: '2024'
+    book: ''
+    page: ''
+    custom: RoBear - E
+    license: ''
+  identified: true
+  unidentified:
+    description: ''
+  container: null
+  quantity: 1
+  weight:
+    value: 0
+    units: lb
+  price:
+    value: 0
+    denomination: gp
+  rarity: ''
+  attunement: ''
+  attuned: false
+  equipped: false
+  cover: null
+  crewed: false
+  type:
+    value: ''
+    baseItem: ''
+  armor:
+    value: null
+    magicalBonus: null
+    dex: null
+  properties: []
+  strength: null
+  proficient: null
+effects: []
+flags: {}
+_stats:
+  compendiumSource: null
+  duplicateSource: null
+  exportSource: null
+  coreVersion: '13.345'
+  systemId: dnd5e
+  systemVersion: 5.0.3
+  createdTime: 1750025520942
+  modifiedTime: 1750025642878
+  lastModifiedBy: aIghMfAvO7zq37fB
+_id: igQaOEJzgiJ4fCni
+sort: 200000
+ownership:
+  default: 0
+  aIghMfAvO7zq37fB: 3
+_key: '!items!igQaOEJzgiJ4fCni'

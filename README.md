@@ -58,7 +58,7 @@ so the roll stays where it is in chat.
 | **Luck** | Rerolls the dice and you must use the new result: the d20 (both d20s with advantage or disadvantage), or all the damage dice. Can't be played on a natural 1 or 20. |
 | **Advantage** | Rolls a second d20 and keeps the higher. On a roll with disadvantage, the two cancel out and the roll becomes a straight roll. |
 | **Indomitable** | Rerolls a failed saving throw, and you must use the new result. |
-| **Relentless** | Rerolls initiative at the start of combat, and updates the combat tracker. |
+| **Relentless** | Rerolls initiative at the start of combat and keeps the higher total, and updates the combat tracker. |
 
 Charger, Reaction Surge, Extra Strike, Mind's Eye and Divine Intervention are played from the
 sheet. Divine Intervention's chat card has a button to roll its 1d100.
@@ -66,8 +66,7 @@ sheet. Divine Intervention's chat card has a button to roll its 1d100.
 A few things to know:
 
 - **Natural 1s and 20s lock the cards.** By default no card can be played on a roll whose d20 shows a
-  natural 1 or 20, except **Indomitable**: it only ever rerolls a failed save, so it can still be
-  played on a failed natural 1. The GM can turn the lock off in **Configure Settings → RoBear-E**; Luck
+  natural 1 or 20, Indomitable included. A natural 20 is ringed in gold in chat. The GM can turn the lock off in **Configure Settings → RoBear-E**; Luck
   still can't be played on a natural 1 or 20 either way. Rolls without a d20, such as damage, aren't
   affected.
 - Cards can only be played on your own rolls.
@@ -106,9 +105,9 @@ Indomitable, the feature or the RoBear-E card, is only offered once the player c
 failed. On a roll request whose result the GM hasn't shown yet, it appears when the GM clicks
 **Show to players**, since offering it any sooner would tell the player they failed.
 
-This is the class feature. The RoBear-E **Indomitable** card is separate and works as before, and like
-the feature it can be played on a failed natural 1 even with **Natural 1s and 20s lock RoBear-E
-Cards** on.
+This is the class feature. The RoBear-E **Indomitable** card is separate and works as before. Unlike
+the feature, the card can't be played on a natural 1 while **Natural 1s and 20s lock RoBear-E Cards**
+is on.
 
 ## Asking for Rolls (GM)
 

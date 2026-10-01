@@ -54,10 +54,12 @@ All notable changes to RoBear-E.
 ### Changed
 
 - **Natural 1s and 20s lock RoBear-E Cards.** A new setting, **on by default**, so existing worlds
-  change when they update: no card can be played on a roll whose d20 shows a natural 1 or 20. The
-  exception is Indomitable, which only ever rerolls a failed save, so it can still be played on a
-  failed natural 1. Turn the setting off to allow the other cards too; Luck still can't be played
-  on a natural 1 or 20.
+  change when they update: no card can be played on a roll whose d20 shows a natural 1 or 20,
+  Indomitable included. Turn the setting off to allow them; Luck still can't be played on a
+  natural 1 or 20.
+- **Natural 20s are ringed in gold.** A roll in chat whose d20 shows a natural 20, and its result
+  on a roll request card, gets a turning gold ring and glow, like the Character Creator's Level Up
+  button. Under reduced motion the ring holds still.
 - **The RoBear-E Card button has a new icon**, the anchor also used for roll requests.
 - **Corn Liquor uses Foundry's own jug icon.** The item and its effect now use an icon that ships
   with Foundry VTT, in place of the art added in 1.0.0, which is no longer included.
@@ -76,7 +78,8 @@ All notable changes to RoBear-E.
     the damage dice. It can't be played on a natural 1 or 20.
   - **Advantage** rolls a second d20 and keeps the higher, or cancels disadvantage.
   - **Indomitable** rerolls a failed saving throw.
-  - **Relentless** rerolls initiative at the start of combat and updates the combat tracker.
+  - **Relentless** rerolls initiative at the start of combat, keeps the higher total, and updates
+    the combat tracker.
 - **A card window.** Clicking the RoBear-E Cards feature on a character sheet opens a window showing
   the art of every card you still have, and clicking one plays it. Cards with no uses left aren't
   shown. Shift-click the feature for the standard D&D 5e list instead.

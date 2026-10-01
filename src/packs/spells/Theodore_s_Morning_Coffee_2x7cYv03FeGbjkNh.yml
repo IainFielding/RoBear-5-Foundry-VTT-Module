@@ -1,0 +1,172 @@
+name: Theodore's Morning Coffee
+type: spell
+_id: 2x7cYv03FeGbjkNh
+img: icons/containers/kitchenware/mug-stein-grey.webp
+system:
+  activities:
+    p6VKB4K6FHvV0sK2:
+      type: utility
+      _id: p6VKB4K6FHvV0sK2
+      sort: 0
+      activation:
+        type: action
+        override: false
+      consumption:
+        scaling:
+          allowed: false
+        spellSlot: true
+        targets: []
+      description:
+        chatFlavor: ''
+      duration:
+        units: inst
+        concentration: false
+        override: false
+      effects:
+        - _id: VXUFAlfdmBJev31p
+      range:
+        units: self
+        override: false
+      target:
+        template:
+          contiguous: false
+          units: ft
+        affects:
+          choice: false
+        override: false
+        prompt: true
+      uses:
+        spent: 0
+        recovery: []
+        max: ''
+      roll:
+        prompt: false
+        visible: false
+        name: ''
+        formula: ''
+      name: Pour Coffee
+      img: ''
+      appliedEffects:
+        - VXUFAlfdmBJev31p
+  uses:
+    spent: 0
+    recovery: []
+    max: ''
+  description:
+    value: >-
+      <p>Channeling the warmth and invigorating aroma of freshly brweed coffee,
+      you conjure a magically energizing beverage. The recipient experiences
+      heightened alertness, clarity and motivation as the comforting scent fills
+      their senses. Until the spell ends, the affected creature can add 1d4 to
+      their initiative rolls.</p><p><strong>Cantrip Upgrade. </strong>When you
+      reach 5th level, you can choose one additional creature within 10 feet of
+      you to recieve this benefit. At 11th level, you may choose two additional
+      creatures, and at 17th level you may choose three additional
+      creatures</p><div class="fvtt narrative"><p>"All things are possible, with
+      enough coffee" - Theodore the Orange</p></div>
+    chat: ''
+  identifier: new-item
+  source:
+    revision: 1
+    rules: '2024'
+  activation:
+    type: action
+    condition: ''
+  duration:
+    units: inst
+  level: 0
+  materials:
+    value: a pinch of ground coffee bens
+    consumed: false
+    cost: 0
+    supply: 0
+  preparation:
+    mode: prepared
+    prepared: false
+  properties:
+    - vocal
+    - somatic
+    - material
+    - concentration
+  range:
+    units: ft
+    special: ''
+    value: '10'
+  school: con
+  target:
+    template:
+      contiguous: false
+      units: ft
+      type: ''
+    affects:
+      choice: false
+      type: creature
+      count: ''
+      special: ''
+effects:
+  - name: Theodore's Morning Coffee
+    img: icons/containers/kitchenware/mug-stein-grey.webp
+    origin: Compendium.sogrom-robear-e.spells.Item.2x7cYv03FeGbjkNh
+    transfer: false
+    _id: VXUFAlfdmBJev31p
+    type: base
+    system:
+      changes:
+        - key: system.attributes.init.bonus
+          value: 1d4
+          priority: null
+          type: add
+    disabled: false
+    duration:
+      value: 3600
+      units: seconds
+      expiry: turnStart
+      expired: false
+    description: >-
+      <p>Channeling the warmth and invigorating aroma of freshly brewed coffee,
+      you conjure a magically energizing beverage. The recipient experiences
+      heightened alertness, clarity and motivation as the comforting scent fills
+      their senses. Until the spell ends, the affected creature can add 1d4 to
+      their initiative rolls.</p><p></p>
+    tint: '#ffffff'
+    statuses: []
+    sort: 0
+    flags:
+      dnd5e:
+        riders:
+          statuses: []
+    _stats:
+      compendiumSource: null
+      duplicateSource: null
+      exportSource: null
+      coreVersion: '14.368'
+      systemId: dnd5e
+      systemVersion: 5.0.4
+      createdTime: 1751575119256
+      modifiedTime: 1752446062118
+      lastModifiedBy: oPArLVzZie8E3hLP
+    start: null
+    showIcon: 1
+    folder: null
+    _key: '!items.effects!2x7cYv03FeGbjkNh.VXUFAlfdmBJev31p'
+folder: null
+sort: 0
+ownership:
+  default: 0
+  aIghMfAvO7zq37fB: 3
+flags:
+  dnd5e:
+    riders:
+      activity: []
+      effect: []
+_stats:
+  compendiumSource: null
+  duplicateSource: null
+  exportSource: null
+  coreVersion: '14.368'
+  systemId: dnd5e
+  systemVersion: 5.0.4
+  createdTime: 1751574866510
+  modifiedTime: 1751625069552
+  lastModifiedBy: aIghMfAvO7zq37fB
+_key: '!items!2x7cYv03FeGbjkNh'

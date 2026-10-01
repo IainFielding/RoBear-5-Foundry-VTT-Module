@@ -8,7 +8,7 @@
     "Settings": {
       "LockNaturals": {
         "Name": "Natural 1s and 20s lock RoBear-E Cards",
-        "Hint": "No RoBear-E Card can be played on a roll whose d20 shows a natural 1 or 20, except Indomitable on a failed save. Turn this off to allow them, though Luck still can't be played on a natural 1 or 20."
+        "Hint": "No RoBear-E Card can be played on a roll whose d20 shows a natural 1 or 20, Indomitable included. Turn this off to allow them, though Luck still can't be played on a natural 1 or 20."
       },
       "ShowPlayedCards": {
         "Name": "Show played cards on screen",
@@ -55,6 +55,7 @@
         "RerollDamage": "rerolled damage dice: {before} → {after}",
         "RerollD100": "rerolled the d100: {before} → {after}",
         "RerollD20": "rerolled {dice} ({old} → {new}): {before} → {after}",
+        "RerollKeepHigher": "rerolled {dice} ({old} → {new}): {before} or {rerolled}, keeping {after}",
         "TheD20": "the d20",
         "BothD20s": "both d20s",
         "DivineAdvantage": "rolled with advantage ({first} and {second}), keeping {total}",

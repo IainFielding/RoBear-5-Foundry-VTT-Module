@@ -423,8 +423,8 @@
 }
 
 :is(.chat-message, .robear-request-popup) .robear-request-result.critical {
+  /* Ringed in gold in robear-cards.css, as a natural 20 in chat is. */
   color: var(--cc-settled-bright);
-  box-shadow: 0 0 8px var(--cc-settled-glow);
 }
 
 :is(.chat-message, .robear-request-popup) .robear-request-result.fumble {

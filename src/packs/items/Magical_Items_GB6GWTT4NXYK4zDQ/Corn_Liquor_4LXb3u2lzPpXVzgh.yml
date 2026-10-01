@@ -1,0 +1,193 @@
+folder: GB6GWTT4NXYK4zDQ
+name: Corn Liquor
+type: consumable
+img: icons/consumables/drinks/water-jug-clay-brown.webp
+system:
+  activities:
+    EsryynCwgAbqXxXn:
+      type: utility
+      _id: EsryynCwgAbqXxXn
+      sort: 0
+      activation:
+        type: bonus
+        value: null
+        override: false
+        condition: ''
+      consumption:
+        scaling:
+          allowed: false
+        spellSlot: true
+        targets:
+          - type: itemUses
+            value: '1'
+            target: ''
+            scaling: {}
+      description:
+        chatFlavor: You take a swig straight from the bottle
+      duration:
+        units: inst
+        concentration: false
+        override: false
+      effects:
+        - _id: QVjMayPE5jYEGVRm
+      range:
+        override: false
+        units: self
+        special: ''
+      target:
+        template:
+          contiguous: false
+          units: ft
+          type: ''
+        affects:
+          choice: false
+          type: ''
+        override: false
+        prompt: false
+      uses:
+        spent: 0
+        recovery: []
+        max: ''
+      roll:
+        prompt: false
+        visible: false
+        name: ''
+        formula: ''
+      name: Drink
+  uses:
+    spent: 0
+    recovery: []
+    autoDestroy: true
+    max: '10'
+  description:
+    value: >-
+      <p>Corn Liquor has an acquired taste but no one can deny the power of this
+      potent alcoholic beverage.</p><p>As you drink the Corn Liquor you receive
+      the following bonuses:</p><ul><li><p>Ranged Spell Attack :
+      +1</p></li><li><p>Ranged Damage Bonus: +1</p></li><li><p>Spell DC bonus:
+      +1</p></li></ul><div class="fvtt narrative"><p>Have you tried some of this
+      <strong>Corn Liquor?</strong></p><p><cite>Nelson</cite></p></div>
+    chat: ''
+  identifier: corn-liquor
+  source:
+    revision: 1
+    rules: '2024'
+    book: RoBear-E
+    page: ''
+    custom: ''
+    license: ''
+  identified: true
+  unidentified:
+    description: ''
+  container: null
+  quantity: 1
+  weight:
+    value: 0.25
+    units: lb
+  price:
+    value: 400
+    denomination: gp
+  rarity: legendary
+  attunement: ''
+  attuned: false
+  equipped: false
+  type:
+    value: potion
+    subtype: ''
+  damage:
+    base:
+      number: null
+      denomination: null
+      types: []
+      custom:
+        enabled: false
+      scaling:
+        number: 1
+    replace: false
+  magicalBonus: null
+  properties:
+    - mgc
+  rarities:
+    - legendary
+effects:
+  - name: Corn Liquor
+    img: icons/consumables/drinks/water-jug-clay-brown.webp
+    origin: Compendium.sogrom-dms-toolkit.items.Item.YCEQsrEC2l1FwAC4
+    _id: QVjMayPE5jYEGVRm
+    type: base
+    system:
+      changes:
+        - key: system.bonuses.msak.attack
+          value: 1
+          priority: null
+          type: add
+          phase: initial
+          _id: edBoprVm7AJ9vqit
+          conditions: '{}'
+          replacement: ''
+        - key: system.bonuses.rsak.damage
+          value: 1
+          priority: null
+          type: add
+          phase: initial
+          _id: jeTYTGvstxf062FX
+          conditions: '{}'
+          replacement: ''
+        - key: system.bonuses.spell.dc
+          value: 1
+          priority: null
+          type: add
+          phase: initial
+          _id: r6AyUkmwFCps6AKF
+          conditions: '{}'
+          replacement: ''
+    disabled: false
+    duration:
+      value: 12
+      units: seconds
+      expiry: turnStart
+      expired: false
+    description: >-
+      <p>As you Drink the Corn Liquor you receive the following
+      bonuses:</p><ul><li><p>Ranged Spell Attack : +1</p></li><li><p>Ranged
+      Damage Bonus: +1</p></li><li><p>Spell DC bonus: +1</p></li></ul>
+    tint: '#ffffff'
+    transfer: false
+    statuses: []
+    sort: 0
+    flags: {}
+    _stats:
+      compendiumSource: null
+      duplicateSource: null
+      exportSource: null
+      coreVersion: '14.368'
+      systemId: dnd5e
+      systemVersion: 6.0.5
+      lastModifiedBy: kA3WMBmNO8WoBNb4
+      createdTime: 1790544613101
+      modifiedTime: 1790582872099
+    start: null
+    showIcon: 1
+    folder: null
+    _key: '!items.effects!4LXb3u2lzPpXVzgh.QVjMayPE5jYEGVRm'
+flags:
+  dnd5e:
+    riders:
+      activity: []
+      effect: []
+_stats:
+  compendiumSource: null
+  duplicateSource: null
+  exportSource: null
+  coreVersion: '14.368'
+  systemId: dnd5e
+  systemVersion: 6.0.5
+  createdTime: 1750025487222
+  modifiedTime: 1790582859035
+  lastModifiedBy: kA3WMBmNO8WoBNb4
+_id: 4LXb3u2lzPpXVzgh
+sort: 100000
+ownership:
+  default: 0
+  aIghMfAvO7zq37fB: 3
+_key: '!items!4LXb3u2lzPpXVzgh'
