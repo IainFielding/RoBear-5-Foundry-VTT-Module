@@ -4,14 +4,14 @@
 /*  Chat Card Button                            */
 /* -------------------------------------------- */
 
-.chat-message .robear-card-button {
+:is(.chat-message, .robear-request-popup) .robear-card-button {
   display: block;
   width: 100%;
   margin-top: 6px;
   border-color: #a428e6;
 }
 
-.chat-message .robear-card-button.icon {
+:is(.chat-message, .robear-request-popup) .robear-card-button.icon {
   display: inline-flex;
   width: auto;
   margin-top: 0;
@@ -28,7 +28,10 @@
 /*  windowed mode. Teal asks, brass is chosen.  */
 /* -------------------------------------------- */
 
-.robear-card-dialog {
+.robear-card-dialog,
+.chat-message .robear-request,
+.chat-message .robear-card-log,
+.robear-played-card {
   --cc-settled:        #c9a227;
   --cc-settled-bright: #e3bf4b;
   --cc-settled-glow:   rgba(201, 162, 39, 0.30);
@@ -48,7 +51,11 @@
   --cc-ease:           cubic-bezier(0.32, 0.72, 0, 1);
   --cc-font-heading:   'Cinzel', 'Palatino Linotype', Georgia, serif;
   --cc-font-body:      'Spectral', 'Palatino Linotype', Georgia, serif;
+  --cc-fail:           #c96a5a;
+  --cc-fail-soft:      rgba(201, 106, 90, 0.16);
+}
 
+.robear-card-dialog {
   background: var(--cc-bg);
   border: 1px solid var(--cc-line-2);
   border-radius: 0;
@@ -189,4 +196,207 @@
   max-height: 70vh;
   object-fit: contain;
   border: none;
+}
+
+/* -------------------------------------------- */
+/*  Card Notes on Rolls                         */
+/* -------------------------------------------- */
+
+.robear-card-log {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* A thumbnail of the card played; hovering shows it full size. */
+.robear-card-log .robear-card-log-art {
+  flex: none;
+  width: 22px;
+  aspect-ratio: 240 / 365;
+  object-fit: cover;
+  border: 1px solid var(--cc-settled, #c9a227);
+  border-radius: 0;
+  cursor: zoom-in;
+}
+
+/* -------------------------------------------- */
+/*  Played Card, Shown on Screen                */
+/* -------------------------------------------- */
+
+/* The overlay lets clicks through to the table; only the card itself can be clicked, to dismiss it. */
+.robear-played-card {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  grid-template-rows: auto auto;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  pointer-events: none;
+  background: radial-gradient(40% 50% at 50% 50%, rgba(201, 162, 39, 0.10), transparent 70%);
+  animation: robear-played-fade 0.45s var(--cc-ease) both;
+}
+
+.robear-played-card > * {
+  pointer-events: auto;
+}
+
+.robear-played-card img {
+  width: min(260px, calc(55vh * 240 / 365));
+  aspect-ratio: 240 / 365;
+  object-fit: cover;
+  border: 1px solid var(--cc-settled);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.6),
+    0 0 28px var(--cc-settled-glow),
+    0 18px 48px rgba(0, 0, 0, 0.7),
+    0 0 90px var(--cc-open-glow);
+  cursor: pointer;
+  animation: robear-played-in 0.5s var(--cc-ease) both;
+}
+
+.robear-played-card-caption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 16px;
+  background: var(--cc-chrome-grad);
+  border: 1px solid var(--cc-line);
+  animation: robear-played-in 0.5s 0.08s var(--cc-ease) both;
+}
+
+.robear-played-card-by {
+  color: var(--cc-muted);
+  font-family: var(--cc-font-body);
+  font-style: italic;
+}
+
+.robear-played-card-name {
+  color: var(--cc-settled-bright);
+  font-family: var(--cc-font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.robear-played-card.leaving {
+  opacity: 0;
+  transition: opacity 0.4s var(--cc-ease);
+}
+
+.robear-played-card.leaving img,
+.robear-played-card.leaving .robear-played-card-caption {
+  transform: translateY(-10px) scale(0.97);
+  transition: transform 0.4s var(--cc-ease);
+}
+
+@keyframes robear-played-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes robear-played-in {
+  from { opacity: 0; transform: translateY(28px) scale(0.92) rotate(-2deg); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .robear-played-card img,
+  .robear-played-card-caption {
+    animation-name: robear-played-fade;
+  }
+  .robear-played-card.leaving img,
+  .robear-played-card.leaving .robear-played-card-caption {
+    transform: none;
+  }
+}
+
+/* A card played from the sheet: its record in chat stays short, as its art is shown on screen. */
+.chat-message.robear-card-usage .icon-row:has(.fa-tag) {
+  display: none;
+}
+
+.chat-message.robear-card-usage .activity-icon img {
+  cursor: zoom-in;
+}
+
+/* -------------------------------------------- */
+/*  Bonus Rolls                                 */
+/* -------------------------------------------- */
+
+.robear-card-log .robear-card-log-icon {
+  flex: none;
+  width: 22px;
+  text-align: center;
+  color: var(--cc-open, #4fb3a8);
+}
+
+.chat-message .robear-bonus-used {
+  margin-top: 4px;
+  color: var(--cc-muted, #9a978f);
+  font-style: italic;
+}
+
+.chat-message .robear-bonus-used i {
+  margin-right: 6px;
+  color: #4fb3a8;
+}
+
+/* The roll chooser: one row per roll, teal on hover as in the card picker. */
+.robear-bonus-dialog .robear-bonus-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.robear-bonus-dialog .robear-bonus-choice {
+  justify-content: flex-start;
+  height: auto;
+  margin: 0;
+  padding: 8px 10px;
+  background: var(--cc-panel-grad);
+  border: 1px solid var(--cc-line-2);
+  border-radius: 0;
+  box-shadow: var(--cc-sheen);
+  color: var(--cc-text);
+  font-family: var(--cc-font-body);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.25s var(--cc-ease), box-shadow 0.25s var(--cc-ease);
+}
+
+.robear-bonus-dialog .robear-bonus-choice:hover,
+.robear-bonus-dialog .robear-bonus-choice:focus-visible {
+  border-color: var(--cc-open);
+  box-shadow: var(--cc-sheen), 0 0 0 1px var(--cc-open-soft), 0 4px 14px var(--cc-open-glow);
+  outline: none;
+}
+
+/* -------------------------------------------- */
+/*  Class Features on Rolls                     */
+/* -------------------------------------------- */
+
+/* Use Indomitable on a failed save: in teal, as an action the roll invites, where the card button is purple. */
+:is(.chat-message, .robear-request-popup) .robear-feature-button {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  border-color: #4fb3a8;
+}
+
+:is(.chat-message, .robear-request-popup) .robear-feature-button.icon {
+  display: inline-flex;
+  width: auto;
+  height: 24px;
+  min-height: 0;
+  margin: 0;
+  flex: none;
+  background: var(--cc-panel-2, #2a2e35);
+  border-radius: 0;
+  color: #4fb3a8;
 }

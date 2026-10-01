@@ -2,15 +2,19 @@
   "name": "sogrom-robear-e",
   "private": true,
   "type": "module",
-  "description": "Dev tooling (lint + manifest validation) for the RoBear-E Foundry module. Not shipped in the module archive.",
+  "description": "Dev tooling (lint, manifest validation, unit and end-to-end tests) for the RoBear-E Foundry module. Not shipped in the module archive.",
   "scripts": {
-    "lint": "eslint scripts tools",
+    "lint": "eslint scripts tools test test-e2e",
     "validate:json": "node tools/validate-json.mjs",
-    "check": "npm run validate:json && npm run lint"
+    "test": "vitest run",
+    "test:e2e": "node test-e2e/run.mjs",
+    "check": "npm run validate:json && npm run lint && npm run test"
   },
   "devDependencies": {
     "@eslint/js": "^9.14.0",
     "eslint": "^9.14.0",
-    "globals": "^15.12.0"
+    "globals": "^15.12.0",
+    "playwright": "^1.63.0",
+    "vitest": "^5.0.3"
   }
 }

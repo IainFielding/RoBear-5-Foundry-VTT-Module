@@ -1,0 +1,145 @@
+<div class="robear-request-form">
+
+    {{!-- Mode --}}
+    <fieldset class="robear-request-modes">
+        <legend>{{localize "ROBEAR.Request.Config.KindOfRoll"}}</legend>
+        {{#each modes as |mode|}}
+        <label class="robear-request-mode">
+            <input type="radio" name="mode" value="{{mode.value}}" {{checked mode.checked}}>
+            <i class="{{mode.icon}}" inert></i>
+            <span class="robear-request-mode-label">{{mode.label}}</span>
+            <span class="robear-request-mode-hint">{{mode.hint}}</span>
+        </label>
+        {{/each}}
+    </fieldset>
+
+    {{!-- Rolls --}}
+    <fieldset class="robear-request-parts">
+        <legend>{{localize "ROBEAR.Request.Config.Rolls"}}</legend>
+        {{#each rows as |row|}}
+        <div class="form-group">
+            <label>{{row.label}}</label>
+            <div class="form-fields">
+                <select name="{{row.field}}.roll">
+                    {{#each @root.rollOptions as |group|}}
+                    <optgroup label="{{group.label}}">
+                        {{#each group.options as |option|}}
+                        <option value="{{option.value}}" {{#if (eq option.value row.roll)}}selected{{/if}}>{{option.label}}</option>
+                        {{/each}}
+                    </optgroup>
+                    {{/each}}
+                </select>
+                {{#if row.hasDC}}
+                <label class="robear-request-dc">
+                    {{localize "ROBEAR.Request.Config.DC"}} <input type="number" name="{{row.field}}.dc" value="{{row.dc}}" min="0" step="1" placeholder="—">
+                </label>
+                {{/if}}
+            </div>
+        </div>
+        {{/each}}
+        {{#if challenge}}
+        <div class="form-group">
+            <label>{{localize "ROBEAR.Request.Config.SuccessesNeeded"}}</label>
+            <div class="form-fields">
+                <select name="successes">
+                    {{#each successOptions as |option|}}
+                    <option value="{{option.value}}" {{#if (eq option.value @root.successes)}}selected{{/if}}>{{option.label}}</option>
+                    {{/each}}
+                </select>
+            </div>
+            <p class="hint">{{localize "ROBEAR.Request.Config.ChallengeHint"}}</p>
+        </div>
+        {{/if}}
+        {{#if contest}}
+        <p class="hint">{{localize "ROBEAR.Request.Config.ContestHint"}}</p>
+        {{/if}}
+        {{#if divine}}
+        <div class="form-group">
+            <label>{{localize "ROBEAR.Request.Config.NumbersToPick"}}</label>
+            <div class="form-fields">
+                <range-picker name="range" value="{{range}}" min="{{rangeLimits.min}}" max="{{rangeLimits.max}}" step="1"></range-picker>
+            </div>
+            <p class="hint">{{localize "ROBEAR.Request.Config.DivineHint"}}</p>
+        </div>
+        {{/if}}
+    </fieldset>
+
+    {{!-- Actors --}}
+    {{#if contest}}
+    <div class="robear-request-sides">
+        {{#each sides as |side|}}
+        {{#if side.side}}<div class="robear-request-versus" aria-hidden="true">{{localize "ROBEAR.Request.Versus"}}</div>{{/if}}
+        <fieldset class="robear-request-side">
+            <legend>
+                {{side.label}}
+                {{#unless side.single}}
+                <button type="button" class="robear-request-select-all" data-action="selectAll"
+                        data-tooltip aria-label="{{localize 'ROBEAR.Request.Config.SelectAll'}}">
+                    <i class="fa-solid fa-check-double" inert></i>
+                </button>
+                {{/unless}}
+            </legend>
+            <div class="robear-request-actor-list">
+                {{#each side.actors as |actor|}}
+                <label class="robear-request-actor-choice">
+                    {{#if side.single}}
+                    <input type="radio" name="rivals.{{side.side}}" value="{{actor.index}}" {{checked actor.checked}}>
+                    {{else}}
+                    <input type="checkbox" name="teams.{{side.side}}.{{actor.index}}" {{checked actor.checked}}>
+                    {{/if}}
+                    <img src="{{actor.img}}" alt="">
+                    <span>{{actor.name}}</span>
+                </label>
+                {{/each}}
+            </div>
+        </fieldset>
+        {{/each}}
+    </div>
+    {{else}}
+    <fieldset>
+        <legend>
+            {{localize "ROBEAR.Request.Config.WhoRolls"}}
+            <button type="button" class="robear-request-select-all" data-action="selectAll"
+                    data-tooltip aria-label="{{localize 'ROBEAR.Request.Config.SelectAll'}}">
+                <i class="fa-solid fa-check-double" inert></i>
+            </button>
+        </legend>
+        <div class="robear-request-actor-list">
+            {{#each actors as |actor|}}
+            <label class="robear-request-actor-choice">
+                <input type="checkbox" name="actors.{{actor.index}}" {{checked actor.checked}}>
+                <img src="{{actor.img}}" alt="">
+                <span>{{actor.name}}</span>
+            </label>
+            {{else}}
+            <p class="hint">{{localize "ROBEAR.Request.Config.NoActors"}}</p>
+            {{/each}}
+        </div>
+    </fieldset>
+    {{/if}}
+
+    {{!-- Options --}}
+    <fieldset>
+        <legend>{{localize "ROBEAR.Request.Config.Options"}}</legend>
+        {{#unless (or contest divine)}}
+        <div class="form-group">
+            <label>{{localize "ROBEAR.Request.Config.ShowDC"}}</label>
+            <div class="form-fields">
+                <input type="checkbox" name="showDC" {{checked showDC}}>
+            </div>
+            <p class="hint">{{localize "ROBEAR.Request.Config.ShowDCHint"}}</p>
+        </div>
+        {{/unless}}
+        <div class="form-group">
+            <label>{{localize "ROBEAR.Request.Config.Visibility"}}</label>
+            <div class="form-fields">
+                <select name="rollMode">
+                    <option value="public" {{#if (eq rollMode "public")}}selected{{/if}}>{{localize "ROBEAR.Request.Config.Public"}}</option>
+                    <option value="gm" {{#if (eq rollMode "gm")}}selected{{/if}}>{{localize "ROBEAR.Request.Config.Private"}}</option>
+                </select>
+            </div>
+            <p class="hint">{{localize "ROBEAR.Request.Config.PrivateHint"}}</p>
+        </div>
+    </fieldset>
+
+</div>

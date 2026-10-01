@@ -34,3 +34,8 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      # The unit tests run the module's rules in plain Node against stand-ins for Foundry. The end-to-end tests
+      # need a real Foundry install, so they are run locally (npm run test:e2e) rather than here.
+      - name: Unit Tests
+        run: npm test

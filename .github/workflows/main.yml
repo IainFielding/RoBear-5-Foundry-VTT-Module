@@ -130,6 +130,8 @@ jobs:
             LICENSE                              \
             scripts/                             \
             styles/                              \
+            templates/                           \
+            lang/                                \
             assets/                              \
             packs/                               \
             `# LevelDB lock files are runtime  ` \

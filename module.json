@@ -30,10 +30,23 @@
     }
   ],
   "esmodules": [
-    "scripts/robear-cards.mjs"
+    "scripts/robear-cards.mjs",
+    "scripts/roll-requests.mjs",
+    "scripts/roll-request-popup.mjs",
+    "scripts/bonus-rolls.mjs",
+    "scripts/class-features.mjs"
+  ],
+  "socket": true,
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
   ],
   "styles": [
-    "styles/robear-cards.css"
+    "styles/robear-cards.css",
+    "styles/roll-requests.css"
   ],
   "packs": [
     {
@@ -75,7 +88,7 @@
   "packFolders": [
     {
       "name": "RoBear-E",
-      "color": "#a428e6",
+      "color": "#392046",
       "sorting": "m",
       "packs": [
         "content",

@@ -2,6 +2,66 @@
 
 All notable changes to RoBear-E.
 
+## 2.0.0
+
+### New
+
+- **The GM can ask for rolls.** A new window, opened from the chat controls or the token
+  controls, posts a roll request to chat. Players roll from it with a **Roll** button for each
+  of their characters, and the request fills in as the rolls come in. RoBear-E Cards can be
+  played on these rolls, and the request updates when they are.
+  - **Standard Roll**: each actor rolls once against the DC, with a d20 by default, a d6, d8,
+    d10, d12 or d100, or any check, save or tool.
+  - **Skill Challenge**: three rolls in turn, each with its own roll and DC, needing a chosen
+    number of successes.
+  - **Team Challenge**: the party's rolls are averaged against the DC. A natural 1 removes the
+    highest roll from the pool, and a natural 20 removes the lowest.
+  - **Roll-Off**: one actor against another, each with its own roll: a d20 by default, a d6,
+    d8, d10, d12 or d100, or any check, save or tool. The higher total wins. An NPC's roll
+    stays private to the GM until the GM shows it.
+  - **Team vs Team**: the players against a team of NPCs. Each team is averaged like a Team
+    Challenge, and the higher average wins.
+  - **Divine Intervention**: each player picks a run of 1 to 50 numbers in a row (the GM
+    chooses how many), then rolls a d100 and must roll one of them. The Advantage and Luck
+    cards can be played on the d100.
+
+  A macro can post a request with `game.modules.get("sogrom-robear-e").api.createRequest()`.
+  Anything it leaves out is filled in as the window would, and a request that can't be rolled,
+  such as one naming a skill D&D 5e doesn't know, is refused with a message saying why.
+- **Fighter's Indomitable on a failed save.** A Use Indomitable button on a failed saving throw
+  spends a use of the class feature and rerolls it, adding the Fighter level under the 2024 rules.
+- **Add another feature's die to a roll.** Right-click a die rolled by a feature such as Bardic
+  Inspiration or Cutting Words, and choose Add to a roll or Subtract from a roll. Its total goes onto
+  the roll you pick, which updates, with a note of what changed. The GM applies it to rolls that
+  aren't yours to change, and tells you if it can't. Only the player who rolled the die, or the GM,
+  can spend it.
+- **Played cards appear on screen.** However a card is played, its art appears in the middle of
+  the screen for a moment, for everyone who can see the roll. Chat keeps a short record: a card
+  played on a roll is noted on the roll with a thumbnail, instead of posting a message that pushed
+  the roll out of view, and a card played from the sheet has its description folded away. A
+  setting turns the on-screen card off.
+- **The DC is hidden from players by default.** A new setting decides whether Show DC to Players
+  starts ticked in the request window. It starts unticked. The DC is kept off the chat card, but
+  it still reaches each player's Foundry with the request, so it isn't a secret from a player who
+  goes looking.
+- **Rolls attach to the request card.** A new setting, on by default: the rolls made for a request
+  show on its card rather than as messages of their own. Click a result to see its dice.
+- **Roll request pop-ups.** Two settings, both off by default, open a window with the Roll buttons
+  when a request is posted: one for players, with their own characters, and one for the GM, with
+  the NPCs. The window closes once everything in it is rolled.
+- **Ready for translation.** Every string the module shows is now in `lang/en.json`.
+
+### Changed
+
+- **Natural 1s and 20s lock RoBear-E Cards.** A new setting, **on by default**, so existing worlds
+  change when they update: no card can be played on a roll whose d20 shows a natural 1 or 20. The
+  exception is Indomitable, which only ever rerolls a failed save, so it can still be played on a
+  failed natural 1. Turn the setting off to allow the other cards too; Luck still can't be played
+  on a natural 1 or 20.
+- **The RoBear-E Card button has a new icon**, the anchor also used for roll requests.
+- **Corn Liquor uses Foundry's own jug icon.** The item and its effect now use an icon that ships
+  with Foundry VTT, in place of the art added in 1.0.0, which is no longer included.
+
 ## 1.0.0
 
 ### New

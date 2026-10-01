@@ -3,7 +3,7 @@
  * The chat message's rolls are rewritten in place, so dnd5e re-evaluates hit/miss and save success on re-render.
  */
 
-const MODULE_ID = "sogrom-robear-e";
+export const MODULE_ID = "sogrom-robear-e";
 const CARDS_ITEM_ID = "xFVsPIjSASjXaqUO";
 const CARDS_IDENTIFIER = "robear-e";
 const IMAGE_PATH = `modules/${MODULE_ID}/assets/images`;
@@ -21,17 +21,19 @@ const CARDS = {
   luck: {
     ids: ["uPqHABvpmYZr0ASg"],
     names: ["luck"],
-    appliesTo: ["attack", "damage", "check", "save", "initiative"]
+    appliesTo: ["attack", "damage", "check", "save", "initiative", "divine"]
   },
   advantage: {
     ids: ["OkUWoFMxuyT5TxX7"],
     names: ["advantage"],
-    appliesTo: ["attack", "check", "save", "initiative"]
+    appliesTo: ["attack", "check", "save", "initiative", "divine"]
   },
   indomitable: {
     ids: ["aE8dyIQUgvXfcu3M"],
     names: ["indomitable"],
-    appliesTo: ["save"]
+    appliesTo: ["save"],
+    // Playable on a natural 1 or 20 even with the Natural 1s and 20s setting on: see getCardOptions.
+    ignoresLock: true
   },
   relentless: {
     ids: ["28kjjOyF9Suf3hkq"],
@@ -64,16 +66,61 @@ const CARD_ART = {
  */
 const retroactiveUses = new Set();
 
+/**
+ * How long a played card's art stays on screen.
+ */
+const PLAYED_CARD_MS = 3000;
+
+/* -------------------------------------------- */
+/*  Localization                                */
+/* -------------------------------------------- */
+
+/**
+ * Translate one of the module's strings from its language file.
+ * @param {string} key      A key in lang/en.json, such as "ROBEAR.Cards.Button".
+ * @param {object} [data]   Values for the string's {placeholders}.
+ * @returns {string}
+ */
+export function localize(key, data) {
+  return data ? game.i18n.format(key, data) : game.i18n.localize(key);
+}
+
 /* -------------------------------------------- */
 /*  Hooks                                       */
 /* -------------------------------------------- */
 
+Hooks.once("init", registerSettings);
 Hooks.once("setup", wrapItemUse);
 Hooks.on("dnd5e.renderChatMessage", onRenderChatMessage);
+Hooks.on("createChatMessage", onCreateChatMessage);
 Hooks.on("updateChatMessage", onUpdateChatMessage);
 Hooks.on("dnd5e.postUseActivity", onPostUseActivity);
 Hooks.on("dnd5e.preRollD20TestV2", onPreRollD20Test);
 Hooks.on("dnd5e.postD20TestRollConfiguration", onPostD20TestRollConfiguration);
+
+/**
+ * Register the module's settings.
+ */
+function registerSettings() {
+  game.settings.register(MODULE_ID, "lockNaturals", {
+    name: "ROBEAR.Settings.LockNaturals.Name",
+    hint: "ROBEAR.Settings.LockNaturals.Hint",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: true
+  });
+  game.settings.register(MODULE_ID, "showPlayedCards", {
+    name: "ROBEAR.Settings.ShowPlayedCards.Name",
+    hint: "ROBEAR.Settings.ShowPlayedCards.Hint",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: true
+  });
+}
+
+/* -------------------------------------------- */
 
 /**
  * dnd5e offers no hook before its activity choice list, so wrap Item#use to show the card picker instead for the
@@ -88,10 +135,10 @@ function wrapItemUse() {
       .filter(a => a.canUse && hasUsesLeft(a))
       .map(activity => ({ activity, label: getCardLabel(activity), img: getCardArt(activity) }));
     if ( !options.length ) {
-      ui.notifications.warn("You have no RoBear-E Cards left until your next long rest.");
+      ui.notifications.warn(localize("ROBEAR.Cards.NoneLeft"));
       return;
     }
-    const option = await chooseCard(options, "Choose a card to play. It will be spent until your next long rest.");
+    const option = await chooseCard(options, localize("ROBEAR.Cards.ChooseFromSheet"));
     if ( option ) return option.activity.use(config, dialog, message);
   };
 }
@@ -104,18 +151,67 @@ function wrapItemUse() {
  * @param {HTMLElement} html
  */
 function onRenderChatMessage(message, html) {
-  if ( getCardOptions(message).length ) {
-    const content = html.querySelector(".message-content");
-    content?.append(...renderLog(message), createCardButton(message));
-  }
+  // The notes on cards already played stay, even once no card is left to play on the roll.
+  const content = html.querySelector(".message-content");
+  content?.append(...renderLog(message));
+  if ( getCardOptions(message).length ) content?.append(createCardButton(message));
 
   for ( const summary of html.querySelectorAll(".card-summary[data-message-id]") ) {
     const child = game.messages.get(summary.dataset.messageId);
-    if ( !child || !getCardOptions(child).length ) continue;
-    const row = summary.querySelector(".icon-row") ?? summary;
-    row.append(createCardButton(child, { compact: true }));
+    if ( !child ) continue;
+    if ( getCardOptions(child).length ) {
+      const row = summary.querySelector(".icon-row") ?? summary;
+      row.append(createCardButton(child, { compact: true }));
+    }
     summary.append(...renderLog(child));
   }
+
+  const activity = getCardActivity(message);
+  if ( activity ) compactCardUsage(html, activity);
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {ChatMessage5e} message
+ * @returns {Activity|void}  The card activity, if this is the chat record of a RoBear-E Card played from the sheet.
+ */
+function getCardActivity(message) {
+  if ( message.type !== "usage" ) return;
+  const activity = message.getAssociatedActivity?.();
+  return activity?.item && isCardItem(activity.item) ? activity : undefined;
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Keep a played card's chat record short: the card's art is shown on screen as it is played, so here its
+ * description starts collapsed (clicking the header still opens it), and the small art in the header shows the card
+ * full size on hover.
+ * @param {HTMLElement} html
+ * @param {Activity} activity
+ */
+function compactCardUsage(html, activity) {
+  html.classList.add("robear-card-usage");
+  html.querySelector(".card-description")?.classList.add("collapsed");
+  const icon = html.querySelector(".activity-icon img");
+  if ( icon ) {
+    icon.dataset.tooltipHtml = cardArtHTML(getCardArt(activity), getCardLabel(activity));
+    icon.dataset.tooltipClass = "robear-card-tooltip";
+    icon.dataset.tooltipDirection = "LEFT";
+  }
+}
+
+/* -------------------------------------------- */
+
+/**
+ * A card played from the sheet is shown on screen, as a card played on a roll is.
+ * @param {ChatMessage5e} message
+ */
+function onCreateChatMessage(message) {
+  const activity = getCardActivity(message);
+  if ( !activity || !message.isContentVisible || !game.settings.get(MODULE_ID, "showPlayedCards") ) return;
+  showPlayedCard({ card: getCardLabel(activity), img: getCardArt(activity), by: activity.actor?.name ?? "" });
 }
 
 /* -------------------------------------------- */
@@ -126,6 +222,12 @@ function onRenderChatMessage(message, html) {
  * @param {object} changes
  */
 async function onUpdateChatMessage(message, changes) {
+  // A card was just played on this roll: show it to everyone who can see the roll.
+  const played = changes.flags?.[MODULE_ID]?.log?.at(-1);
+  if ( played?.img && message.isContentVisible && game.settings.get(MODULE_ID, "showPlayedCards") ) {
+    showPlayedCard(played);
+  }
+
   if ( !("rolls" in changes) ) return;
   const origin = message.system?.origin;
   if ( !origin ) return;
@@ -144,7 +246,7 @@ async function onPostUseActivity(activity) {
   const actor = activity.actor;
   if ( !actor ) return;
   await actor.setFlag(MODULE_ID, "advantage", true);
-  ui.notifications.info(`${actor.name}'s next attack roll, ability check, or saving throw will be made with advantage.`);
+  ui.notifications.info(localize("ROBEAR.Cards.NextRollAdvantage", { name: actor.name }));
 }
 
 /* -------------------------------------------- */
@@ -190,9 +292,9 @@ function getSubjectActor(subject) {
 /**
  * Classify a chat message by the kind of roll it holds.
  * @param {ChatMessage5e} message
- * @returns {"attack"|"damage"|"check"|"save"|"initiative"|null}
+ * @returns {"attack"|"damage"|"check"|"save"|"initiative"|"divine"|null}
  */
-function getRollKind(message) {
+export function getRollKind(message) {
   if ( !message.rolls.length ) return null;
   switch ( message.type ) {
     case "attack":
@@ -203,8 +305,14 @@ function getRollKind(message) {
     case "save":
       // Death saves have already been applied to the actor, so changing the card would desync them.
       return message.system.type === "death" ? null : "save";
-    default:
+    default: {
+      const request = message.getFlag(MODULE_ID, "requestRoll");
+      // A Divine Intervention d100, which must land in the range of numbers the player picked.
+      if ( request?.range ) return "divine";
+      // Plain d20s rolled for a roll request are played on like ability checks.
+      if ( request && (message.rolls[0] instanceof CONFIG.Dice.D20Roll) ) return "check";
       return null;
+    }
   }
 }
 
@@ -279,7 +387,7 @@ function getCardArt(activity) {
  * @param {ChatMessage5e} message
  * @returns {{ key: string, activity: Activity, label: string, icon: string }[]}
  */
-function getCardOptions(message) {
+export function getCardOptions(message) {
   const kind = getRollKind(message);
   if ( !kind || !message.isContentVisible || !(message.isAuthor || game.user.isGM) ) return [];
   const actor = message.getAssociatedActor();
@@ -288,6 +396,7 @@ function getCardOptions(message) {
   const roll = message.rolls[0];
   const d20 = (roll instanceof CONFIG.Dice.D20Roll) ? roll.d20 : null;
   const natural = d20?.results.find(r => r.active)?.result;
+  const locked = [1, 20].includes(natural) && game.settings.get(MODULE_ID, "lockNaturals");
   const options = [];
 
   for ( const item of getCardItems(actor) ) {
@@ -296,19 +405,23 @@ function getCardOptions(message) {
       const card = CARDS[key];
       if ( !card?.appliesTo.includes(kind) ) continue;
       if ( !hasUsesLeft(activity) ) continue;
+      // A natural 1 or 20 locks the roll, except against Indomitable: it only ever rerolls a failed save, as the
+      // class feature of the same name does, and a natural 1 is the save it is most often needed for.
+      if ( locked && !card.ignoresLock ) continue;
 
       switch ( key ) {
         case "inspiration":
           if ( !activity.roll?.formula ) continue;
           break;
         case "luck":
-          if ( (kind !== "damage") && (!d20 || [1, 20].includes(natural)) ) continue;
+          if ( ["damage", "divine"].includes(kind) ) break;
+          if ( !d20 || [1, 20].includes(natural) ) continue;
           break;
         case "advantage":
-          if ( !d20 || roll.hasAdvantage ) continue;
+          if ( kind === "divine" ? roll.options.robearAdvantage : (!d20 || roll.hasAdvantage) ) continue;
           break;
         case "indomitable":
-          if ( !d20 || (Number.isNumeric(roll.options.target) && !roll.isFailure) ) continue;
+          if ( !d20 || !isKnownFailure(message) ) continue;
           break;
         case "relentless":
           if ( !d20 || !findCombatant(message) || (game.combat.round > 1) ) continue;
@@ -323,10 +436,45 @@ function getCardOptions(message) {
 /* -------------------------------------------- */
 
 /**
+ * Whether this user may treat a saving throw as failed, for a card or feature that rerolls a failed save. Offering one
+ * would tell them it failed, so it waits until they can see that: for a roll request's roll, until the GM shows the
+ * result; otherwise, whenever dnd5e shows them the roll's outcome. A save with no DC to judge it by is left to them.
+ * @param {ChatMessage5e} message
+ * @returns {boolean}
+ */
+export function isKnownFailure(message) {
+  const roll = message.rolls[0];
+  const target = getRollTarget(message, roll);
+  if ( !Number.isNumeric(target) ) return true;
+  if ( roll.total >= target ) return false;
+  if ( game.user.isGM ) return true;
+  const request = message.getFlag(MODULE_ID, "requestRoll")?.request;
+  if ( request ) return !!game.messages.get(request)?.getFlag(MODULE_ID, "revealed");
+  return message.shouldDisplayChallenge ?? true;
+}
+
+/* -------------------------------------------- */
+
+/**
+ * The DC a roll is made against. A roll made for a roll request may not carry its DC, so dnd5e does not show the
+ * result early, in which case it is read from the request.
+ * @param {ChatMessage5e} message
+ * @param {D20Roll} roll
+ * @returns {number|null}
+ */
+export function getRollTarget(message, roll) {
+  if ( Number.isNumeric(roll.options.target) ) return roll.options.target;
+  const { request, part } = message.getFlag(MODULE_ID, "requestRoll") ?? {};
+  return game.messages.get(request)?.getFlag(MODULE_ID, "request")?.parts[part]?.dc ?? null;
+}
+
+/* -------------------------------------------- */
+
+/**
  * @param {ChatMessage5e} message  An initiative roll message.
  * @returns {Combatant|void}
  */
-function findCombatant(message) {
+export function findCombatant(message) {
   const { actor, token } = message.speaker;
   return game.combat?.combatants.find(c => token ? c.tokenId === token : c.actorId === actor);
 }
@@ -341,12 +489,14 @@ function findCombatant(message) {
  * @param {boolean} [options.compact]  Render as an icon-only button.
  * @returns {HTMLButtonElement}
  */
-function createCardButton(message, { compact=false }={}) {
+export function createCardButton(message, { compact=false }={}) {
   const button = document.createElement("button");
   button.type = "button";
   button.className = compact ? "robear-card-button icon" : "robear-card-button";
-  button.dataset.tooltip = "Use a RoBear-E Card on this roll";
-  button.innerHTML = `<i class="fa-solid fa-anchor fa-rotate-90" inert></i>${compact ? "" : " RoBear-E Card"}`;
+  button.dataset.tooltipText = localize("ROBEAR.Cards.ButtonTooltip");
+  button.setAttribute("aria-label", localize("ROBEAR.Cards.ButtonTooltip"));
+  button.innerHTML = '<i class="fa-solid fa-anchor fa-rotate-90" inert></i>';
+  if ( !compact ) button.append(` ${localize("ROBEAR.Cards.Button")}`);
   button.addEventListener("click", event => {
     event.preventDefault();
     event.stopPropagation();
@@ -358,17 +508,96 @@ function createCardButton(message, { compact=false }={}) {
 /* -------------------------------------------- */
 
 /**
- * @param {ChatMessage5e} message
- * @returns {HTMLElement[]}  Notes describing cards already spent on this message.
+ * @typedef {object} CardLogEntry
+ * @property {string} text  What the card did, e.g. "Luck: rerolled the d20 (4 → 13): 4 → 13".
+ * @property {string} card  The card's label.
+ * @property {string} img   The card's art.
+ * @property {string} by    The name of the actor who played it.
  */
-function renderLog(message) {
+
+/**
+ * @param {ChatMessage5e} message
+ * @returns {HTMLElement[]}  Notes describing cards already spent on this message, each with a thumbnail of the card,
+ *   shown full size on hover. Notes written before 2.0.0 are plain text.
+ */
+export function renderLog(message) {
   return (message.getFlag(MODULE_ID, "log") ?? []).map(entry => {
     const p = document.createElement("p");
     p.className = "supplement robear-card-log";
-    p.innerHTML = `<strong>RoBear-E:</strong> `;
-    p.append(entry);
+    // Notes written before 2.0.0 are plain text, so they need a label to say where they came from.
+    if ( typeof entry === "string" ) {
+      const strong = document.createElement("strong");
+      strong.textContent = localize("ROBEAR.Cards.LegacyLabel");
+      p.append(strong, " ", entry);
+      return p;
+    }
+    // A card's note leads with a thumbnail of the card; a bonus roll's, with an icon.
+    if ( entry.img ) {
+      const art = document.createElement("img");
+      art.className = "robear-card-log-art";
+      art.src = entry.img;
+      art.alt = entry.card;
+      art.dataset.tooltipHtml = cardArtHTML(entry.img, entry.card);
+      art.dataset.tooltipClass = "robear-card-tooltip";
+      art.dataset.tooltipDirection = "UP";
+      p.append(art);
+    } else if ( entry.icon ) {
+      const icon = document.createElement("i");
+      icon.className = `${entry.icon} robear-card-log-icon`;
+      icon.inert = true;
+      p.append(icon);
+    }
+    const text = document.createElement("span");
+    text.textContent = entry.text;
+    p.append(text);
     return p;
   });
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Card art as HTML, for a tooltip that shows it full size. A note's art and label are read from the message's flags,
+ * which whoever wrote the message can set to anything, so both are escaped.
+ * @param {string} img
+ * @param {string} label
+ * @returns {string}
+ */
+export function cardArtHTML(img, label) {
+  const { escapeHTML } = foundry.utils;
+  return `<img src="${escapeHTML(img ?? "")}" alt="${escapeHTML(label ?? "")}">`;
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Show a played card's art large on screen for a moment, with who played it. Clicking it dismisses it.
+ * The entry comes from a message's flags, so it is only ever set as text and attributes, never parsed as HTML.
+ * @param {CardLogEntry} entry
+ */
+function showPlayedCard(entry) {
+  document.getElementById("robear-played-card")?.remove();
+  const reveal = document.createElement("div");
+  reveal.id = "robear-played-card";
+  reveal.className = "robear-played-card";
+  reveal.setAttribute("role", "status");
+  reveal.innerHTML = `
+    <img alt="">
+    <div class="robear-played-card-caption">
+      <span class="robear-played-card-by"></span>
+      <span class="robear-played-card-name"></span>
+    </div>
+  `;
+  reveal.querySelector("img").src = entry.img;
+  reveal.querySelector(".robear-played-card-by").textContent = localize("ROBEAR.Cards.Plays", { name: entry.by ?? "" });
+  reveal.querySelector(".robear-played-card-name").textContent = entry.card ?? "";
+  const dismiss = () => {
+    reveal.classList.add("leaving");
+    setTimeout(() => reveal.remove(), 400);
+  };
+  reveal.addEventListener("click", dismiss);
+  document.body.append(reveal);
+  setTimeout(dismiss, PLAYED_CARD_MS);
 }
 
 /* -------------------------------------------- */
@@ -383,7 +612,7 @@ function renderLog(message) {
 async function promptCard(message, button) {
   const options = getCardOptions(message);
   if ( !options.length ) return;
-  const option = await chooseCard(options, "Choose a card to play on this roll. It will be spent until your next long rest.");
+  const option = await chooseCard(options, localize("ROBEAR.Cards.ChooseOnRoll"));
   if ( !option ) return;
 
   button.disabled = true;
@@ -404,12 +633,13 @@ async function promptCard(message, button) {
  */
 async function chooseCard(options, hint) {
   // The tooltip shows the card art at full size so its rules text is readable.
+  const { escapeHTML } = foundry.utils;
   const cards = options.map((o, i) => `
     <button type="button" class="robear-card-choice" data-index="${i}"
-            data-tooltip-html="${foundry.utils.escapeHTML(`<img src="${o.img}" alt="${o.label}">`)}"
+            data-tooltip-html="${escapeHTML(cardArtHTML(o.img, o.label))}"
             data-tooltip-class="robear-card-tooltip" data-tooltip-direction="UP">
-      <img src="${o.img}" alt="${o.label}">
-      <span>${o.label}</span>
+      <img src="${escapeHTML(o.img)}" alt="${escapeHTML(o.label)}">
+      <span>${escapeHTML(o.label)}</span>
     </button>
   `).join("");
 
@@ -417,13 +647,13 @@ async function chooseCard(options, hint) {
   let chosen;
   await foundry.applications.api.DialogV2.wait({
     classes: ["robear-card-dialog"],
-    window: { title: "Use a RoBear-E Card", icon: "fa-solid fa-anchor fa-rotate-90" },
+    window: { title: "ROBEAR.Cards.DialogTitle", icon: "fa-solid fa-anchor fa-rotate-90" },
     position: { width: Math.clamp(48 + (options.length * 124), 340, 792) },
     content: `
-      <p class="robear-card-hint">${hint}</p>
+      <p class="robear-card-hint">${foundry.utils.escapeHTML(hint)}</p>
       <div class="robear-card-grid">${cards}</div>
     `,
-    buttons: [{ action: "cancel", label: "Cancel", icon: "fa-solid fa-xmark" }],
+    buttons: [{ action: "cancel", label: "ROBEAR.Common.Cancel", icon: "fa-solid fa-xmark" }],
     render: (event, dialog) => {
       for ( const el of dialog.element.querySelectorAll(".robear-card-choice") ) {
         el.addEventListener("click", () => {
@@ -449,7 +679,8 @@ async function applyCard(message, { key, activity, label }) {
   retroactiveUses.add(activity.uuid);
   let used;
   try {
-    used = await activity.use({ subsequentActions: false }, { configure: false });
+    // No usage card is posted: the card is shown on screen and noted on the roll instead, so the roll stays in view.
+    used = await activity.use({ subsequentActions: false }, { configure: false }, { create: false });
   } finally {
     retroactiveUses.delete(activity.uuid);
   }
@@ -466,35 +697,50 @@ async function applyCard(message, { key, activity, label }) {
       const { OperatorTerm } = foundry.dice.terms;
       rolls[0].terms.push(OperatorTerm.fromData({ class: "OperatorTerm", operator: "+", evaluated: true }), ...bonus.terms);
       finalize(rolls[0]);
-      detail = `added ${bonus.formula} (${bonus.total}): ${before} + ${bonus.total} = ${rolls[0].total}`;
+      detail = localize("ROBEAR.Cards.Log.Inspiration", {
+        formula: bonus.formula, bonus: bonus.total, before, after: rolls[0].total
+      });
       break;
     }
     case "luck":
       if ( getRollKind(message) === "damage" ) {
         await rerollAllDice(rolls, message);
-        detail = `rerolled damage dice: ${sumTotals(message.rolls)} → ${sumTotals(rolls)}`;
+        detail = localize("ROBEAR.Cards.Log.RerollDamage", { before: sumTotals(message.rolls), after: sumTotals(rolls) });
+        break;
+      }
+      if ( getRollKind(message) === "divine" ) {
+        await rerollAllDice(rolls, message);
+        detail = localize("ROBEAR.Cards.Log.RerollD100", { before, after: rolls[0].total });
         break;
       }
       // Falls through to reroll the d20.
     case "indomitable":
     case "relentless": {
       const [old, values] = await rerollD20(rolls[0], message);
-      const dice = values.length > 1 ? "both d20s" : "the d20";
-      detail = `rerolled ${dice} (${old.join(", ")} → ${values.join(", ")}): ${before} → ${rolls[0].total}`;
+      detail = localize("ROBEAR.Cards.Log.RerollD20", {
+        dice: describeD20s(values), old: old.join(", "), new: values.join(", "), before, after: rolls[0].total
+      });
       break;
     }
     case "advantage": {
+      if ( getRollKind(message) === "divine" ) {
+        const [first, second] = await addDivineAdvantage(rolls[0], message);
+        detail = localize("ROBEAR.Cards.Log.DivineAdvantage", { first, second, total: rolls[0].total });
+        break;
+      }
       if ( cancelDisadvantage(rolls[0]) ) {
-        detail = `cancelled disadvantage: ${before} → ${rolls[0].total}`;
+        detail = localize("ROBEAR.Cards.Log.CancelDisadvantage", { before, after: rolls[0].total });
         break;
       }
       const [first, second] = await addAdvantage(rolls[0], message);
-      detail = `rolled with advantage (${first} and ${second}): ${before} → ${rolls[0].total}`;
+      detail = localize("ROBEAR.Cards.Log.Advantage", { first, second, before, after: rolls[0].total });
       break;
     }
   }
 
-  const log = [...(message.getFlag(MODULE_ID, "log") ?? []), `${label}: ${detail}`];
+  const text = localize("ROBEAR.Cards.Log.Entry", { card: label, detail });
+  const entry = { text, card: label, img: getCardArt(activity), by: activity.actor?.name ?? "" };
+  const log = [...(message.getFlag(MODULE_ID, "log") ?? []), entry];
   await message.update({ rolls: rolls.map(r => r.toJSON()), [`flags.${MODULE_ID}.log`]: log });
 
   if ( getRollKind(message) === "initiative" ) await findCombatant(message)?.update({ initiative: rolls[0].total });
@@ -508,9 +754,19 @@ async function applyCard(message, { key, activity, label }) {
  * Recompute a roll's formula and total after its terms were changed.
  * @param {Roll} roll
  */
-function finalize(roll) {
+export function finalize(roll) {
   roll.resetFormula();
   roll._total = roll._evaluateTotal();
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {number[]} values  The d20s rolled again.
+ * @returns {string}  "the d20", or "both d20s" for a roll with advantage or disadvantage.
+ */
+export function describeD20s(values) {
+  return localize(values.length > 1 ? "ROBEAR.Cards.Log.BothD20s" : "ROBEAR.Cards.Log.TheD20");
 }
 
 /* -------------------------------------------- */
@@ -519,7 +775,7 @@ function finalize(roll) {
  * @param {Roll[]} rolls
  * @returns {number}
  */
-function sumTotals(rolls) {
+export function sumTotals(rolls) {
   return rolls.reduce((total, r) => total + r.total, 0);
 }
 
@@ -570,7 +826,7 @@ function getLiveResults(roll) {
  * @param {ChatMessage5e} message
  * @returns {Promise<[number[], number[]]>}  The old and new results.
  */
-async function rerollD20(roll, message) {
+export async function rerollD20(roll, message) {
   const live = getLiveResults(roll);
   const [values] = await rollFresh([{ number: live.length, faces: 20 }], message);
   for ( const r of live ) {
@@ -636,7 +892,30 @@ async function addAdvantage(roll, message) {
 /* -------------------------------------------- */
 
 /**
- * Reroll every active die across a set of damage rolls.
+ * Roll a second d100 for Divine Intervention. The new roll is kept only if it lands in the picked range and the
+ * first did not; otherwise the first stands.
+ * @param {Roll} roll
+ * @param {ChatMessage5e} message
+ * @returns {Promise<[number, number]>}  Both d100 results.
+ */
+async function addDivineAdvantage(roll, message) {
+  const { start, end } = message.getFlag(MODULE_ID, "requestRoll").range;
+  const inRange = n => (n >= start) && (n <= end);
+  const die = roll.dice[0];
+  const current = die.results.find(r => r.active);
+  const [[value]] = await rollFresh([{ number: 1, faces: die.faces }], message);
+  const swap = inRange(value) && !inRange(current.result);
+  if ( swap ) Object.assign(current, { active: false, discarded: true });
+  die.results.push({ result: value, active: swap, discarded: !swap });
+  roll.options.robearAdvantage = true;
+  finalize(roll);
+  return [current.result, value];
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Reroll every active die across a set of damage rolls, or the d100 of a Divine Intervention roll.
  * @param {DamageRoll[]} rolls
  * @param {ChatMessage5e} message
  */
