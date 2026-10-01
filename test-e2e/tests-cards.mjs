@@ -159,6 +159,33 @@ test("inspiration: adds its die to the check, and is spent", async ({ player }) 
 /*  Luck                                        */
 /* -------------------------------------------- */
 
+// Dice So Nice takes a die's appearance from the speaker's actor, so the card's dice must carry the roll's speaker.
+// A stand-in records the call: the e2e world doesn't run Dice So Nice.
+test("dice so nice: a card's dice are shown with the roll's speaker and message", async ({ player }) => {
+  await player.eval(() => {
+    window.dsnCalls = [];
+    game.dice3d = { showForRoll: async (...args) => { window.dsnCalls.push(args); return true; } };
+  });
+  try {
+    await forceDice(player, [d20(5)]);
+    const id = await roll(player, "Aria", "skill");
+    await forceDice(player, [d20(13)]);
+    await cardsOffered(player, id, "Luck");
+    await afterCard(player, id);
+    const calls = await player.eval(id => window.dsnCalls.map(([roll, user, , , , messageId, speaker]) => ({
+      formula: roll.formula, user: user.id === game.user.id, messageId, actor: speaker?.actor,
+      expected: game.messages.get(id).speaker.actor
+    })), id);
+    assertEqual(calls.length, 1, "Dice So Nice calls");
+    const [call] = calls;
+    assertEqual([call.formula, call.user, call.messageId, call.actor], ["1d20", true, id, call.expected],
+      "the dice shown: formula, user, message and speaker's actor");
+    assert(call.expected, "The roll has no speaker actor to compare with.");
+  } finally {
+    await player.eval(() => { delete game.dice3d; delete window.dsnCalls; });
+  }
+});
+
 test("luck: rerolls the d20 of a check, and the new result stands", async ({ player }) => {
   await forceDice(player, [d20(5)]);
   const id = await roll(player, "Aria", "skill");
