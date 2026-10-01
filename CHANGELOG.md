@@ -2,6 +2,14 @@
 
 All notable changes to RoBear-E.
 
+## 2.1.0
+
+### Fixed
+
+- **Card dice use the actor's Dice So Nice appearance.** Dice rolled by a RoBear-E Card, or by
+  the Fighter's Indomitable, were shown in the player's own dice, not the ones set for that
+  actor. They now look like the dice of the roll they change.
+
 ## 2.0.0
 
 ### New

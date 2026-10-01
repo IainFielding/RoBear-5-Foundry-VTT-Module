@@ -843,13 +843,15 @@ async function rollFresh(groups, message) {
 /* -------------------------------------------- */
 
 /**
+ * Show dice rolled for a card in Dice So Nice, as the roll they change was shown: with its speaker, so the dice take
+ * the actor's own appearance where it has one, and its message, so they are hidden as a secret roll's are.
  * @param {Roll} roll
- * @param {ChatMessage5e} message  Message whose visibility the dice animation should match.
+ * @param {ChatMessage5e} message  The roll's message.
  */
 async function showDice(roll, message) {
   if ( !game.dice3d ) return;
   const whisper = message.whisper.length ? message.whisper : null;
-  await game.dice3d.showForRoll(roll, game.user, true, whisper, message.blind);
+  await game.dice3d.showForRoll(roll, game.user, true, whisper, message.blind, message.id, message.speaker);
 }
 
 /* -------------------------------------------- */
