@@ -293,6 +293,14 @@ test("indomitable: rerolls a failed saving throw only", async ({ player }) => {
   assertEqual(await player.eval(id => game.messages.get(id).rolls[0].isSuccess, failed), true, "the save now passes");
 });
 
+// Indomitable only rerolls a failed save, so the natural 1s and 20s lock doesn't keep it off a natural 1, while the
+// other cards stay locked.
+test("indomitable: still offered on a failed natural 1 with the lock on", async ({ player }) => {
+  await forceDice(player, [d20(1)]);
+  const failed = await roll(player, "Aria", "save", { config: { target: 15 } });
+  assertEqual(await cardsOffered(player, failed), ["Indomitable"], "the cards offered on a natural 1 failed save");
+});
+
 /* -------------------------------------------- */
 /*  Relentless                                  */
 /* -------------------------------------------- */

@@ -100,7 +100,7 @@ test("indomitable (2024): offered once the GM shows a failed requested save, and
     "The GM is not offered Indomitable on Borin's failed save.");
   await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-reveal`).click();
   await button.waitFor({ timeout: 5000 });
-  assertEqual(await button.getAttribute("data-tooltip"), "Use Indomitable (2 left)", "the button's tooltip");
+  assertEqual(await button.getAttribute("data-tooltip-text"), "Use Indomitable (2 left)", "the button's tooltip");
   await forceDice(player, [d20(8)]);
   await button.click();
 

@@ -78,9 +78,16 @@ function localize(key) {
   return typeof value === "string" ? value : key;
 }
 
+/**
+ * The module's world settings, as a test has set them.
+ * @type {Map<string, unknown>}
+ */
+export const settingValues = new Map([["showDCDefault", false]]);
+
 let messages = new MessageLog();
 globalThis.game = {
   user: { isGM: true },
+  settings: { get: (_scope, key) => settingValues.get(key) },
   i18n: {
     lang: "en",
     localize,

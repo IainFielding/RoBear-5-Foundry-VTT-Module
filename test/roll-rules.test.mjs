@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { actorNames, actorOwners } from "./helpers/foundry-shims.mjs";
+import { actorNames, actorOwners, settingValues } from "./helpers/foundry-shims.mjs";
 import { requestMessage, rollMessage } from "./helpers/messages.mjs";
 import {
   DIVINE_RANGE, MODES, getChallengeState, getGroupOutcome, getPartLabel, getResults, isContest, poolTeamRolls,
-  validateRequest
+  validateRequest, withDefaults
 } from "../scripts/roll-requests.mjs";
 
 const entries = rows => rows.map(([uuid, total, natural]) => ({ uuid, total, natural }));
@@ -118,9 +118,17 @@ describe("Results from tagged roll messages", () => {
     expect(getResults(message).get("A")[0].success).toBeNull();
   });
 
-  it("counts the latest roll when a part is rolled twice", () => {
+  it("counts the first roll when a part is rolled twice, so a second can't fish for a better one", () => {
     const message = requestMessage({ mode: "standard", actors: ["A"], parts: [{ type: "skill", key: "ath", dc: 12 }] });
-    game.messages = [rollMessage({ actor: "A", total: 20, natural: 18 }), rollMessage({ actor: "A", total: 3, natural: 3 })];
+    game.messages = [rollMessage({ actor: "A", total: 3, natural: 3 }), rollMessage({ actor: "A", total: 20, natural: 18 })];
+    expect(getResults(message).get("A")[0].total).toBe(3);
+  });
+
+  it("counts the first roll by when it was made, whatever order the chat log holds them in", () => {
+    const message = requestMessage({ mode: "standard", actors: ["A"], parts: [{ type: "skill", key: "ath", dc: 12 }] });
+    const first = rollMessage({ actor: "A", total: 3, natural: 3 });
+    const second = rollMessage({ actor: "A", total: 20, natural: 18 });
+    game.messages = [second, first];
     expect(getResults(message).get("A")[0].total).toBe(3);
   });
 
@@ -213,26 +221,102 @@ describe("Results from tagged roll messages", () => {
 
 describe("Checking a request before it is posted", () => {
   const part = { type: "d20", dc: null };
+  const valid = {
+    standard: { mode: "standard", actors: ["A"], parts: [part], rollMode: "public" },
+    challenge: { mode: "challenge", actors: ["A"], parts: [part, part, part], successes: 2, rollMode: "public" },
+    rolloff: { mode: "rolloff", actors: ["A", "B"], sides: [["A"], ["B"]], parts: [part, part], rollMode: "gm" },
+    versus: { mode: "versus", actors: ["A", "B", "C"], sides: [["A", "B"], ["C"]], parts: [part, part], rollMode: "public" },
+    divine: { mode: "divine", actors: ["A"], parts: [{ type: "d100", dc: null }], range: 16, rollMode: "public" }
+  };
+
+  /**
+   * @param {object} request
+   * @returns {string|null}  Why the request was refused, or null if it was accepted.
+   */
+  const errorFor = request => {
+    try {
+      validateRequest(request);
+    } catch ( err ) {
+      return err.message;
+    }
+    return null;
+  };
 
   it("accepts a well-formed request of each kind", () => {
-    expect(() => validateRequest({ mode: "standard", actors: ["A"], parts: [part] })).not.toThrow();
-    expect(() => validateRequest({ mode: "challenge", actors: ["A"], parts: [part, part, part] })).not.toThrow();
-    expect(() => validateRequest({ mode: "rolloff", actors: ["A", "B"], sides: [["A"], ["B"]], parts: [part, part] }))
-      .not.toThrow();
+    for ( const request of Object.values(valid) ) expect(errorFor(request)).toBeNull();
+    expect(errorFor({ ...valid.standard, parts: [{ type: "skill", key: "ath", dc: 15 }] })).toBeNull();
   });
 
   it("refuses a request with no one to roll", () => {
-    expect(() => validateRequest({ mode: "standard", actors: [], parts: [part] })).toThrow();
+    expect(errorFor({ ...valid.standard, actors: [] })).not.toBeNull();
   });
 
   it("refuses a contest with an empty side", () => {
-    expect(() => validateRequest({ mode: "versus", actors: ["A"], sides: [["A"], []], parts: [part, part] })).toThrow();
-    expect(() => validateRequest({ mode: "rolloff", actors: ["A"], sides: [["A"]], parts: [part, part] })).toThrow();
+    expect(errorFor({ ...valid.versus, sides: [["A", "B"], []] })).not.toBeNull();
+    expect(errorFor({ ...valid.rolloff, sides: [["A"]] })).not.toBeNull();
   });
 
   it("refuses an unknown mode, or a skill challenge without its three rolls", () => {
-    expect(() => validateRequest({ mode: "nonsense", actors: ["A"], parts: [part] })).toThrow();
-    expect(() => validateRequest({ mode: "challenge", actors: ["A"], parts: [part] })).toThrow();
+    expect(errorFor({ ...valid.standard, mode: "nonsense" })).not.toBeNull();
+    expect(errorFor({ ...valid.challenge, parts: [part] })).not.toBeNull();
+  });
+
+  it("refuses a skill challenge needing more successes than it has rolls, or none", () => {
+    expect(errorFor({ ...valid.challenge, successes: 4 })).toBe("A skill challenge needs from 1 to 3 successes, not 4.");
+    for ( const successes of [0, undefined, 1.5] ) expect(errorFor({ ...valid.challenge, successes })).not.toBeNull();
+  });
+
+  it("refuses Divine Intervention without a run of numbers to pick, or with too long a run", () => {
+    expect(errorFor({ ...valid.divine, range: undefined })).not.toBeNull();
+    expect(errorFor({ ...valid.divine, range: DIVINE_RANGE.max + 1 }))
+      .toBe(`Divine Intervention needs from 1 to ${DIVINE_RANGE.max} numbers to pick, not ${DIVINE_RANGE.max + 1}.`);
+  });
+
+  it("refuses a Roll-Off with more than one actor on a side, whose second roll would never count", () => {
+    expect(errorFor({ ...valid.rolloff, actors: ["A", "B", "C"], sides: [["A", "C"], ["B"]] }))
+      .toBe("Each side of a Roll-Off needs exactly one actor.");
+  });
+
+  it("refuses a contest with someone on a side who isn't one of the request's actors", () => {
+    expect(errorFor({ ...valid.versus, sides: [["A", "B"], ["D"]] })).not.toBeNull();
+  });
+
+  it("refuses an unknown roll, a DC that isn't a number, or an unknown visibility", () => {
+    expect(errorFor({ ...valid.standard, parts: [{ type: "d7", dc: null }] })).toBe("Unknown kind of roll: d7.");
+    expect(errorFor({ ...valid.standard, parts: [{ type: "d20", dc: "hard" }] })).not.toBeNull();
+    expect(errorFor({ ...valid.standard, rollMode: "blind" })).not.toBeNull();
+  });
+});
+
+/* -------------------------------------------- */
+
+describe("Filling in what a macro leaves out", () => {
+  const part = { type: "d20", dc: null };
+
+  it("gives the request window's defaults, so a short macro request is still valid", () => {
+    const challenge = withDefaults({ mode: "challenge", actors: ["A"], parts: [part, part, part] });
+    expect(challenge).toMatchObject({ rollMode: "public", showDC: false, successes: 2 });
+    expect(() => validateRequest(challenge)).not.toThrow();
+    const divine = withDefaults({ mode: "divine", actors: ["A"], parts: [{ type: "d100", dc: null }] });
+    expect(divine.range).toBe(DIVINE_RANGE.initial);
+    expect(() => validateRequest(divine)).not.toThrow();
+  });
+
+  it("follows the GM's Show DC setting", () => {
+    settingValues.set("showDCDefault", true);
+    expect(withDefaults({ mode: "standard" }).showDC).toBe(true);
+    settingValues.set("showDCDefault", false);
+  });
+
+  it("keeps what the macro gave, and fills in a value it left as null", () => {
+    expect(withDefaults({ mode: "challenge", successes: 3, rollMode: "gm" })).toMatchObject({ successes: 3, rollMode: "gm" });
+    expect(withDefaults({ mode: "challenge", successes: null }).successes).toBe(2);
+  });
+
+  it("doesn't change the request it was given", () => {
+    const request = { mode: "standard" };
+    withDefaults(request);
+    expect(request).toEqual({ mode: "standard" });
   });
 });
 

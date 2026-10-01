@@ -179,7 +179,7 @@ export function readCard(session, id) {
         pending: row.querySelectorAll(".robear-request-pending").length,
         cardButton: !!row.querySelector(".robear-card-button"),
         badge: text(row.querySelector(".robear-request-badge")),
-        tooltip: row.dataset.tooltip ?? null
+        tooltip: row.dataset.tooltipText ?? null
       })),
       sides: [...card.querySelectorAll(".robear-request-side")].map(side => ({
         name: text(side.querySelector("h4")),

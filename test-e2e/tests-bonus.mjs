@@ -187,7 +187,9 @@ test("bonus rolls: a player can't spend someone else's die, even by asking the G
   await player.eval(({ bonus, aria, moduleId }) => {
     game.socket.emit(`module.${moduleId}`, { action: "applyBonus", source: bonus, target: aria, sign: 1 });
   }, { bonus, aria, moduleId: MODULE_ID });
-  await gm.page.waitForTimeout(1500);
+  // The GM refuses it, and says so.
+  await player.page.locator("#notifications .notification", { hasText: "The GM couldn't apply your bonus roll" })
+    .waitFor({ timeout: 5000 });
   const after = await gm.eval(({ bonus, aria, moduleId }) => ({
     used: game.messages.get(bonus).getFlag(moduleId, "bonusUsed") ?? null,
     total: game.messages.get(aria).rolls[0].total,

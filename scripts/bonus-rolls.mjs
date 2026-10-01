@@ -6,7 +6,7 @@
  * roll request's result are worked out again. The bonus roll is marked as used, so it can only be spent once.
  */
 
-import { MODULE_ID, findCombatant, finalize, getRollKind, localize } from "./robear-cards.mjs";
+import { MODULE_ID, findCombatant, finalize, getRollKind, localize, sumTotals } from "./robear-cards.mjs";
 
 /**
  * How many of the latest chat messages are offered as rolls to change.
@@ -75,18 +75,42 @@ function onRenderChatMessage(message, html) {
 /* -------------------------------------------- */
 
 /**
- * The active GM applies bonuses for users who may not change the roll themselves. The request is checked again here,
- * as the user who sent it: only the bonus roll's own author may spend it, and only on a roll they can see.
+ * Handle the module's socket messages: the active GM applies bonuses for users who may not change the roll themselves,
+ * and tells them if it couldn't.
  * @param {object} data
  * @param {string} userId  The sender, which Foundry's server adds, so it cannot be forged.
  */
 function onSocketMessage(data, userId) {
-  if ( (data?.action !== "applyBonus") || (game.user !== game.users.activeGM) ) return;
+  switch ( data?.action ) {
+    case "applyBonus": return onApplyBonusRequest(data, userId);
+    case "bonusNotApplied": return ui.notifications.warn(localize(data.reason === "invalid"
+      ? "ROBEAR.Bonus.GMRefused" : "ROBEAR.Bonus.GMFailed"));
+  }
+}
+
+/* -------------------------------------------- */
+
+/**
+ * As the active GM, apply a bonus a user asked for. The request is checked again here, as the user who sent it: only
+ * the bonus roll's own author may spend it, and only on a roll they can see. If it can't be applied, they are told.
+ * @param {object} data
+ * @param {string} userId
+ */
+async function onApplyBonusRequest(data, userId) {
+  if ( game.user !== game.users.activeGM ) return;
   const user = game.users.get(userId);
+  if ( !user ) return;
+  const reply = reason => game.socket.emit(`module.${MODULE_ID}`, { action: "bonusNotApplied", reason },
+    { recipients: [userId] });
   const source = game.messages.get(data.source);
   const target = game.messages.get(data.target);
-  if ( !user || !canSpend(source, user) || !isValidTarget(target, source, user) ) return;
-  applyBonus(source, target, data.sign < 0 ? -1 : 1);
+  if ( !canSpend(source, user) || !isValidTarget(target, source, user) ) return reply("invalid");
+  try {
+    if ( !(await applyBonus(source, target, data.sign < 0 ? -1 : 1)) ) reply("invalid");
+  } catch(err) {
+    console.error(`${MODULE_ID} | Could not apply a bonus roll for ${user.name}`, err);
+    reply("error");
+  }
 }
 
 /* -------------------------------------------- */
@@ -166,7 +190,7 @@ export function getTargets(source) {
  */
 function describeTarget(message, { total=true }={}) {
   const who = message.getAssociatedActor()?.name ?? message.speaker.alias;
-  const sum = total ? message.rolls.reduce((t, r) => t + r.total, 0) : null;
+  const sum = total ? sumTotals(message.rolls) : null;
   return [who, message.flavor || localize(ROLL_KINDS[getRollKind(message)]), sum].filterJoin(" · ");
 }
 
@@ -231,11 +255,18 @@ async function chooseTarget(source, sign) {
   const target = targets[chosen];
   if ( !target ) return;
 
-  // Rolls this user may not change are changed by the GM.
-  if ( target.canUserModify(game.user, "update") ) return applyBonus(source, target, sign);
-  const recipients = [game.users.activeGM?.id].filter(Boolean);
+  // Rolls this user may not change are changed by the GM, who says so if they can't.
+  if ( target.canUserModify(game.user, "update") ) {
+    await applyBonus(source, target, sign);
+    return;
+  }
+  const gm = game.users.activeGM;
+  if ( !gm ) {
+    ui.notifications.warn(localize("ROBEAR.Bonus.NoGM"));
+    return;
+  }
   game.socket.emit(`module.${MODULE_ID}`, { action: "applyBonus", source: source.id, target: target.id, sign },
-    { recipients });
+    { recipients: [gm.id] });
   ui.notifications.info(localize("ROBEAR.Bonus.SentToGM"));
 }
 
@@ -245,12 +276,17 @@ async function chooseTarget(source, sign) {
 
 /**
  * Add a bonus roll's total to another roll, or subtract it, noting it on both.
+ *
+ * If two clients spend the same bonus at the same moment, both mark it used and both rewrite the roll from the same
+ * starting point, so the bonus is applied once. A card played on the same roll at the same moment can be lost the same
+ * way, as both rewrite the whole roll; that needs two people acting on one roll within a fraction of a second.
  * @param {ChatMessage5e|void} source  The bonus roll.
  * @param {ChatMessage5e|void} target  The roll to change.
  * @param {1|-1} sign
+ * @returns {Promise<boolean>}  Whether the bonus was applied: false if it was already spent, or is being spent.
  */
 export async function applyBonus(source, target, sign) {
-  if ( !source || !target || source.getFlag(MODULE_ID, "bonusUsed") || spending.has(source.id) ) return;
+  if ( !source || !target || source.getFlag(MODULE_ID, "bonusUsed") || spending.has(source.id) ) return false;
   spending.add(source.id);
   try {
     // Marked as used before the roll is changed, so it cannot be spent twice. If changing the roll fails, the mark is
@@ -262,6 +298,7 @@ export async function applyBonus(source, target, sign) {
       await source.unsetFlag(MODULE_ID, "bonusUsed");
       throw err;
     }
+    return true;
   } finally {
     spending.delete(source.id);
   }
@@ -278,7 +315,9 @@ export async function applyBonus(source, target, sign) {
 async function addBonus(source, target, sign) {
   const bonus = source.rolls[0];
   const rolls = target.rolls.map(r => Roll.fromData(r.toJSON()));
-  const before = rolls[0].total;
+  // The bonus goes on the first roll, but the note gives the whole message's total, as the list of rolls did, so a
+  // damage roll of several types reads the same in both.
+  const before = sumTotals(rolls);
 
   // A single die keeps its dice in the roll's breakdown; anything longer is added as its total.
   const { NumericTerm, OperatorTerm } = foundry.dice.terms;
@@ -292,7 +331,7 @@ async function addBonus(source, target, sign) {
 
   const label = getBonusLabel(source);
   const detail = localize(sign > 0 ? "ROBEAR.Bonus.Log.Added" : "ROBEAR.Bonus.Log.Subtracted", {
-    formula: bonus.formula, bonus: bonus.total, before, after: rolls[0].total
+    formula: bonus.formula, bonus: bonus.total, before, after: sumTotals(rolls)
   });
   const entry = {
     text: localize("ROBEAR.Cards.Log.Entry", { card: label, detail }),

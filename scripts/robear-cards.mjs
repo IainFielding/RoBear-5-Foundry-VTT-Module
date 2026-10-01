@@ -31,7 +31,9 @@ const CARDS = {
   indomitable: {
     ids: ["aE8dyIQUgvXfcu3M"],
     names: ["indomitable"],
-    appliesTo: ["save"]
+    appliesTo: ["save"],
+    // Playable on a natural 1 or 20 even with the Natural 1s and 20s setting on: see getCardOptions.
+    ignoresLock: true
   },
   relentless: {
     ids: ["28kjjOyF9Suf3hkq"],
@@ -394,7 +396,7 @@ export function getCardOptions(message) {
   const roll = message.rolls[0];
   const d20 = (roll instanceof CONFIG.Dice.D20Roll) ? roll.d20 : null;
   const natural = d20?.results.find(r => r.active)?.result;
-  if ( [1, 20].includes(natural) && game.settings.get(MODULE_ID, "lockNaturals") ) return [];
+  const locked = [1, 20].includes(natural) && game.settings.get(MODULE_ID, "lockNaturals");
   const options = [];
 
   for ( const item of getCardItems(actor) ) {
@@ -403,6 +405,9 @@ export function getCardOptions(message) {
       const card = CARDS[key];
       if ( !card?.appliesTo.includes(kind) ) continue;
       if ( !hasUsesLeft(activity) ) continue;
+      // A natural 1 or 20 locks the roll, except against Indomitable: it only ever rerolls a failed save, as the
+      // class feature of the same name does, and a natural 1 is the save it is most often needed for.
+      if ( locked && !card.ignoresLock ) continue;
 
       switch ( key ) {
         case "inspiration":
@@ -488,7 +493,7 @@ export function createCardButton(message, { compact=false }={}) {
   const button = document.createElement("button");
   button.type = "button";
   button.className = compact ? "robear-card-button icon" : "robear-card-button";
-  button.dataset.tooltip = localize("ROBEAR.Cards.ButtonTooltip");
+  button.dataset.tooltipText = localize("ROBEAR.Cards.ButtonTooltip");
   button.setAttribute("aria-label", localize("ROBEAR.Cards.ButtonTooltip"));
   button.innerHTML = '<i class="fa-solid fa-anchor fa-rotate-90" inert></i>';
   if ( !compact ) button.append(` ${localize("ROBEAR.Cards.Button")}`);
@@ -770,7 +775,7 @@ export function describeD20s(values) {
  * @param {Roll[]} rolls
  * @returns {number}
  */
-function sumTotals(rolls) {
+export function sumTotals(rolls) {
   return rolls.reduce((total, r) => total + r.total, 0);
 }
 

@@ -6,7 +6,7 @@
  * exactly the die forced for it.
  */
 
-import { MODULE_ID } from "./config.mjs";
+import { MODULE_ID, PLAYER_USER } from "./config.mjs";
 import {
   assert, assertEqual, cardsOnRow, clickRoll, forceDice, playCard, postRequest, readCard, rollButton, test, unusedDice,
   waitFor, waitForCard, waitForRoll
@@ -674,6 +674,34 @@ test("roll-off: the NPC's roll is private to the GM until the GM shows it", asyn
   await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-reveal`).click();
   card = await waitForCard(player, id, c => row(c, "Goblin").results[0].text === "?", "the NPC roll to be hidden again");
   assertEqual(card.summary, "The result is hidden.", "the player's summary once hidden again");
+});
+
+// Showing the NPC's roll never makes it more public than the request: a private request's roll goes only to the GM and
+// the players in the request.
+test("roll-off: in a private request, showing the NPC's roll shows it only to the players in it", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const id = await postRequest(ctx, {
+    mode: "rolloff", parts: [athletics(null), athletics(null)], rollMode: "gm",
+    sides: [[ids.aria], [ids.goblin]], actors: [ids.aria, ids.goblin]
+  });
+  await forceDice(gm, [d20(16)]);
+  await clickRoll(gm, id, "Goblin", { fastForward: true });
+  const goblin = await waitForRoll(gm, id, ids.goblin, 1);
+  await revealRival(gm, player, id);
+
+  // The player can see the roll as soon as it reaches them, which can be before the GM's own copy has caught up.
+  const users = await gm.eval(name => ({
+    gms: game.users.filter(u => u.isGM).map(u => u.id),
+    player: game.users.getName(name).id
+  }), PLAYER_USER);
+  await waitFor(gm, ({ id, whisper }) => game.messages.get(id).whisper.join() === whisper.join(),
+    { id: goblin.id, whisper: [...users.gms, users.player] }, "the Goblin's roll to be shown only to the GM and Aria's player");
+
+  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-reveal`).click();
+  await waitFor(gm, ({ id, gms }) => game.messages.get(id).whisper.every(u => gms.includes(u)), { id: goblin.id, gms: users.gms },
+    "the Goblin's roll to be hidden again");
+  const card = await waitForCard(player, id, c => row(c, "Goblin").results[0]?.text === "?", "the NPC roll to be hidden again");
+  assertEqual(row(card, "Goblin").results[0].text, "?", "the Goblin's result once hidden again");
 });
 
 test("roll-off: equal d20s tie, and a card can be played on a plain d20", async (ctx) => {

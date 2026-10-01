@@ -59,24 +59,27 @@ if ( manifest ) {
 /**
  * Every language file must parse, and every string key the scripts and templates use must be in each of them: a
  * missing key shows in the game as the key itself, such as "ROBEAR.Request.Roll".
+ *
+ * Every script is read, not just those the manifest loads, since the rest are imported by them. Keys are found as
+ * whole string literals, so a key must be written out in full rather than built from pieces.
  * @param {object} manifest
  */
 async function validateLanguages(manifest) {
+  const listed = async dir => (await readdir(resolve(root, dir))).map(f => `${dir}/${f}`);
   const files = [
-    ...(manifest.esmodules ?? []),
-    ...(await readdir(resolve(root, "templates"))).map(f => `templates/${f}`)
+    ...(await listed("scripts")).filter(f => f.endsWith(".mjs")),
+    ...(await listed("templates")).filter(f => f.endsWith(".hbs"))
   ];
   const used = new Set();
   for ( const rel of files ) {
     const source = await readFile(resolve(root, rel), "utf8");
-    for ( const [, key] of source.matchAll(/["'](ROBEAR\.[A-Za-z0-9.]+)["']/g) ) used.add(key);
+    for ( const [, key] of source.matchAll(/["'`](ROBEAR\.[A-Za-z0-9.]+)["'`]/g) ) used.add(key);
   }
 
   for ( const { lang, path } of manifest.languages ?? [] ) {
     let strings;
     try {
       strings = JSON.parse(await readFile(resolve(root, path), "utf8"));
-      console.log(`ok    ${path}`);
     } catch ( err ) {
       fail(`${path}: ${err.message}`);
       continue;

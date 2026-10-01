@@ -12,6 +12,7 @@ import {
 
 /**
  * Rolls Indomitable is being used on from this client, so a second click cannot spend another use on the same roll.
+ * Each entry is removed once its use finishes, however it ends.
  * @type {Set<string>}
  */
 const using = new Set();
@@ -130,7 +131,11 @@ async function confirmIndomitable(item) {
 /* -------------------------------------------- */
 
 /**
- * Reroll the save, then spend the use, so a reroll that fails costs nothing.
+ * Reroll the save and spend the use. The use is spent before the roll is saved, and given back if saving the roll
+ * fails, so the player never loses a use without getting the reroll.
+ *
+ * If two clients use it on the same roll at the same moment, both write the same `spent` count, so one use is spent,
+ * and the roll ends as whichever reroll was saved last.
  * @param {ChatMessage5e} message
  * @param {Item5e} item  The Indomitable feature.
  */
@@ -163,8 +168,14 @@ async function rerollWithIndomitable(message, item) {
     by: item.actor.name
   };
   const log = [...(message.getFlag(MODULE_ID, "log") ?? []), entry];
-  await item.update({ "system.uses.spent": (item.system.uses.spent ?? 0) + 1 });
-  await message.update({ rolls: rolls.map(r => r.toJSON()), [`flags.${MODULE_ID}.log`]: log });
+  const spent = item.system.uses.spent ?? 0;
+  await item.update({ "system.uses.spent": spent + 1 });
+  try {
+    await message.update({ rolls: rolls.map(r => r.toJSON()), [`flags.${MODULE_ID}.log`]: log });
+  } catch(err) {
+    await item.update({ "system.uses.spent": spent });
+    throw err;
+  }
 }
 
 /* -------------------------------------------- */
@@ -182,7 +193,7 @@ export function createIndomitableButton(message, { compact=false }={}) {
   button.type = "button";
   button.className = compact ? "robear-feature-button icon" : "robear-feature-button";
   const label = localize("ROBEAR.Indomitable.Button", { name: item.name });
-  button.dataset.tooltip = localize("ROBEAR.Indomitable.ButtonTooltip", { name: item.name, uses: item.system.uses.value });
+  button.dataset.tooltipText = localize("ROBEAR.Indomitable.ButtonTooltip", { name: item.name, uses: item.system.uses.value });
   button.setAttribute("aria-label", label);
   button.innerHTML = '<i class="fa-solid fa-shield-halved" inert></i>';
   if ( !compact ) button.append(` ${label}`);

@@ -76,13 +76,20 @@ export const DICE = {
 export const CHALLENGE_PARTS = 3;
 
 /**
+ * Kinds of roll a request part can ask for, besides the plain dice.
+ */
+const PART_TYPES = ["skill", "check", "save", "tool"];
+
+/**
  * Requests with a roll in progress on this client, keyed by "messageId.actorUuid.part", to ignore repeat clicks.
+ * Another client can still roll at the same moment; if both rolls land, getResults counts the first.
  * @type {Set<string>}
  */
 const rolling = new Set();
 
 /**
  * Roll messages whose dice breakdown is open on the request card, so it stays open when the card is redrawn.
+ * A message is forgotten when it is deleted.
  * @type {Set<string>}
  */
 const expandedRolls = new Set();
@@ -90,7 +97,7 @@ const expandedRolls = new Set();
 /**
  * The IDs of the roll messages made for each request, keyed by request message ID, so drawing a request card does not
  * search the whole chat log. Built from the chat log the first time it is needed, then kept up to date as roll
- * messages are created. A deleted message is simply no longer found.
+ * messages are created, and pruned as they are deleted.
  * @type {{ source: object, rolls: Map<string, Set<string>> }|null}
  */
 let rollIndex = null;
@@ -109,7 +116,7 @@ Hooks.on("dnd5e.renderChatMessage", onRenderChatMessage);
 Hooks.on("preDeleteChatMessage", onPreDeleteChatMessage);
 Hooks.on("createChatMessage", onCreateChatMessage);
 Hooks.on("updateChatMessage", refreshRequest);
-Hooks.on("deleteChatMessage", refreshRequest);
+Hooks.on("deleteChatMessage", onDeleteChatMessage);
 
 /**
  * Register the roll request settings.
@@ -143,11 +150,18 @@ function registerSettings() {
 /* -------------------------------------------- */
 
 /**
- * Open the roll request window.
+ * Open the roll request window, or bring it to the front if it is already open, keeping what the GM has filled in.
+ * A second window would replace the first under the same ID, leaving the first orphaned.
  * @returns {RollRequestConfig|void}
  */
 export function openRollRequest() {
   if ( !game.user.isGM ) return;
+  const open = foundry.applications.instances.get(RollRequestConfig.DEFAULT_OPTIONS.id);
+  if ( open?.rendered ) {
+    if ( open.minimized ) open.maximize();
+    open.bringToFront();
+    return open;
+  }
   const app = new RollRequestConfig();
   app.render({ force: true });
   return app;
@@ -166,7 +180,7 @@ function onRenderChatInput(_app, elements) {
   const button = document.createElement("button");
   button.type = "button";
   button.className = "ui-control icon fa-solid fa-anchor fa-rotate-90 robear-request-control";
-  button.dataset.tooltip = localize("ROBEAR.Request.WindowTitle");
+  button.dataset.tooltipText = localize("ROBEAR.Request.WindowTitle");
   button.setAttribute("aria-label", localize("ROBEAR.Request.WindowTitle"));
   button.addEventListener("click", openRollRequest);
   controls.prepend(button);
@@ -221,6 +235,25 @@ function onCreateChatMessage(message) {
 /* -------------------------------------------- */
 
 /**
+ * Forget a deleted message, so the roll index and open dice breakdowns don't grow for the whole session, then redraw
+ * its request.
+ * @param {ChatMessage5e} message
+ */
+function onDeleteChatMessage(message) {
+  expandedRolls.delete(message.id);
+  if ( rollIndex ) {
+    rollIndex.rolls.delete(message.id);
+    const requestId = message.getFlag(MODULE_ID, "requestRoll")?.request;
+    const ids = rollIndex.rolls.get(requestId);
+    ids?.delete(message.id);
+    if ( ids && !ids.size ) rollIndex.rolls.delete(requestId);
+  }
+  refreshRequest(message);
+}
+
+/* -------------------------------------------- */
+
+/**
  * Redraw the request card when one of its rolls is made, changed by a card, or deleted, and its rolls when its result
  * is shown or hidden.
  * @param {ChatMessage5e} message
@@ -261,11 +294,12 @@ function refreshRequest(message, changes) {
 
 /**
  * Post a roll request to chat.
- * @param {RollRequest} request
+ * @param {RollRequest} request  Anything left out that the request window always fills in is given the window's default.
  * @returns {Promise<ChatMessage5e>}
- * @throws {Error}  If the request has no one to roll, or a contest has an empty side.
+ * @throws {Error}  If the request can't be rolled: see validateRequest.
  */
 export async function createRequest(request) {
+  request = withDefaults(request);
   validateRequest(request);
   return ChatMessage.create({
     speaker: { alias: "RoBear-E" },
@@ -277,18 +311,62 @@ export async function createRequest(request) {
 /* -------------------------------------------- */
 
 /**
+ * Fill in what a macro may leave out, as the request window would.
+ * @param {Partial<RollRequest>} request
+ * @returns {RollRequest}  A copy, with the defaults filled in.
+ */
+export function withDefaults(request) {
+  const defaults = { rollMode: "public", showDC: game.settings.get(MODULE_ID, "showDCDefault") };
+  if ( request?.mode === "challenge" ) defaults.successes = 2;
+  if ( request?.mode === "divine" ) defaults.range = DIVINE_RANGE.initial;
+  const filled = { ...defaults, ...request };
+  for ( const key of Object.keys(defaults) ) filled[key] ??= defaults[key];
+  return filled;
+}
+
+/* -------------------------------------------- */
+
+/**
  * Check a request can be rolled before it is posted. The request window checks the same things with friendlier
  * messages, but a macro can call createRequest directly.
  * @param {RollRequest} request
  * @throws {Error}
  */
 export function validateRequest(request) {
-  if ( !(request?.mode in MODES) ) throw new Error(localize("ROBEAR.Request.Invalid.Mode", { mode: request?.mode }));
-  if ( !request.actors?.length ) throw new Error(localize("ROBEAR.Request.Invalid.NoActors"));
-  const parts = isContest(request) ? request.sides?.length : (request.mode === "challenge" ? CHALLENGE_PARTS : 1);
-  if ( (request.parts?.length ?? 0) < parts ) throw new Error(localize("ROBEAR.Request.Invalid.MissingRoll"));
-  if ( isContest(request) && ((request.sides?.length !== 2) || request.sides.some(s => !s?.length)) ) {
-    throw new Error(localize("ROBEAR.Request.Invalid.EmptySide"));
+  const check = (ok, key, data) => {
+    if ( !ok ) throw new Error(localize(key, data));
+  };
+  check(request?.mode in MODES, "ROBEAR.Request.Invalid.Mode", { mode: request?.mode });
+  check(request.actors?.length, "ROBEAR.Request.Invalid.NoActors");
+  check(["public", "gm"].includes(request.rollMode), "ROBEAR.Request.Invalid.RollMode", { rollMode: request.rollMode });
+
+  const contest = isContest(request);
+  if ( contest ) {
+    const { sides } = request;
+    check((sides?.length === 2) && sides.every(s => s?.length), "ROBEAR.Request.Invalid.EmptySide");
+    // A roll-off is scored by each side's one roll, so a second actor on a side would never count.
+    check((request.mode !== "rolloff") || sides.every(s => s.length === 1), "ROBEAR.Request.Invalid.RollOffSide");
+    // Results are only worked out for the request's actors, so anyone on a side must be one of them.
+    check(sides.flat().every(uuid => request.actors.includes(uuid)), "ROBEAR.Request.Invalid.SideNotActor");
+  }
+
+  const count = contest ? 2 : (request.mode === "challenge" ? CHALLENGE_PARTS : 1);
+  const parts = request.parts?.slice(0, count) ?? [];
+  check(parts.length >= count, "ROBEAR.Request.Invalid.MissingRoll");
+  for ( const part of parts ) {
+    check((part?.type in DICE) || PART_TYPES.includes(part?.type), "ROBEAR.Request.Invalid.Roll", { type: part?.type });
+    check((part.dc ?? null) === null || Number.isNumeric(part.dc), "ROBEAR.Request.Invalid.DC", { dc: part.dc });
+  }
+
+  const between = (n, min, max) => Number.isInteger(n) && (n >= min) && (n <= max);
+  if ( request.mode === "challenge" ) {
+    const { successes } = request;
+    check(between(successes, 1, CHALLENGE_PARTS), "ROBEAR.Request.Invalid.Successes", { successes, total: CHALLENGE_PARTS });
+  }
+  if ( request.mode === "divine" ) {
+    const { range } = request;
+    const { min, max } = DIVINE_RANGE;
+    check(between(range, min, max), "ROBEAR.Request.Invalid.Range", { range, min, max });
   }
 }
 
@@ -419,7 +497,10 @@ function isRollByOwner(roll, uuid) {
 
 /**
  * Find the results of each actor's rolls, from the roll messages tagged with this request.
- * In a contest each actor makes one roll, the one for their side. If a roll was made more than once, the latest counts.
+ * In a contest each actor makes one roll, the one for their side. If a roll was made more than once, such as by the GM
+ * and a player clicking Roll at the same moment, the first counts, so a second roll can't be used to fish for a better
+ * one. To let an actor roll again, the GM deletes the roll that counts. A card or feature played on a roll changes its
+ * message in place, so it stays the same roll.
  * A roll only counts if it was made by the GM or by one of the actor's owners.
  * @param {ChatMessage5e} message  The request message.
  * @returns {Map<string, (PartResult|null)[]>}  Results for each roll, keyed by actor UUID.
@@ -437,10 +518,12 @@ export function getResults(message) {
     if ( !results.has(actor) || !first || !(part in request.parts) ) continue;
     if ( contest && !request.sides[part]?.includes(actor) ) continue;
     if ( !isRollByOwner(roll, actor) ) continue;
+    const slot = contest ? 0 : part;
+    if ( results.get(actor)[slot] ) continue;
     const dc = request.parts[part].dc;
     let success = Number.isNumeric(dc) ? first.total >= dc : null;
     if ( range ) success = (first.total >= range.start) && (first.total <= range.end);
-    results.get(actor)[contest ? 0 : part] = {
+    results.get(actor)[slot] = {
       message: roll,
       total: first.total,
       natural: first.d20?.results.find(r => r.active)?.result,
@@ -596,9 +679,13 @@ function renderRequest(message, request) {
   if ( request.mode === "challenge" ) {
     const steps = document.createElement("ol");
     steps.className = "robear-request-steps";
-    steps.innerHTML = request.parts.map(p => {
-    return `<li>${foundry.utils.escapeHTML(getPartLabel(p))} <span>${getDCText(request, p.dc)}</span></li>`;
-  }).join("");
+    for ( const part of request.parts ) {
+      const step = document.createElement("li");
+      const dc = document.createElement("span");
+      dc.textContent = getDCText(request, part.dc);
+      step.append(getPartLabel(part), " ", dc);
+      steps.append(step);
+    }
     card.append(steps);
   }
 
@@ -664,16 +751,17 @@ function renderContest(card, message, request, results) {
     const block = document.createElement("section");
     block.className = "robear-request-side";
     if ( winner !== undefined ) block.classList.add(winner === side ? "success" : (winner === null ? "tie" : "failure"));
-    const score = pooled && isSettled(group) ? `<span class="robear-request-score"${exactTooltip(group)}>${group.score}</span>` : "";
-    block.innerHTML = `
-      <header>
-        <h4>${foundry.utils.escapeHTML(names[side])}</h4>
-        <span>${foundry.utils.escapeHTML(getPartLabel(request.parts[side]))}</span>
-        ${score}
-      </header>
-      <ul class="robear-request-actors"></ul>
-    `;
-    const list = block.querySelector("ul");
+    const header = document.createElement("header");
+    header.append(textElement("h4", names[side]), textElement("span", getPartLabel(request.parts[side])));
+    if ( pooled && isSettled(group) ) {
+      const score = textElement("span", group.score);
+      score.className = "robear-request-score";
+      setExactTooltip(score, group);
+      header.append(score);
+    }
+    const list = document.createElement("ul");
+    list.className = "robear-request-actors";
+    block.append(header, list);
     for ( const uuid of uuids ) {
       list.append(renderActorRow(message, request, uuid, results.get(uuid), { team: pooled ? group : null, side }));
     }
@@ -695,12 +783,9 @@ function renderContest(card, message, request, results) {
     const verdict = winner === null ? localize("ROBEAR.Request.Contest.Tie")
       : localize(pooled ? "ROBEAR.Request.Contest.TeamWins" : "ROBEAR.Request.Contest.Wins", { name: label(winner) });
     summary.classList.add(winner === null ? "tie" : "success");
-    summary.innerHTML = "<span></span><strong></strong>";
-    summary.querySelector("span").textContent = scores;
-    summary.querySelector("strong").textContent = verdict;
+    summary.append(textElement("span", scores), textElement("strong", verdict));
   } else if ( groups.every(g => g.complete) ) {
-    summary.innerHTML = "<span></span>";
-    summary.querySelector("span").textContent = localize("ROBEAR.Request.Contest.Hidden");
+    summary.append(textElement("span", localize("ROBEAR.Request.Contest.Hidden")));
   }
   const reveal = game.user.isGM ? renderRivalRevealButton(request, results) : null;
   if ( reveal ) summary.append(reveal);
@@ -710,13 +795,13 @@ function renderContest(card, message, request, results) {
 /* -------------------------------------------- */
 
 /**
+ * Show a group's exact average as the element's tooltip, if its score was rounded.
+ * @param {HTMLElement} element
  * @param {GroupOutcome} group
- * @returns {string}  A tooltip attribute showing the exact average, if it was rounded.
  */
-function exactTooltip(group) {
-  if ( group.exact === group.score ) return "";
-  const tooltip = localize("ROBEAR.Request.Team.ExactAverage", { average: group.exact.toFixed(2) });
-  return ` data-tooltip="${foundry.utils.escapeHTML(tooltip)}"`;
+function setExactTooltip(element, group) {
+  if ( group.exact === group.score ) return;
+  element.dataset.tooltipText = localize("ROBEAR.Request.Team.ExactAverage", { average: group.exact.toFixed(2) });
 }
 
 /* -------------------------------------------- */
@@ -758,14 +843,14 @@ export function renderActorRow(message, request, uuid, results, { team=null, sid
   }
   if ( team?.removed.has(uuid) ) {
     row.classList.add("removed");
-    row.dataset.tooltip = team.removed.get(uuid);
+    row.dataset.tooltipText = team.removed.get(uuid);
   }
 
   results.forEach((result, slot) => {
     if ( result?.range && result.visible ) {
       const range = document.createElement("span");
       range.className = "robear-request-range";
-      range.dataset.tooltip = localize("ROBEAR.Request.Divine.Picked");
+      range.dataset.tooltipText = localize("ROBEAR.Request.Divine.Picked");
       range.textContent = `${result.range.start}–${result.range.end}`;
       slots.append(range);
     }
@@ -792,12 +877,12 @@ export function renderActorRow(message, request, uuid, results, { team=null, sid
       // Players see only that the actor is finished, not how it went.
       if ( success !== null ) {
         badge.textContent = localize("ROBEAR.Request.Challenge.Done");
-        badge.dataset.tooltip = localize("ROBEAR.Request.Challenge.DoneTooltip");
+        badge.dataset.tooltipText = localize("ROBEAR.Request.Challenge.DoneTooltip");
       }
     } else {
       badge.textContent = hidden ? "?" : `${passed}/${request.successes}`;
       if ( !hidden && (success !== null) ) {
-        badge.dataset.tooltip = localize(success ? "ROBEAR.Request.Challenge.Passed" : "ROBEAR.Request.Challenge.Failed");
+        badge.dataset.tooltipText = localize(success ? "ROBEAR.Request.Challenge.Passed" : "ROBEAR.Request.Challenge.Failed");
       }
     }
     row.append(badge);
@@ -835,13 +920,25 @@ function renderRollDetail(message) {
   const detail = document.createElement("div");
   detail.className = "robear-request-roll-detail";
   detail.dataset.messageId = message.id;
-  detail.innerHTML = `<div class="robear-request-roll-flavor">${foundry.utils.escapeHTML(message.flavor ?? "")}</div>`;
+  const flavor = document.createElement("div");
+  flavor.className = "robear-request-roll-flavor";
+  flavor.textContent = message.flavor ?? "";
+  detail.append(flavor);
   for ( const roll of message.rolls ) {
     const formula = document.createElement("div");
     formula.className = "robear-request-roll-formula";
     formula.textContent = `${roll.formula} = ${roll.total}`;
-    detail.append(formula);
-    roll.getTooltip().then(html => detail.insertAdjacentHTML("beforeend", html));
+    // Each roll's dice go in a slot under its own formula, since they are drawn after the formulas are.
+    const dice = document.createElement("div");
+    detail.append(formula, dice);
+    roll.getTooltip()
+      .then(html => {
+        dice.outerHTML = html;
+      })
+      .catch(err => {
+        dice.remove();
+        console.error(`${MODULE_ID} | Could not draw the dice of roll message ${message.id}`, err);
+      });
   }
   return detail;
 }
@@ -883,7 +980,7 @@ function renderResult(result, part, row) {
   pill.className = "robear-request-result";
   if ( !result.visible ) {
     pill.textContent = "?";
-    pill.dataset.tooltip = localize("ROBEAR.Request.Result.Hidden");
+    pill.dataset.tooltipText = localize("ROBEAR.Request.Result.Hidden");
     return pill;
   }
   pill.textContent = result.total;
@@ -908,7 +1005,7 @@ function renderResult(result, part, row) {
     pill.addEventListener("click", toggle);
     pill.addEventListener("keydown", toggle);
   }
-  pill.dataset.tooltip = tooltip;
+  pill.dataset.tooltipText = tooltip;
   return pill;
 }
 
@@ -920,7 +1017,7 @@ function renderResult(result, part, row) {
 function renderPending() {
   const pending = document.createElement("span");
   pending.className = "robear-request-pending";
-  pending.dataset.tooltip = localize("ROBEAR.Request.Waiting");
+  pending.dataset.tooltipText = localize("ROBEAR.Request.Waiting");
   return pending;
 }
 
@@ -938,7 +1035,7 @@ function renderRollButton(message, request, actor, part) {
   const button = document.createElement("button");
   button.type = "button";
   button.className = "robear-request-roll";
-  button.dataset.tooltip = localize("ROBEAR.Request.RollTooltip", { roll: getPartLabel(request.parts[part]) });
+  button.dataset.tooltipText = localize("ROBEAR.Request.RollTooltip", { roll: getPartLabel(request.parts[part]) });
   button.innerHTML = '<i class="fa-solid fa-dice-d20" inert></i>';
   button.append(` ${request.mode === "challenge" ? part + 1 : localize("ROBEAR.Request.Roll")}`);
   button.addEventListener("click", async event => {
@@ -978,8 +1075,12 @@ function renderSummary(message, request, results, team) {
     if ( !revealed && !game.user.isGM ) return;
     const dc = request.parts[0].dc;
     const removed = team.removed.size ? localize("ROBEAR.Request.Team.Removed", { count: team.removed.size }) : "";
-    const average = localize("ROBEAR.Request.Team.Average", { average: `<strong>${team.score}</strong>`, removed });
-    summary.innerHTML = `<span${exactTooltip(team)}>${average}</span>`;
+    const score = document.createElement("strong");
+    score.textContent = team.score;
+    const average = document.createElement("span");
+    average.append(...formatNodes("ROBEAR.Request.Team.Average", { average: score, removed }));
+    setExactTooltip(average, team);
+    summary.append(average);
     if ( Number.isNumeric(dc) ) {
       const success = team.score >= dc;
       summary.classList.add(success ? "success" : "failure");
@@ -998,8 +1099,8 @@ function renderSummary(message, request, results, team) {
     // The GM decides when players see how the challenge went.
     const revealed = !!message.getFlag(MODULE_ID, "revealed");
     if ( !revealed && !game.user.isGM ) return;
-    const text = localize("ROBEAR.Request.Summary.Challenge", { count: states.filter(s => s.success).length, total: rows.length });
-    summary.innerHTML = `<span>${text}</span>`;
+    const count = states.filter(s => s.success).length;
+    summary.append(textElement("span", localize("ROBEAR.Request.Summary.Challenge", { count, total: rows.length })));
     if ( game.user.isGM ) summary.append(renderRevealButton(message, revealed));
     return summary;
   }
@@ -1008,8 +1109,10 @@ function renderSummary(message, request, results, team) {
   if ( request.mode === "divine" ) {
     const answered = rows.filter(r => r[0].success).length;
     summary.classList.add(answered ? "success" : "failure");
-    summary.innerHTML = `<span>${localize("ROBEAR.Request.Summary.Divine", { count: answered, total: rows.length })}</span>`
-      + `<strong>${localize(answered ? "ROBEAR.Request.Divine.Answered" : "ROBEAR.Request.Divine.NoAnswer")}</strong>`;
+    summary.append(
+      textElement("span", localize("ROBEAR.Request.Summary.Divine", { count: answered, total: rows.length })),
+      textElement("strong", localize(answered ? "ROBEAR.Request.Divine.Answered" : "ROBEAR.Request.Divine.NoAnswer"))
+    );
     return summary;
   }
   if ( !Number.isNumeric(request.parts[0].dc) ) return;
@@ -1017,10 +1120,41 @@ function renderSummary(message, request, results, team) {
   // The GM decides when players see how many succeeded.
   const revealed = !!message.getFlag(MODULE_ID, "revealed");
   if ( !revealed && !game.user.isGM ) return;
-  const text = localize("ROBEAR.Request.Summary.Standard", { count: rows.filter(r => r[0].success).length, total: rows.length });
-  summary.innerHTML = `<span>${text}</span>`;
+  const count = rows.filter(r => r[0].success).length;
+  summary.append(textElement("span", localize("ROBEAR.Request.Summary.Standard", { count, total: rows.length })));
   if ( game.user.isGM ) summary.append(renderRevealButton(message, revealed));
   return summary;
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {string} tag
+ * @param {string} text
+ * @returns {HTMLElement}  An element holding the text as text, never parsed as HTML.
+ */
+function textElement(tag, text) {
+  const element = document.createElement(tag);
+  element.textContent = text;
+  return element;
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Translate a string whose {placeholders} may be filled with elements as well as text, so a translation can place
+ * them anywhere without the string ever being parsed as HTML.
+ * @param {string} key
+ * @param {Record<string, Node|string|number>} data
+ * @returns {(Node|string)[]}  The pieces, in order, ready to append.
+ */
+export function formatNodes(key, data) {
+  return localize(key).split(/({[^}]+})/).filter(Boolean).map(piece => {
+    const name = piece.match(/^{([^}]+)}$/)?.[1];
+    if ( !name || !(name in data) ) return piece;
+    const value = data[name];
+    return value instanceof Node ? value : String(value ?? "");
+  });
 }
 
 /* -------------------------------------------- */
@@ -1047,7 +1181,7 @@ function renderToggleButton(revealed, labels, toggle) {
   const button = document.createElement("button");
   button.type = "button";
   button.className = `robear-request-reveal${revealed ? " revealed" : ""}`;
-  button.dataset.tooltip = localize(revealed ? "ROBEAR.Request.Reveal.ShownTooltip" : "ROBEAR.Request.Reveal.HiddenTooltip");
+  button.dataset.tooltipText = localize(revealed ? "ROBEAR.Request.Reveal.ShownTooltip" : "ROBEAR.Request.Reveal.HiddenTooltip");
   button.innerHTML = `<i class="fa-solid ${revealed ? "fa-eye" : "fa-eye-slash"}" inert></i>`;
   button.append(` ${localize(revealed ? labels.shown : labels.hidden)}`);
   button.addEventListener("click", async event => {
@@ -1078,17 +1212,28 @@ function isHiddenRival(request, actor) {
 /* -------------------------------------------- */
 
 /**
- * A GM button to show the NPC's roll-off roll to players, by making its private roll public, or to hide it again.
+ * A GM button to show the NPC's roll-off roll to players, or to hide it again. The roll is a private GM roll until it
+ * is shown. It is then shown as the request's other rolls are: to everyone for a public request, or for a private
+ * one only to the players in it, so showing it never makes it more public than the request itself.
  * @param {RollRequest} request
  * @param {Map<string, (PartResult|null)[]>} results
- * @returns {HTMLButtonElement|void}  Nothing until an NPC has rolled.
+ * @returns {HTMLButtonElement|void}  Nothing until an NPC has rolled, or if there is no player to show it to.
  */
 function renderRivalRevealButton(request, results) {
   const rolls = request.actors.filter(uuid => isHiddenRival(request, fromUuidSync(uuid)))
     .map(uuid => results.get(uuid)[0]?.message).filter(Boolean);
   if ( !rolls.length ) return;
-  const revealed = rolls.every(m => !m.whisper.length);
-  const whisper = revealed ? ChatMessage.getWhisperRecipients("GM").map(u => u.id) : [];
+  const gms = ChatMessage.getWhisperRecipients("GM").map(u => u.id);
+  let shownTo = [];
+  if ( request.rollMode === "gm" ) {
+    const players = game.users.filter(u => !u.isGM && request.actors.some(uuid => {
+      return fromUuidSync(uuid)?.testUserPermission?.(u, "OWNER");
+    })).map(u => u.id);
+    if ( !players.length ) return;
+    shownTo = [...gms, ...players];
+  }
+  const revealed = rolls.every(m => !m.whisper.length || m.whisper.some(id => !gms.includes(id)));
+  const whisper = revealed ? gms : shownTo;
   return renderToggleButton(revealed, { hidden: "ROBEAR.Request.Reveal.ShowNPC", shown: "ROBEAR.Request.Reveal.NPCShown" },
     () => ChatMessage.updateDocuments(rolls.map(m => ({ _id: m.id, whisper }))));
 }
@@ -1185,6 +1330,7 @@ async function chooseRange(actor, size) {
     <button type="button" class="robear-divine-number" data-number="${i + 1}">${i + 1}</button>
   `).join("");
 
+  const { escapeHTML } = foundry.utils;
   let start;
   return foundry.applications.api.DialogV2.wait({
     classes: ["robear-card-dialog", "robear-divine-dialog"],
@@ -1194,9 +1340,9 @@ async function chooseRange(actor, size) {
     },
     position: { width: 460 },
     content: `
-      <p class="robear-card-hint">${localize("ROBEAR.Request.Divine.DialogHint", { count: size })}</p>
+      <p class="robear-card-hint">${escapeHTML(localize("ROBEAR.Request.Divine.DialogHint", { count: size }))}</p>
       <div class="robear-divine-grid">${cells}</div>
-      <p class="robear-divine-choice">${localize("ROBEAR.Request.Divine.NonePicked")}</p>
+      <p class="robear-divine-choice">${escapeHTML(localize("ROBEAR.Request.Divine.NonePicked"))}</p>
     `,
     buttons: [
       {

@@ -65,8 +65,10 @@ sheet. Divine Intervention's chat card has a button to roll its 1d100.
 A few things to know:
 
 - **Natural 1s and 20s lock the cards.** By default no card can be played on a roll whose d20 shows a
-  natural 1 or 20. The GM can turn this off in **Configure Settings → RoBear-E**; Luck still can't be
-  played on a natural 1 or 20 either way. Rolls without a d20, such as damage, aren't affected.
+  natural 1 or 20, except **Indomitable**: it only ever rerolls a failed save, so it can still be
+  played on a failed natural 1. The GM can turn the lock off in **Configure Settings → RoBear-E**; Luck
+  still can't be played on a natural 1 or 20 either way. Rolls without a d20, such as damage, aren't
+  affected.
 - Cards can only be played on your own rolls.
 - Death saving throws can't be changed, because D&D 5e has already applied the result.
 - Play a card on a damage roll **before** applying the damage — damage that's already been
@@ -84,7 +86,8 @@ roll request's card updates too.
   own message says which roll it went to. A die can only be used once.
 - Only the player who rolled the die can spend it, or the GM.
 - Any roll you can see can be chosen. If it isn't yours to change, such as a monster's roll for
-  Cutting Words, the GM's Foundry applies it, so a GM needs to be logged in.
+  Cutting Words, the GM's Foundry applies it, so a GM needs to be logged in. If the GM's Foundry
+  can't apply it, you're told, and the die isn't spent.
 - Checks, saves, attacks and damage can't be used as the die.
 
 ## Fighter's Indomitable
@@ -93,7 +96,8 @@ A Fighter with the **Indomitable** feature from D&D 5e's compendiums can use it 
 they failed. A **Use Indomitable** button appears on the failed save, and on its row of a roll
 request's card. It's also in the save's right-click menu. Using it spends one use of the feature
 and rerolls the d20, and the new roll stands. A save rolled with no DC can't be known to have
-failed, so the button is offered on it either way, and asks you to confirm before spending a use. Under the 2024 rules the reroll also adds the
+failed, so the button is offered on it either way, and asks you to confirm before spending a use.
+If the reroll can't be saved, the use is given back. Under the 2024 rules the reroll also adds the
 Fighter's level; under the 2014 rules it doesn't. The save notes what happened, e.g.
 "Indomitable: rerolled the d20 (6 → 8) + 9 (Fighter level): 6 → 17".
 
@@ -101,7 +105,9 @@ Indomitable, the feature or the RoBear-E card, is only offered once the player c
 failed. On a roll request whose result the GM hasn't shown yet, it appears when the GM clicks
 **Show to players**, since offering it any sooner would tell the player they failed.
 
-This is the class feature. The RoBear-E **Indomitable** card is separate and works as before.
+This is the class feature. The RoBear-E **Indomitable** card is separate and works as before, and like
+the feature it can be played on a failed natural 1 even with **Natural 1s and 20s lock RoBear-E
+Cards** on.
 
 ## Asking for Rolls (GM)
 
@@ -132,10 +138,13 @@ A few things to know:
 - A roll only counts on the request if it was made by the GM or by one of the actor's owners.
 - To let someone roll again, the GM deletes their roll message and the **Roll** button comes back.
   Players can't delete a roll made for a request, so a bad roll can't be thrown away.
+- If the same roll is made twice, such as by the GM and a player clicking **Roll** at the same moment,
+  the first one counts.
 - With **Show DC to Players** off, players see "DC ?", and the DC is kept off their roll so
   D&D 5e doesn't show success or failure on it. It starts off for each new request; the GM can
   make it start on with **Show the DC to players by default** in **Configure Settings → RoBear-E**.
-- With **Private GM Roll**, each player sees only their own results.
+- With **Private GM Roll**, each player sees only their own results. In a private Roll-Off,
+  **Show NPC roll** shows the NPC's roll only to the players in the request, not to everyone.
 - **What "hidden" means.** The DC, and results the GM hasn't shown yet, are hidden on the chat card,
   but they still reach every player's Foundry as part of the request. A player who opens the browser
   console can read them. That's how Foundry shares chat messages, so treat the hiding as keeping the

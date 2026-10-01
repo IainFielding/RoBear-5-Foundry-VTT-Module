@@ -185,10 +185,10 @@ export default class RollRequestPopup extends ApplicationV2 {
   }
 
   /**
-   * Whether the pop-up is already set to close.
-   * @type {boolean}
+   * The timer that closes the pop-up once everything is rolled, if one is running.
+   * @type {number|null}
    */
-  #closing = false;
+  #closeTimer = null;
 
   /* -------------------------------------------- */
 
@@ -223,10 +223,31 @@ export default class RollRequestPopup extends ApplicationV2 {
   async _onRender(context, options) {
     await super._onRender(context, options);
     this.setPosition({ height: "auto" });
-    // Once everything is rolled, leave the results up a moment, then close.
+    // Once everything is rolled, leave the results up a moment, then close. If a roll is deleted in that moment, so
+    // there is something to roll again, the pop-up stays open.
     const request = this.message.getFlag(MODULE_ID, "request");
-    if ( this.#closing || hasRollsLeft(this.message, getPopupActors(request)) ) return;
-    this.#closing = true;
-    setTimeout(() => this.close(), CLOSE_DELAY_MS);
+    if ( hasRollsLeft(this.message, getPopupActors(request)) ) this.#cancelClose();
+    else this.#closeTimer ??= setTimeout(() => {
+      this.#closeTimer = null;
+      this.close();
+    }, CLOSE_DELAY_MS);
+  }
+
+  /* -------------------------------------------- */
+
+  /** @inheritDoc */
+  _onClose(options) {
+    super._onClose(options);
+    this.#cancelClose();
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Stop the pop-up closing itself.
+   */
+  #cancelClose() {
+    clearTimeout(this.#closeTimer);
+    this.#closeTimer = null;
   }
 }
