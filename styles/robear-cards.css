@@ -22,6 +22,60 @@
   margin-top: 4px;
 }
 
+/* A natural 20, ringed in gold as the Character Creator's Level Up button is once the XP is there: a gold ring that
+   turns and a glow that breathes. The ring is a masked conic gradient on ::before, so it follows the element's own
+   rounding. */
+@property --robear-nat20-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.chat-message .robear-natural-20,
+:is(.chat-message, .robear-request-popup) .robear-request-result.critical {
+  position: relative;
+  overflow: visible;
+  color: #f5c542;
+  animation: robear-nat20-glow 1.8s ease-in-out infinite;
+}
+
+.chat-message .robear-natural-20::before,
+:is(.chat-message, .robear-request-popup) .robear-request-result.critical::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(from var(--robear-nat20-angle),
+    #fff4c2, #f5c542 20%, #a8741a 40%, #f5c542 60%, #fff4c2 80%, #f5c542);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: robear-nat20-spin 2.4s linear infinite;
+}
+
+@keyframes robear-nat20-spin { to { --robear-nat20-angle: 360deg; } }
+@keyframes robear-nat20-glow {
+  0%, 100% { box-shadow: 0 0 4px 1px rgba(245, 197, 66, 0.55); }
+  50% { box-shadow: 0 0 12px 4px rgba(255, 214, 92, 0.95); }
+}
+
+/* No motion: a steady gold ring and glow, still unmistakable. */
+@media (prefers-reduced-motion: reduce) {
+  .chat-message .robear-natural-20,
+  .chat-message .robear-natural-20::before,
+  :is(.chat-message, .robear-request-popup) .robear-request-result.critical,
+  :is(.chat-message, .robear-request-popup) .robear-request-result.critical::before {
+    animation: none;
+  }
+  .chat-message .robear-natural-20,
+  :is(.chat-message, .robear-request-popup) .robear-request-result.critical {
+    box-shadow: 0 0 8px 2px rgba(245, 197, 66, 0.8);
+  }
+}
+
 /* -------------------------------------------- */
 /*  Card Dialog — "Arcane Midnight", the theme  */
 /*  of the Simple D&D 5e Character Creator's    */

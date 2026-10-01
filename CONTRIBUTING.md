@@ -20,10 +20,17 @@ New-Item -ItemType Junction -Path "$env:LOCALAPPDATA\FoundryVTT\Data\modules\sog
 
 ## Compendium packs
 
-The packs in `packs/` are LevelDB databases, and Foundry holds them open while a world using
-the module is running. Either edit them in Foundry, or close Foundry and rebuild them with the
-[Foundry CLI](https://github.com/foundryvtt/foundryvtt-cli) — never both at once, or one set
-of changes will overwrite the other.
+The packs are committed as YAML in `src/packs/`, one file per document. The LevelDB databases
+Foundry reads, in `packs/`, are built from it and aren't committed: Foundry rewrites them
+whenever it opens them. The release workflow builds them before zipping the module.
+
+```sh
+npm run build:packs     # YAML → packs/, after cloning or pulling, before opening Foundry
+npm run extract:packs   # packs/ → YAML, after editing the packs in Foundry, then commit src/packs/
+```
+
+Close Foundry before either: it holds the databases open while a world using the module is
+running, and edits made in Foundry are lost if you build over them without extracting first.
 
 ## Before opening a pull request
 

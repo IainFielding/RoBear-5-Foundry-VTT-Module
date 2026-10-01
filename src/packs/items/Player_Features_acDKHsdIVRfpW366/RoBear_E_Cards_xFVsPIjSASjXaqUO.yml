@@ -1,0 +1,753 @@
+folder: acDKHsdIVRfpW366
+name: RoBear-E Cards
+type: feat
+_id: xFVsPIjSASjXaqUO
+img: icons/sundries/gaming/playing-cards-black.webp
+system:
+  activities:
+    28kjjOyF9Suf3hkq:
+      type: utility
+      name: Relentless
+      _id: 28kjjOyF9Suf3hkq
+      sort: 100000
+      activation:
+        type: ''
+        override: false
+        condition: ''
+      consumption:
+        scaling:
+          allowed: false
+        spellSlot: true
+        targets:
+          - type: activityUses
+            value: '1'
+      description:
+        chatFlavor: ''
+        value: >-
+          <p
+          style="text-align:center">@embed[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.3UmjWskjiAhYvXmo
+          inline]</p>
+      duration:
+        units: inst
+        concentration: false
+        override: false
+      effects: []
+      range:
+        units: self
+        override: false
+        special: ''
+      target:
+        template:
+          contiguous: false
+          units: ft
+          type: ''
+        affects:
+          choice: false
+          type: ''
+        override: false
+        prompt: false
+      uses:
+        spent: 0
+        recovery:
+          - period: lr
+            type: recoverAll
+        max: '1'
+      roll:
+        prompt: false
+        visible: false
+        name: ''
+        formula: ''
+      img: modules/sogrom-robear-e/assets/images/relentlessdc20.webp
+      appliedEffects: []
+      visibility:
+        level:
+          min: null
+          max: null
+        identifier: ''
+    exPS4XLFSs6pctgo:
+      type: utility
+      name: Reaction Surge
+      _id: exPS4XLFSs6pctgo
+      sort: 200000
+      activation:
+        type: ''
+        override: false
+        condition: ''
+      consumption:
+        scaling:
+          allowed: false
+        spellSlot: true
+        targets:
+          - type: activityUses
+            value: '1'
+      description:
+        chatFlavor: ''
+        value: >-
+          <p
+          style="text-align:center">@embed[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.Lhs0clYrsIkgrpsE
+          inline]</p>
+      duration:
+        units: inst
+        concentration: false
+        override: false
+      effects: []
+      range:
+        units: self
+        override: false
+        special: ''
+      target:
+        template:
+          contiguous: false
+          units: ft
+          type: ''
+        affects:
+          choice: false
+          type: ''
+        override: false
+        prompt: false
+      uses:
+        spent: 0
+        recovery:
+          - period: lr
+            type: recoverAll
+        max: '1'
+      roll:
+        prompt: false
+        visible: false
+        name: ''
+        formula: ''
+      img: modules/sogrom-robear-e/assets/images/reactionsurge.webp
+      appliedEffects: []
+      visibility:
+        level:
+          min: null
+          max: null
+        identifier: ''
+    uPqHABvpmYZr0ASg:
+      type: utility
+      name: Luck
+      _id: uPqHABvpmYZr0ASg
+      sort: 700000
+      activation:
+        type: ''
+        override: false
+        condition: ''
+      consumption:
+        scaling:
+          allowed: false
+        spellSlot: true
+        targets:
+          - type: activityUses
+            value: '1'
+      description:
+        chatFlavor: ''
+        value: >-
+          <p>@embed[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.LiLYG9ekrRw3bQph
+          inline]</p>
+      duration:
+        units: inst
+        concentration: false
+        override: false
+      effects: []
+      range:
+        units: self
+        override: false
+        special: ''
+      target:
+        template:
+          contiguous: false
+          units: ft
+          type: ''
+        affects:
+          choice: false
+          type: ''
+        override: false
+        prompt: true
+      uses:
+        spent: 0
+        recovery:
+          - period: lr
+            type: recoverAll
+        max: '1'
+      roll:
+        prompt: false
+        visible: false
+        name: ''
+        formula: ''
+      img: modules/sogrom-robear-e/assets/images/luckdc20.webp
+      appliedEffects: []
+      visibility:
+        level:
+          min: null
+          max: null
+        identifier: ''
+    aE8dyIQUgvXfcu3M:
+      type: utility
+      name: Indomitable
+      _id: aE8dyIQUgvXfcu3M
+      sort: 300000
+      activation:
+        type: ''
+        override: false
+        condition: ''
+      consumption:
+        scaling:
+          allowed: false
+        spellSlot: true
+        targets:
+          - type: activityUses
+            value: '1'
+      description:
+        chatFlavor: ''
+        value: >-
+          <p>@embed[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.vT9f82NznQJpiQFP
+          inline]</p>
+      duration:
+        units: inst
+        concentration: false
+        override: false
+      effects: []
+      range:
+        units: self
+        override: false
+        special: ''
+      target:
+        template:
+          contiguous: false
+          units: ft
+          type: ''
+        affects:
+          choice: false
+          type: ''
+        override: false
+        prompt: false
+      uses:
+        spent: 0
+        recovery:
+          - period: lr
+            type: recoverAll
+        max: '1'
+      roll:
+        prompt: false
+        visible: false
+        name: ''
+        formula: ''
+      img: modules/sogrom-robear-e/assets/images/indomitabledc20.webp
+      appliedEffects: []
+      visibility:
+        level:
+          min: null
+          max: null
+        identifier: ''
+    7e53TjAsIeMhGpCX:
+      type: utility
+      name: Extra Strike
+      _id: 7e53TjAsIeMhGpCX
+      sort: 400000
+      activation:
+        type: ''
+        override: false
+        condition: ''
+      consumption:
+        scaling:
+          allowed: false
+        spellSlot: true
+        targets:
+          - type: activityUses
+            value: '1'
+      description:
+        chatFlavor: ''
+        value: >-
+          <p>@embed[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.TTBtpUOLQvWTpd47
+          inline]</p>
+      duration:
+        units: inst
+        concentration: false
+        override: false
+      effects: []
+      range:
+        units: self
+        override: false
+        special: ''
+      target:
+        template:
+          contiguous: false
+          units: ft
+          type: ''
+        affects:
+          choice: false
+          type: ''
+        override: false
+        prompt: false
+      uses:
+        spent: 0
+        recovery:
+          - period: lr
+            type: recoverAll
+        max: '1'
+      roll:
+        prompt: false
+        visible: false
+        name: ''
+        formula: ''
+      img: modules/sogrom-robear-e/assets/images/extrastrikedc20.webp
+      appliedEffects: []
+      visibility:
+        level:
+          min: null
+          max: null
+        identifier: ''
+    FlKmWeXckuAoHciF:
+      type: utility
+      _id: FlKmWeXckuAoHciF
+      sort: 500000
+      activation:
+        type: ''
+        override: false
+        condition: ''
+      consumption:
+        scaling:
+          allowed: false
+        spellSlot: true
+        targets:
+          - type: activityUses
+            value: '1'
+      description:
+        chatFlavor: ''
+        value: >-
+          <p>@embed[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.1olSJkroTSqTWdey
+          inline]</p>
+      duration:
+        units: inst
+        concentration: false
+        override: false
+      effects: []
+      range:
+        units: self
+        override: false
+        special: ''
+      target:
+        template:
+          contiguous: false
+          units: ft
+          type: ''
+        affects:
+          choice: false
+          type: ''
+        override: false
+        prompt: false
+      uses:
+        spent: 0
+        recovery:
+          - period: lr
+            type: recoverAll
+        max: '1'
+      roll:
+        prompt: false
+        visible: false
+        name: ''
+        formula: ''
+      name: Charger
+      img: modules/sogrom-robear-e/assets/images/chargerdc20.webp
+      appliedEffects: []
+      visibility:
+        level:
+          min: null
+          max: null
+        identifier: ''
+    OkUWoFMxuyT5TxX7:
+      type: utility
+      name: Advantage
+      _id: OkUWoFMxuyT5TxX7
+      sort: 600000
+      activation:
+        type: ''
+        override: false
+        condition: ''
+      consumption:
+        scaling:
+          allowed: false
+        spellSlot: true
+        targets:
+          - type: activityUses
+            value: '1'
+      description:
+        chatFlavor: ''
+        value: >-
+          <p>@embed[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.kUmJLCna5paHGXPb
+          inline]</p>
+      duration:
+        units: inst
+        concentration: false
+        override: false
+      effects: []
+      range:
+        units: self
+        override: false
+        special: ''
+      target:
+        template:
+          contiguous: false
+          units: ft
+          type: ''
+        affects:
+          choice: false
+          type: ''
+        override: false
+        prompt: false
+      uses:
+        spent: 0
+        recovery:
+          - period: lr
+            type: recoverAll
+        max: '1'
+      roll:
+        prompt: false
+        visible: false
+        name: ''
+        formula: ''
+      img: modules/sogrom-robear-e/assets/images/advantagedc20.webp
+      appliedEffects: []
+      visibility:
+        level:
+          min: null
+          max: null
+        identifier: ''
+    wsXzhRxrJrqUqfnq:
+      type: utility
+      name: Minds Eye
+      _id: wsXzhRxrJrqUqfnq
+      sort: 800000
+      activation:
+        type: ''
+        override: false
+        condition: ''
+      consumption:
+        scaling:
+          allowed: false
+        spellSlot: true
+        targets:
+          - type: activityUses
+            value: '1'
+      description:
+        chatFlavor: ''
+        value: >-
+          <p>@embed[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.gFZbWI3XhrnvwFxk
+          inline]</p>
+      duration:
+        units: inst
+        concentration: false
+        override: false
+      effects: []
+      range:
+        units: self
+        override: false
+        special: ''
+      target:
+        template:
+          contiguous: false
+          units: ft
+          type: ''
+        affects:
+          choice: false
+          type: ''
+        override: false
+        prompt: false
+      uses:
+        spent: 0
+        recovery:
+          - period: lr
+            type: recoverAll
+        max: '1'
+      roll:
+        prompt: false
+        visible: false
+        name: ''
+        formula: ''
+      img: modules/sogrom-robear-e/assets/images/mindseye.webp
+      appliedEffects: []
+      visibility:
+        level:
+          min: null
+          max: null
+        identifier: ''
+    iE0w9Rp70zne6zuJ:
+      type: utility
+      name: Inspiration - 1d6
+      _id: iE0w9Rp70zne6zuJ
+      sort: 900000
+      activation:
+        type: ''
+        override: false
+        condition: ''
+      consumption:
+        scaling:
+          allowed: false
+        spellSlot: true
+        targets:
+          - type: activityUses
+            value: '1'
+      description:
+        chatFlavor: ''
+        value: >-
+          <p>@embed[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.DTI3JvisO4gEuo8j
+          inline]</p>
+      duration:
+        units: inst
+        concentration: false
+        override: false
+      effects: []
+      range:
+        units: self
+        override: false
+        special: ''
+      target:
+        template:
+          contiguous: false
+          units: ft
+          type: ''
+        affects:
+          choice: false
+          type: ''
+        override: false
+        prompt: false
+      uses:
+        spent: 0
+        recovery:
+          - period: lr
+            type: recoverAll
+        max: '1'
+      roll:
+        prompt: true
+        visible: false
+        name: Inspiration - 1d6
+        formula: 1d6
+      img: modules/sogrom-robear-e/assets/images/inspiration-1d6-dc20.webp
+      appliedEffects: []
+      visibility:
+        level:
+          min: null
+          max: null
+        identifier: ''
+    na7uWxkaPiGn00ZK:
+      type: utility
+      name: Inspiration - 1d8
+      sort: 900000
+      activation:
+        type: ''
+        override: false
+        condition: ''
+      consumption:
+        scaling:
+          allowed: false
+        spellSlot: true
+        targets:
+          - type: activityUses
+            value: '1'
+      description:
+        chatFlavor: ''
+        value: >-
+          <p>@embed[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.5xzTWpbOHtp9sFos
+          inline]</p>
+      duration:
+        units: inst
+        concentration: false
+        override: false
+      effects: []
+      range:
+        units: self
+        override: false
+        special: ''
+      target:
+        template:
+          contiguous: false
+          units: ft
+          type: ''
+        affects:
+          choice: false
+          type: ''
+        override: false
+        prompt: false
+      uses:
+        spent: 0
+        recovery:
+          - period: lr
+            type: recoverAll
+        max: '1'
+      roll:
+        prompt: true
+        visible: false
+        formula: 1d8
+        name: Inspiration - 1d8
+      _id: na7uWxkaPiGn00ZK
+      img: modules/sogrom-robear-e/assets/images/inspiration-1d8-dc20.webp
+      appliedEffects: []
+      visibility:
+        level:
+          min: null
+          max: null
+        identifier: ''
+    l1s90u72J3Q34HFN:
+      type: utility
+      name: Inspiration - 1d10
+      sort: 900000
+      activation:
+        type: ''
+        override: false
+        condition: ''
+      consumption:
+        scaling:
+          allowed: false
+        spellSlot: true
+        targets:
+          - type: activityUses
+            value: '1'
+      description:
+        chatFlavor: ''
+        value: >-
+          <p>@embed[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.SMKq7WxgtybcFQv7
+          inline]</p>
+      duration:
+        units: inst
+        concentration: false
+        override: false
+      effects: []
+      range:
+        units: self
+        override: false
+        special: ''
+      target:
+        template:
+          contiguous: false
+          units: ft
+          type: ''
+        affects:
+          choice: false
+          type: ''
+        override: false
+        prompt: false
+      uses:
+        spent: 0
+        recovery:
+          - period: lr
+            type: recoverAll
+        max: '1'
+      roll:
+        prompt: true
+        visible: false
+        formula: 1d10
+        name: Inspiration - 1d10
+      _id: l1s90u72J3Q34HFN
+      img: modules/sogrom-robear-e/assets/images/inspiration-1d10-dc20.webp
+      appliedEffects: []
+      visibility:
+        level:
+          min: null
+          max: null
+        identifier: ''
+    c4kwzmakUx2o9UFQ:
+      type: utility
+      name: Divine Intervention
+      sort: 900000
+      activation:
+        type: ''
+        override: false
+        condition: ''
+      consumption:
+        scaling:
+          allowed: false
+        spellSlot: true
+        targets:
+          - type: activityUses
+            value: '1'
+      description:
+        chatFlavor: ''
+        value: >-
+          <p>@embed[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.1dKe60pvTreDPlyu
+          inline]</p>
+      duration:
+        units: inst
+        concentration: false
+        override: false
+      effects: []
+      range:
+        units: self
+        override: false
+        special: ''
+      target:
+        template:
+          contiguous: false
+          units: ft
+          type: ''
+        affects:
+          choice: false
+          type: ''
+        override: false
+        prompt: false
+      uses:
+        spent: 0
+        recovery:
+          - period: lr
+            type: recoverAll
+        max: '1'
+      roll:
+        prompt: true
+        visible: false
+        formula: 1d100
+        name: Divine Intervention
+      _id: c4kwzmakUx2o9UFQ
+      img: modules/sogrom-robear-e/assets/images/divineintervention.webp
+      appliedEffects: []
+      visibility:
+        level:
+          min: null
+          max: null
+        identifier: ''
+  uses:
+    spent: 0
+    recovery: []
+    max: ''
+  description:
+    value: >-
+      <p>These Cards can be used once per long rest to influence things in the
+      game.</p>
+    chat: <p> </p>
+  identifier: robear-e
+  source:
+    revision: 1
+    rules: '2024'
+    book: RoBear-E
+    page: ''
+    custom: ''
+    license: ''
+  advancement: []
+  crewed: false
+  enchant: {}
+  prerequisites:
+    repeatable: false
+    level: 1
+  properties:
+    - mgc
+    - trait
+  requirements: A RoBear-E Campaign
+  type:
+    value: ''
+    subtype: epicBoon
+effects: []
+sort: 0
+ownership:
+  default: 0
+  aIghMfAvO7zq37fB: 3
+flags:
+  dnd5e: {}
+_stats:
+  compendiumSource: null
+  duplicateSource: null
+  exportSource: null
+  coreVersion: '14.368'
+  systemId: dnd5e
+  systemVersion: 6.0.5
+  createdTime: 1748768316573
+  modifiedTime: 1790547562901
+  lastModifiedBy: kA3WMBmNO8WoBNb4
+_key: '!items!xFVsPIjSASjXaqUO'

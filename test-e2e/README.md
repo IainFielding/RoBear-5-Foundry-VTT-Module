@@ -22,6 +22,8 @@ The harness is not shipped: the release archive in `.github/workflows/main.yml` 
    ```
 
 3. `npm install`, then `npx playwright install chromium` if Playwright has no browser yet.
+4. `npm run build:packs`, so the module has its compendium packs, and again after the YAML in `src/packs/`
+   changes.
 
 Close any Foundry you have running first: only one Foundry can use the data folder at a time.
 

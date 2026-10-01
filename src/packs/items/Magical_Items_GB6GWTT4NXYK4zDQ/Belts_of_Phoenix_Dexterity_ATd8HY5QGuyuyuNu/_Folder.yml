@@ -1,0 +1,19 @@
+name: Belts of Phoenix Dexterity
+sorting: a
+folder: GB6GWTT4NXYK4zDQ
+type: Item
+_id: ATd8HY5QGuyuyuNu
+description: ''
+sort: 100000
+color: null
+flags: {}
+_stats:
+  compendiumSource: null
+  duplicateSource: null
+  exportSource: null
+  coreVersion: '13.345'
+  systemId: dnd5e
+  systemVersion: 5.0.3
+  lastModifiedBy: aIghMfAvO7zq37fB
+  modifiedTime: 1750025482379
+_key: '!folders!ATd8HY5QGuyuyuNu'

@@ -209,6 +209,17 @@ test("natural 1s and 20s: the lock applies on a request card too", async (ctx) =
   assertEqual(card.rows[0].cardButton, false, "a card button beside a natural 20");
 });
 
+test("natural 20s: the total is ringed in gold, and no other roll's is", async ({ player }) => {
+  for ( const [natural, kind] of [[20, "save"], [20, "skill"], [19, "save"], [1, "save"]] ) {
+    await forceDice(player, [d20(natural)]);
+    const id = await roll(player, "Aria", kind);
+    const dice = player.page.locator(`#chat .chat-log [data-message-id="${id}"] .message-content .dice-roll`);
+    await dice.waitFor({ timeout: 5000 });
+    assertEqual(await dice.evaluate(el => el.matches(".robear-natural-20, :has(.robear-natural-20)")), natural === 20,
+      `gold ring on a ${kind} showing a natural ${natural}`);
+  }
+});
+
 // Luck is never playable on a natural 1 or 20. With the lock off, the other cards are.
 test("luck: never offered on a natural 1 or 20, even with the lock setting off", async ({ gm, player }) => {
   await setLockNaturals(gm, player, false);
@@ -293,12 +304,13 @@ test("indomitable: rerolls a failed saving throw only", async ({ player }) => {
   assertEqual(await player.eval(id => game.messages.get(id).rolls[0].isSuccess, failed), true, "the save now passes");
 });
 
-// Indomitable only rerolls a failed save, so the natural 1s and 20s lock doesn't keep it off a natural 1, while the
-// other cards stay locked.
-test("indomitable: still offered on a failed natural 1 with the lock on", async ({ player }) => {
-  await forceDice(player, [d20(1)]);
-  const failed = await roll(player, "Aria", "save", { config: { target: 15 } });
-  assertEqual(await cardsOffered(player, failed), ["Indomitable"], "the cards offered on a natural 1 failed save");
+// The natural 1s and 20s lock keeps Indomitable off a natural 1 too, with or without a DC.
+test("indomitable: locked on a natural 1 save, as the other cards are", async ({ player }) => {
+  for ( const config of [{ target: 15 }, {}] ) {
+    await forceDice(player, [d20(1)]);
+    const id = await roll(player, "Aria", "save", { config });
+    assertEqual(await cardButton(player, id).count(), 0, `card buttons on a natural 1 save (DC ${config.target ?? "none"})`);
+  }
 });
 
 /* -------------------------------------------- */
@@ -333,6 +345,22 @@ test("relentless: rerolls initiative in the first round and updates the tracker"
   }, result.total, "the tracker to show the new initiative");
   assertEqual(initiative, result.total, "combatant initiative");
   assert(result.log[0].startsWith("Relentless: rerolled the d20 (3 → 19)"), `the card's note: ${result.log[0]}`);
+});
+
+test("relentless: a lower reroll keeps the initiative it had", async ({ gm, player }) => {
+  await startCombat(gm, 1);
+  await waitFor(player, () => !!game.combat?.combatants.size, null, "the combat to reach the player");
+  await forceDice(player, [d20(15)]);
+  const id = await roll(player, "Aria", "initiative");
+  const before = await player.eval(id => game.messages.get(id).rolls[0].total, id);
+  const uses = await usesLeft(player, "Relentless");
+  await forceDice(player, [d20(4)]);
+  await cardsOffered(player, id, "Relentless");
+  const result = await afterCard(player, id);
+  assertEqual(result.total, before, "initiative after a lower reroll");
+  assertEqual(result.log, [`Relentless: rerolled the d20 (15 → 4): ${before} or ${before - 11}, keeping ${before}`],
+    "the card's note");
+  assertEqual(await usesLeft(player, "Relentless"), uses - 1, "Relentless uses left, spent even though the reroll was lower");
 });
 
 test("relentless: not offered after the first round", async ({ gm, player }) => {

@@ -31,9 +31,7 @@ const CARDS = {
   indomitable: {
     ids: ["aE8dyIQUgvXfcu3M"],
     names: ["indomitable"],
-    appliesTo: ["save"],
-    // Playable on a natural 1 or 20 even with the Natural 1s and 20s setting on: see getCardOptions.
-    ignoresLock: true
+    appliesTo: ["save"]
   },
   relentless: {
     ids: ["28kjjOyF9Suf3hkq"],
@@ -153,6 +151,7 @@ function wrapItemUse() {
 function onRenderChatMessage(message, html) {
   // The notes on cards already played stay, even once no card is left to play on the roll.
   const content = html.querySelector(".message-content");
+  if ( message.isContentVisible ) markNatural20s(message, html);
   content?.append(...renderLog(message));
   if ( getCardOptions(message).length ) content?.append(createCardButton(message));
 
@@ -168,6 +167,25 @@ function onRenderChatMessage(message, html) {
 
   const activity = getCardActivity(message);
   if ( activity ) compactCardUsage(html, activity);
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Ring the total of each of the message's d20 rolls that shows a natural 20 in gold, like the Character Creator's
+ * Level Up button once the XP is there.
+ * @param {ChatMessage5e} message
+ * @param {HTMLElement} html
+ */
+function markNatural20s(message, html) {
+  // Rolls of other messages, summarised inside this one, aren't this message's rolls.
+  const rolls = [...html.querySelectorAll(".message-content .dice-roll")]
+    .filter(el => !el.closest(".card-summary, .robear-request"));
+  if ( rolls.length !== message.rolls.length ) return;
+  message.rolls.forEach((roll, i) => {
+    // The classic layout's total, or the whole roll in dnd5e's compact layout, which has no separate total.
+    if ( getNatural(roll) === 20 ) (rolls[i].querySelector(".dice-total") ?? rolls[i]).classList.add("robear-natural-20");
+  });
 }
 
 /* -------------------------------------------- */
@@ -395,7 +413,7 @@ export function getCardOptions(message) {
 
   const roll = message.rolls[0];
   const d20 = (roll instanceof CONFIG.Dice.D20Roll) ? roll.d20 : null;
-  const natural = d20?.results.find(r => r.active)?.result;
+  const natural = getNatural(roll);
   const locked = [1, 20].includes(natural) && game.settings.get(MODULE_ID, "lockNaturals");
   const options = [];
 
@@ -405,9 +423,7 @@ export function getCardOptions(message) {
       const card = CARDS[key];
       if ( !card?.appliesTo.includes(kind) ) continue;
       if ( !hasUsesLeft(activity) ) continue;
-      // A natural 1 or 20 locks the roll, except against Indomitable: it only ever rerolls a failed save, as the
-      // class feature of the same name does, and a natural 1 is the save it is most often needed for.
-      if ( locked && !card.ignoresLock ) continue;
+      if ( locked ) continue;
 
       switch ( key ) {
         case "inspiration":
@@ -431,6 +447,17 @@ export function getCardOptions(message) {
     }
   }
   return options;
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {Roll} roll
+ * @returns {number|void}  The d20 a d20 roll keeps, before modifiers.
+ */
+export function getNatural(roll) {
+  if ( !(roll instanceof CONFIG.Dice.D20Roll) ) return;
+  return roll.d20?.results.find(r => r.active)?.result;
 }
 
 /* -------------------------------------------- */
@@ -714,11 +741,22 @@ async function applyCard(message, { key, activity, label }) {
         break;
       }
       // Falls through to reroll the d20.
-    case "indomitable":
-    case "relentless": {
+    case "indomitable": {
       const [old, values] = await rerollD20(rolls[0], message);
       detail = localize("ROBEAR.Cards.Log.RerollD20", {
         dice: describeD20s(values), old: old.join(", "), new: values.join(", "), before, after: rolls[0].total
+      });
+      break;
+    }
+    case "relentless": {
+      // Initiative is rerolled and the higher total kept: a reroll no higher leaves the roll as it was.
+      const original = rolls[0];
+      rolls[0] = Roll.fromData(original.toJSON());
+      const [old, values] = await rerollD20(rolls[0], message);
+      const rerolled = rolls[0].total;
+      if ( rerolled <= before ) rolls[0] = original;
+      detail = localize("ROBEAR.Cards.Log.RerollKeepHigher", {
+        dice: describeD20s(values), old: old.join(", "), new: values.join(", "), before, rerolled, after: rolls[0].total
       });
       break;
     }

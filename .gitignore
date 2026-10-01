@@ -1,6 +1,10 @@
 # Dev tooling — not part of the shipped module archive.
 node_modules/
 
+# Compendium packs are built from the YAML in src/packs/ (npm run build:packs). Foundry rewrites
+# the LevelDB files whenever it opens them, so they aren't committed.
+/packs/
+
 # Editor / OS cruft
 .DS_Store
 Thumbs.db

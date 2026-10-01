@@ -1,0 +1,113 @@
+folder: ATd8HY5QGuyuyuNu
+name: Belt of Phoenix Dexterity (Hill)
+type: equipment
+_id: Hx713Y5wUnBJ1SMu
+img: icons/equipment/waist/sash-cloth-green.webp
+system:
+  activities: {}
+  uses:
+    spent: 0
+    recovery: []
+    max: ''
+  description:
+    value: >-
+      <p>While wearing this belt, your Dexterity changes to 21. The type of
+      phoenix determines the score. The item has no effect on you if your
+      Dexterity without the belt is equal to or greater than 21.</p>
+    chat: ''
+  identifier: belt-of-phoenix-dexterity-hill
+  source:
+    revision: 1
+    rules: '2024'
+    book: RoBear-E
+    page: ''
+    custom: ''
+    license: ''
+  identified: true
+  unidentified:
+    description: ''
+  container: null
+  quantity: 1
+  weight:
+    value: 0
+    units: lb
+  price:
+    value: 4000
+    denomination: gp
+  rarity: rare
+  attunement: required
+  attuned: true
+  equipped: false
+  cover: null
+  crewed: false
+  type:
+    value: wondrous
+    baseItem: ''
+  armor:
+    value: null
+    magicalBonus: null
+    dex: null
+  properties:
+    - mgc
+  strength: null
+  proficient: null
+effects:
+  - name: Hill Phoenix Dexterity
+    img: icons/magic/control/buff-strength-muscle-damage-red.webp
+    _id: tg9PtuxyVoapMyLD
+    type: base
+    system:
+      changes:
+        - key: system.abilities.dex.value
+          value: 21
+          priority: null
+          type: upgrade
+    disabled: false
+    duration:
+      value: null
+      units: seconds
+      expiry: null
+      expired: false
+    description: >-
+      <p>While wearing this belt, your Dexterity changes to 21. The type of
+      phoenix determines the score. The item has no effect on you if your
+      Dexterity without the belt is equal to or greater than 21.</p>
+    origin: Compendium.sogrom-dms-toolkit.items.Item.Hx713Y5wUnBJ1SMu
+    tint: '#ffffff'
+    transfer: true
+    statuses: []
+    sort: 0
+    flags:
+      dnd5e:
+        riders:
+          statuses: []
+    _stats:
+      compendiumSource: Compendium.dnd-dungeon-masters-guide.equipment.Item.dmgBeltOfGiantSt.ActiveEffect.dVP7XiBERjMWs7xK
+      duplicateSource: null
+      exportSource: null
+      coreVersion: '14.368'
+      systemId: dnd5e
+      systemVersion: 5.0.3
+      lastModifiedBy: null
+      createdTime: null
+      modifiedTime: null
+    start: null
+    showIcon: 1
+    folder: null
+    _key: '!items.effects!Hx713Y5wUnBJ1SMu.tg9PtuxyVoapMyLD'
+sort: 0
+ownership:
+  default: 0
+  aIghMfAvO7zq37fB: 3
+flags: {}
+_stats:
+  compendiumSource: null
+  duplicateSource: null
+  exportSource: null
+  coreVersion: '14.368'
+  systemId: dnd5e
+  systemVersion: 5.0.3
+  createdTime: 1750025482288
+  modifiedTime: 1750025482288
+  lastModifiedBy: aIghMfAvO7zq37fB
+_key: '!items!Hx713Y5wUnBJ1SMu'

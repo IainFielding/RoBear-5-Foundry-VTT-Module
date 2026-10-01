@@ -8,10 +8,13 @@
     "validate:json": "node tools/validate-json.mjs",
     "test": "vitest run",
     "test:e2e": "node test-e2e/run.mjs",
+    "build:packs": "node tools/packs.mjs build",
+    "extract:packs": "node tools/packs.mjs extract",
     "check": "npm run validate:json && npm run lint && npm run test"
   },
   "devDependencies": {
     "@eslint/js": "^9.14.0",
+    "@foundryvtt/foundryvtt-cli": "^3.0.4",
     "eslint": "^9.14.0",
     "globals": "^15.12.0",
     "playwright": "^1.63.0",
