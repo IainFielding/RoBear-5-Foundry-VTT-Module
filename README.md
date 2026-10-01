@@ -66,9 +66,9 @@ sheet. Divine Intervention's chat card has a button to roll its 1d100.
 A few things to know:
 
 - **Natural 1s and 20s lock the cards.** By default no card can be played on a roll whose d20 shows a
-  natural 1 or 20, Indomitable included. A natural 20 is ringed in gold in chat. The GM can turn the lock off in **Configure Settings → RoBear-E**; Luck
-  still can't be played on a natural 1 or 20 either way. Rolls without a d20, such as damage, aren't
-  affected.
+  natural 1 or 20, Indomitable included. A natural 20 is ringed in gold in chat. The GM can turn the
+  lock off in **Configure Settings → RoBear-E**; Luck still can't be played on a natural 1 or 20 either
+  way. Rolls without a d20, such as damage, aren't affected.
 - Cards can only be played on your own rolls.
 - Death saving throws can't be changed, because D&D 5e has already applied the result.
 - Play a card on a damage roll **before** applying the damage — damage that's already been

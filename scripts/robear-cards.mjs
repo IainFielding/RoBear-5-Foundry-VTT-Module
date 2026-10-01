@@ -749,7 +749,7 @@ async function applyCard(message, { key, activity, label }) {
       break;
     }
     case "relentless": {
-      // Initiative is rerolled and the higher total kept: a lower reroll leaves the roll as it was.
+      // Initiative is rerolled and the higher total kept: a reroll no higher leaves the roll as it was.
       const original = rolls[0];
       rolls[0] = Roll.fromData(original.toJSON());
       const [old, values] = await rerollD20(rolls[0], message);
