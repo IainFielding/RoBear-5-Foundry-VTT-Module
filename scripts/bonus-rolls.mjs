@@ -6,12 +6,30 @@
  * roll request's result are worked out again. The bonus roll is marked as used, so it can only be spent once.
  */
 
-import { MODULE_ID, findCombatant, finalize, getRollKind } from "./robear-cards.mjs";
+import { MODULE_ID, findCombatant, finalize, getRollKind, localize } from "./robear-cards.mjs";
 
 /**
  * How many of the latest chat messages are offered as rolls to change.
  */
 const RECENT_MESSAGES = 30;
+
+/**
+ * Bonus rolls being spent on this client, so a second click cannot spend one again before it is marked as used.
+ * @type {Set<string>}
+ */
+const spending = new Set();
+
+/**
+ * How each kind of roll is named when a roll message has no flavor of its own.
+ */
+const ROLL_KINDS = {
+  attack: "ROBEAR.RollKind.Attack",
+  damage: "ROBEAR.RollKind.Damage",
+  check: "ROBEAR.RollKind.Check",
+  save: "ROBEAR.RollKind.Save",
+  initiative: "ROBEAR.RollKind.Initiative",
+  divine: "ROBEAR.RollKind.Divine"
+};
 
 /* -------------------------------------------- */
 /*  Hooks                                       */
@@ -29,9 +47,9 @@ Hooks.once("ready", () => game.socket.on(`module.${MODULE_ID}`, onSocketMessage)
 function onGetContextOptions(_app, options) {
   for ( const sign of [1, -1] ) {
     options.push({
-      label: sign > 0 ? "Add to a roll…" : "Subtract from a roll…",
+      label: localize(sign > 0 ? "ROBEAR.Bonus.MenuAdd" : "ROBEAR.Bonus.MenuSubtract"),
       icon: sign > 0 ? "fa-solid fa-plus" : "fa-solid fa-minus",
-      visible: li => isBonusRoll(game.messages.get(li.dataset.messageId)),
+      visible: li => canSpend(game.messages.get(li.dataset.messageId), game.user),
       onClick: (_event, li) => chooseTarget(game.messages.get(li.dataset.messageId), sign)
     });
   }
@@ -50,19 +68,25 @@ function onRenderChatMessage(message, html) {
   const note = document.createElement("p");
   note.className = "supplement robear-card-log robear-bonus-used";
   note.innerHTML = `<i class="fa-solid ${used.sign > 0 ? "fa-plus" : "fa-minus"}" inert></i>`;
-  note.append(`${used.sign > 0 ? "Added to" : "Subtracted from"} ${used.target}`);
+  note.append(localize(used.sign > 0 ? "ROBEAR.Bonus.AddedTo" : "ROBEAR.Bonus.SubtractedFrom", { target: used.target }));
   html.querySelector(".message-content")?.append(note);
 }
 
 /* -------------------------------------------- */
 
 /**
- * The active GM applies bonuses for users who may not change the rolls involved themselves.
+ * The active GM applies bonuses for users who may not change the roll themselves. The request is checked again here,
+ * as the user who sent it: only the bonus roll's own author may spend it, and only on a roll they can see.
  * @param {object} data
+ * @param {string} userId  The sender, which Foundry's server adds, so it cannot be forged.
  */
-function onSocketMessage(data) {
+function onSocketMessage(data, userId) {
   if ( (data?.action !== "applyBonus") || (game.user !== game.users.activeGM) ) return;
-  applyBonus(game.messages.get(data.source), game.messages.get(data.target), data.sign);
+  const user = game.users.get(userId);
+  const source = game.messages.get(data.source);
+  const target = game.messages.get(data.target);
+  if ( !user || !canSpend(source, user) || !isValidTarget(target, source, user) ) return;
+  applyBonus(source, target, data.sign < 0 ? -1 : 1);
 }
 
 /* -------------------------------------------- */
@@ -75,9 +99,47 @@ function onSocketMessage(data) {
  *   die, rather than a check, save, attack or damage roll, and not one made for a roll request.
  */
 export function isBonusRoll(message) {
-  if ( !message?.rolls.length || !message.isContentVisible ) return false;
+  if ( !message?.rolls.length ) return false;
   if ( message.getFlag(MODULE_ID, "bonusUsed") || message.getFlag(MODULE_ID, "requestRoll") ) return false;
   return getRollKind(message) === null;
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {ChatMessage5e|void} message
+ * @param {User} user
+ * @returns {boolean}  Whether this user may spend this bonus roll: they rolled it, or they are the GM.
+ */
+export function canSpend(message, user) {
+  if ( !isBonusRoll(message) || !canSee(message, user) ) return false;
+  return user.isGM || (message.author?.id === user.id);
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {ChatMessage5e} message
+ * @param {User} user
+ * @returns {boolean}  Whether this user can see the message's rolls. `isContentVisible` only answers for this client's
+ *   own user, and the GM also checks requests made by others.
+ */
+export function canSee(message, user) {
+  if ( user.isGM ) return true;
+  if ( message.blind ) return false;
+  return !message.whisper.length || message.whisper.includes(user.id) || (message.author?.id === user.id);
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {ChatMessage5e|void} target
+ * @param {ChatMessage5e} source  The bonus roll.
+ * @param {User} user
+ * @returns {boolean}  Whether this user may spend the bonus roll on this roll.
+ */
+export function isValidTarget(target, source, user) {
+  return !!target && (target !== source) && !!getRollKind(target) && canSee(target, user);
 }
 
 /* -------------------------------------------- */
@@ -89,7 +151,7 @@ export function isBonusRoll(message) {
 export function getTargets(source) {
   const canAsk = !!game.users.activeGM;
   return game.messages.contents.slice(-RECENT_MESSAGES).reverse().filter(message => {
-    if ( (message === source) || !message.isContentVisible || !getRollKind(message) ) return false;
+    if ( !isValidTarget(message, source, game.user) ) return false;
     return canAsk || message.canUserModify(game.user, "update");
   });
 }
@@ -105,7 +167,7 @@ export function getTargets(source) {
 function describeTarget(message, { total=true }={}) {
   const who = message.getAssociatedActor()?.name ?? message.speaker.alias;
   const sum = total ? message.rolls.reduce((t, r) => t + r.total, 0) : null;
-  return [who, message.flavor || getRollKind(message).capitalize(), sum].filterJoin(" · ");
+  return [who, message.flavor || localize(ROLL_KINDS[getRollKind(message)]), sum].filterJoin(" · ");
 }
 
 /* -------------------------------------------- */
@@ -115,7 +177,7 @@ function describeTarget(message, { total=true }={}) {
  * @returns {string}  The bonus's name: its feature's, or the message's flavor.
  */
 function getBonusLabel(source) {
-  return source.getAssociatedActivity?.()?.item?.name || source.flavor || "Bonus roll";
+  return source.getAssociatedActivity?.()?.item?.name || source.flavor || localize("ROBEAR.Bonus.DefaultLabel");
 }
 
 /* -------------------------------------------- */
@@ -128,27 +190,33 @@ function getBonusLabel(source) {
 async function chooseTarget(source, sign) {
   const targets = getTargets(source);
   if ( !targets.length ) {
-    ui.notifications.warn("There is no roll in chat this can be added to.");
+    ui.notifications.warn(localize("ROBEAR.Bonus.NoTargets"));
     return;
   }
-  const verb = sign > 0 ? "Add" : "Subtract";
+  const { escapeHTML } = foundry.utils;
+  const keys = sign > 0 ? { title: "ROBEAR.Bonus.AddTitle", hint: "ROBEAR.Bonus.AddHint" }
+    : { title: "ROBEAR.Bonus.SubtractTitle", hint: "ROBEAR.Bonus.SubtractHint" };
   const buttons = targets.map((m, i) => `
     <button type="button" class="robear-bonus-choice" data-index="${i}">
-      <span>${foundry.utils.escapeHTML(describeTarget(m))}</span>
+      <span>${escapeHTML(describeTarget(m))}</span>
     </button>
   `).join("");
 
   let chosen;
   await foundry.applications.api.DialogV2.wait({
     classes: ["robear-card-dialog", "robear-bonus-dialog"],
-    window: { title: `${verb} ${getBonusLabel(source)}`, icon: `fa-solid ${sign > 0 ? "fa-plus" : "fa-minus"}` },
+    window: {
+      title: localize(keys.title, { label: getBonusLabel(source) }),
+      icon: `fa-solid ${sign > 0 ? "fa-plus" : "fa-minus"}`
+    },
     position: { width: 420 },
     content: `
-      <p class="robear-card-hint">${verb} ${source.rolls[0].formula} (${source.rolls[0].total})
-        ${sign > 0 ? "to" : "from"} which roll?</p>
+      <p class="robear-card-hint">${escapeHTML(localize(keys.hint, {
+        formula: source.rolls[0].formula, total: source.rolls[0].total
+      }))}</p>
       <div class="robear-bonus-list">${buttons}</div>
     `,
-    buttons: [{ action: "cancel", label: "Cancel", icon: "fa-solid fa-xmark" }],
+    buttons: [{ action: "cancel", label: "ROBEAR.Common.Cancel", icon: "fa-solid fa-xmark" }],
     render: (_event, dialog) => {
       for ( const el of dialog.element.querySelectorAll(".robear-bonus-choice") ) {
         el.addEventListener("click", () => {
@@ -164,10 +232,11 @@ async function chooseTarget(source, sign) {
   if ( !target ) return;
 
   // Rolls this user may not change are changed by the GM.
-  const allowed = target.canUserModify(game.user, "update") && source.canUserModify(game.user, "update");
-  if ( allowed ) return applyBonus(source, target, sign);
-  game.socket.emit(`module.${MODULE_ID}`, { action: "applyBonus", source: source.id, target: target.id, sign });
-  ui.notifications.info("Sent to the GM to apply.");
+  if ( target.canUserModify(game.user, "update") ) return applyBonus(source, target, sign);
+  const recipients = [game.users.activeGM?.id].filter(Boolean);
+  game.socket.emit(`module.${MODULE_ID}`, { action: "applyBonus", source: source.id, target: target.id, sign },
+    { recipients });
+  ui.notifications.info(localize("ROBEAR.Bonus.SentToGM"));
 }
 
 /* -------------------------------------------- */
@@ -181,11 +250,35 @@ async function chooseTarget(source, sign) {
  * @param {1|-1} sign
  */
 export async function applyBonus(source, target, sign) {
-  if ( !source || !target || source.getFlag(MODULE_ID, "bonusUsed") ) return;
+  if ( !source || !target || source.getFlag(MODULE_ID, "bonusUsed") || spending.has(source.id) ) return;
+  spending.add(source.id);
+  try {
+    // Marked as used before the roll is changed, so it cannot be spent twice. If changing the roll fails, the mark is
+    // taken off again and the bonus can still be spent.
+    await source.setFlag(MODULE_ID, "bonusUsed", { target: describeTarget(target, { total: false }), sign });
+    try {
+      await addBonus(source, target, sign);
+    } catch(err) {
+      await source.unsetFlag(MODULE_ID, "bonusUsed");
+      throw err;
+    }
+  } finally {
+    spending.delete(source.id);
+  }
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Rewrite a roll with a bonus roll's total added or subtracted, and note it on the roll.
+ * @param {ChatMessage5e} source  The bonus roll.
+ * @param {ChatMessage5e} target  The roll to change.
+ * @param {1|-1} sign
+ */
+async function addBonus(source, target, sign) {
   const bonus = source.rolls[0];
   const rolls = target.rolls.map(r => Roll.fromData(r.toJSON()));
   const before = rolls[0].total;
-  const description = describeTarget(target, { total: false });
 
   // A single die keeps its dice in the roll's breakdown; anything longer is added as its total.
   const { NumericTerm, OperatorTerm } = foundry.dice.terms;
@@ -198,16 +291,17 @@ export async function applyBonus(source, target, sign) {
   finalize(rolls[0]);
 
   const label = getBonusLabel(source);
-  const verb = sign > 0 ? "added" : "subtracted";
+  const detail = localize(sign > 0 ? "ROBEAR.Bonus.Log.Added" : "ROBEAR.Bonus.Log.Subtracted", {
+    formula: bonus.formula, bonus: bonus.total, before, after: rolls[0].total
+  });
   const entry = {
-    text: `${label}: ${verb} ${bonus.formula} (${bonus.total}): ${before} → ${rolls[0].total}`,
+    text: localize("ROBEAR.Cards.Log.Entry", { card: label, detail }),
     card: label,
     icon: sign > 0 ? "fa-solid fa-plus" : "fa-solid fa-minus",
     by: source.getAssociatedActor()?.name ?? source.speaker.alias ?? ""
   };
   const log = [...(target.getFlag(MODULE_ID, "log") ?? []), entry];
   await target.update({ rolls: rolls.map(r => r.toJSON()), [`flags.${MODULE_ID}.log`]: log });
-  await source.setFlag(MODULE_ID, "bonusUsed", { target: description, sign });
 
   if ( getRollKind(target) === "initiative" ) await findCombatant(target)?.update({ initiative: rolls[0].total });
 }

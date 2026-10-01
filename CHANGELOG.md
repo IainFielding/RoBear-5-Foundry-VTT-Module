@@ -2,7 +2,7 @@
 
 All notable changes to RoBear-E.
 
-## 1.1.0
+## 2.0.0
 
 ### New
 
@@ -30,9 +30,9 @@ All notable changes to RoBear-E.
 - **Add another feature's die to a roll.** Right-click a die rolled by a feature such as Bardic
   Inspiration or Cutting Words, and choose Add to a roll or Subtract from a roll. Its total goes onto
   the roll you pick, which updates, with a note of what changed. The GM applies it to rolls that
-  aren't yours to change.
+  aren't yours to change. Only the player who rolled the die, or the GM, can spend it.
 - **Played cards appear on screen.** However a card is played, its art appears in the middle of
-  everyone's screen for a moment. Chat keeps a short record: a card played on a roll is noted on
+  the screen for a moment, for everyone who can see the roll. Chat keeps a short record: a card played on a roll is noted on
   the roll with a thumbnail, instead of posting a message that pushed the roll out of view, and a
   card played from the sheet has its description folded away. A setting turns the on-screen card off.
 - **The DC is hidden from players by default.** A new setting decides whether Show DC to Players
@@ -45,6 +45,7 @@ All notable changes to RoBear-E.
 - **Natural 1s and 20s lock RoBear-E Cards.** A new setting, on by default: no card can be played
   on a roll whose d20 shows a natural 1 or 20. Turn it off to allow them; Luck still can't be played
   on a natural 1 or 20.
+- **Ready for translation.** Every string the module shows is now in `lang/en.json`.
 
 ## 1.0.0
 

@@ -26,7 +26,7 @@ const CLOSE_DELAY_MS = 1500;
 
 Hooks.once("init", registerSettings);
 Hooks.once("ready", openRecentRequests);
-Hooks.on("createChatMessage", onChangeMessage);
+Hooks.on("createChatMessage", onCreateMessage);
 Hooks.on("updateChatMessage", onChangeMessage);
 Hooks.on("deleteChatMessage", onDeleteMessage);
 
@@ -35,18 +35,16 @@ Hooks.on("deleteChatMessage", onDeleteMessage);
  */
 function registerSettings() {
   game.settings.register(MODULE_ID, "popupPlayers", {
-    name: "Pop up roll requests for players",
-    hint: "When the GM posts a roll request, a window opens for each player with a character in it, with a Roll "
-      + "button for each of their characters. The chat card works either way.",
+    name: "ROBEAR.Settings.PopupPlayers.Name",
+    hint: "ROBEAR.Settings.PopupPlayers.Hint",
     scope: "world",
     config: true,
     type: Boolean,
     default: false
   });
   game.settings.register(MODULE_ID, "popupGM", {
-    name: "Pop up roll requests for the GM",
-    hint: "When a roll request includes NPCs, or any actor no player owns, a window opens for the GM with their "
-      + "Roll buttons. Otherwise the GM rolls for them from the chat card.",
+    name: "ROBEAR.Settings.PopupGM.Name",
+    hint: "ROBEAR.Settings.PopupGM.Hint",
     scope: "world",
     config: true,
     type: Boolean,
@@ -69,15 +67,24 @@ function openRecentRequests() {
 /* -------------------------------------------- */
 
 /**
- * Open a pop-up for a new request, and redraw one when a roll for its request is made, changed by a card, or deleted.
+ * Open a pop-up for a new request, and redraw one when a roll for its request is made.
+ * @param {ChatMessage5e} message
+ */
+function onCreateMessage(message) {
+  if ( message.getFlag(MODULE_ID, "request") ) openPopup(message);
+  else onChangeMessage(message);
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Redraw a request's pop-up when the request changes, such as the GM showing its result, or when one of its rolls is
+ * changed by a card or deleted. A pop-up the user has closed stays closed.
  * @param {ChatMessage5e} message
  */
 function onChangeMessage(message) {
-  if ( message.getFlag(MODULE_ID, "request") ) {
-    openPopup(message);
-    return;
-  }
-  const requestId = message.getFlag(MODULE_ID, "requestRoll")?.request;
+  const requestId = message.getFlag(MODULE_ID, "request") ? message.id
+    : message.getFlag(MODULE_ID, "requestRoll")?.request;
   if ( requestId ) foundry.applications.instances.get(RollRequestPopup.idFor(requestId))?.render();
 }
 
@@ -165,7 +172,7 @@ export default class RollRequestPopup extends ApplicationV2 {
   /** @override */
   static DEFAULT_OPTIONS = {
     classes: ["robear-card-dialog", "robear-request-popup"],
-    window: { title: "Roll Request", icon: "fa-solid fa-anchor fa-rotate-90" },
+    window: { title: "ROBEAR.Request.PopupTitle", icon: "fa-solid fa-anchor fa-rotate-90" },
     position: { width: 380, height: "auto" }
   };
 

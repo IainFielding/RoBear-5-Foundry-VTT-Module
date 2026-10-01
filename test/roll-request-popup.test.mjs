@@ -52,7 +52,7 @@ describe("When a pop-up has nothing left to roll", () => {
     const challenge = requestMessage({ mode: "challenge", actors: ["aria"], parts, successes: 2 });
     game.messages = [rollMessage({ actor: "aria", total: 15, part: 0 })];
     expect(hasRollsLeft(challenge, ["aria"])).toBe(true);
-    game.messages.push(rollMessage({ actor: "aria", total: 15, part: 1 }));
+    game.messages = [...game.messages, rollMessage({ actor: "aria", total: 15, part: 1 })];
     expect(hasRollsLeft(challenge, ["aria"])).toBe(false);
   });
 

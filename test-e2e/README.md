@@ -50,17 +50,21 @@ the end of both consoles.
 
 - `tests.mjs`: roll requests. This covers the GM's buttons, the request window's fields, carrying values
   between modes and its validation, and every mode's Roll button. It also covers the hidden summary and
-  hidden DC, deleting a roll to reroll, double clicks, the cards played from a request card, and attaching
-  rolls to the request card.
+  hidden DC, deleting a roll to reroll (which only the GM may do), rolls that don't count because their
+  author doesn't own the actor, double clicks, the cards played from a request card, and attaching rolls to
+  the request card.
 - `tests-popup.mjs`: the roll request pop-ups for players and for the GM: who gets one, rolling from it,
-  when it closes, and getting it back after a reload.
+  when it closes, redrawing when the GM shows the result, staying closed once closed, and getting it back
+  after a reload.
 - `tests-bonus.mjs`: adding another feature's die to a roll, or subtracting it, from the chat right-click menu,
-  including through the GM when the roll isn't yours.
+  including through the GM when the roll isn't yours. Only the die's own roller can spend it, the GM refuses
+  forged requests, and a die can't be spent twice.
 - `tests-features.mjs`: Fighter's Indomitable from dnd5e's compendiums under both sets of rules: rerolling a
   failed save, the 2024 Fighter-level bonus, and when it is offered.
 - `tests-cards.mjs`: RoBear-E Cards on rolls already in chat, and from the sheet. This covers who can play
   them, and Inspiration, Luck, Advantage, Indomitable and Relentless, including when each is offered.
   It also covers spent uses, death saves, the card window's art, Advantage on the next roll, the "no cards
-  left" warning and shift-click.
+  left" warning and shift-click. Played cards are shown only to those who can see the roll, and a note's art
+  and name are never run as HTML.
 
 The rules themselves also have unit tests in `../test`, which `npm test` runs without Foundry.

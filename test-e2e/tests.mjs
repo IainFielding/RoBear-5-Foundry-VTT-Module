@@ -365,6 +365,38 @@ test("standard roll: deleting a roll brings the Roll button back", async (ctx) =
   await waitForCard(player, id, c => row(c, "Aria").rollButtons === 1, "the Roll button to come back");
 });
 
+test("standard roll: a player can't delete their roll to roll again", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const id = await postRequest(ctx, { mode: "standard", parts: [athletics(12)], actors: [ids.aria] });
+  await forceDice(player, [d20(3)]);
+  await clickRoll(player, id, "Aria", { fastForward: true });
+  // Waited for on the player's side, so the message has reached them before they try to delete it.
+  const roll = await waitForRoll(player, id, ids.aria);
+  const deleted = await player.eval(async id => !!(await game.messages.get(id).delete()), roll.id);
+  assertEqual(deleted, false, "the player's delete");
+  await player.page.locator("#notifications .notification", { hasText: "Only the GM can delete" }).waitFor({ timeout: 5000 });
+  await gm.page.waitForTimeout(500);
+  assertEqual(await gm.eval(id => game.messages.has(id), roll.id), true, "the roll, after the player tried to delete it");
+  const card = await readCard(player, id);
+  assertEqual([row(card, "Aria").results[0]?.text, row(card, "Aria").rollButtons], ["3", 0], "Aria's row");
+});
+
+test("standard roll: a player's roll for an actor they don't own doesn't count", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const id = await postRequest(ctx, { mode: "standard", parts: [athletics(12)], actors: [ids.aria, ids.goblin] });
+  // Made by hand, as only a player meddling from the console could: the card offers them no Roll button for it.
+  await player.eval(async ({ id, goblin, moduleId }) => {
+    const roll = await new Roll("20").evaluate();
+    await ChatMessage.create({ rolls: [roll], flags: { [moduleId]: { requestRoll: { request: id, actor: goblin, part: 0 } } } });
+  }, { id, goblin: ids.goblin, moduleId: MODULE_ID });
+  await gm.page.waitForTimeout(1000);
+  for ( const session of [gm, player] ) {
+    const card = await readCard(session, id);
+    assertEqual(row(card, "Goblin").results.length, 0, `the Goblin's results (${session.user})`);
+  }
+  assertEqual(row(await readCard(gm, id), "Goblin").rollButtons, 1, "the GM's Roll button for the Goblin");
+});
+
 test("standard roll: a double click makes one roll", async (ctx) => {
   const { gm, player, ids } = ctx;
   const id = await postRequest(ctx, { mode: "standard", parts: [athletics(12)], actors: [ids.aria] });

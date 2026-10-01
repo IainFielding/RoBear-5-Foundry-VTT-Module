@@ -7,7 +7,8 @@ system, so most changes need checking in a real world as well as by CI.
 
 ```sh
 npm install        # dev tooling only — nothing here ships in the module archive
-npm run check      # manifest validation and lint (what CI runs)
+npm run check      # manifest validation, lint and unit tests (what CI runs)
+npm run test:e2e   # end-to-end tests against a local Foundry install — see test-e2e/README.md
 ```
 
 To try the module in Foundry, symlink or copy the repository into your `Data/modules/`

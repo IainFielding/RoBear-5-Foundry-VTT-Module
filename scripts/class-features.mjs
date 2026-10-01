@@ -6,7 +6,15 @@
  * also adds the Fighter's level.
  */
 
-import { MODULE_ID, finalize, getRollKind, isKnownFailure, rerollD20 } from "./robear-cards.mjs";
+import {
+  MODULE_ID, describeD20s, finalize, getRollKind, getRollTarget, isKnownFailure, localize, rerollD20
+} from "./robear-cards.mjs";
+
+/**
+ * Rolls Indomitable is being used on from this client, so a second click cannot spend another use on the same roll.
+ * @type {Set<string>}
+ */
+const using = new Set();
 
 /* -------------------------------------------- */
 /*  Hooks                                       */
@@ -22,7 +30,7 @@ Hooks.on("dnd5e.renderChatMessage", onRenderChatMessage);
  */
 function onGetContextOptions(_app, options) {
   options.push({
-    label: "Use Indomitable",
+    label: localize("ROBEAR.Indomitable.MenuLabel"),
     icon: "fa-solid fa-shield-halved",
     visible: li => !!getIndomitable(game.messages.get(li.dataset.messageId)),
     onClick: (_event, li) => useIndomitable(game.messages.get(li.dataset.messageId))
@@ -87,14 +95,46 @@ function getIndomitableBonus(item) {
 /* -------------------------------------------- */
 
 /**
- * Spend a use of Indomitable to reroll a failed saving throw, noting it on the roll.
+ * Spend a use of Indomitable to reroll a failed saving throw, noting it on the roll. A save with no DC can't be known
+ * to have failed, so the player is asked to confirm first rather than lose a use to a stray click.
  * @param {ChatMessage5e} message
  */
 export async function useIndomitable(message) {
   const item = getIndomitable(message);
-  if ( !item ) return;
-  await item.update({ "system.uses.spent": (item.system.uses.spent ?? 0) + 1 });
+  if ( !item || using.has(message.id) ) return;
+  using.add(message.id);
+  try {
+    if ( !Number.isNumeric(getRollTarget(message, message.rolls[0])) && !(await confirmIndomitable(item)) ) return;
+    await rerollWithIndomitable(message, item);
+  } finally {
+    using.delete(message.id);
+  }
+}
 
+/* -------------------------------------------- */
+
+/**
+ * @param {Item5e} item  The Indomitable feature.
+ * @returns {Promise<boolean>}  Whether the player confirmed spending a use on a save with no DC.
+ */
+async function confirmIndomitable(item) {
+  return foundry.applications.api.DialogV2.confirm({
+    window: { title: item.name, icon: "fa-solid fa-shield-halved" },
+    content: `<p>${foundry.utils.escapeHTML(localize("ROBEAR.Indomitable.ConfirmNoDC", {
+      name: item.name, uses: item.system.uses.value
+    }))}</p>`,
+    rejectClose: false
+  });
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Reroll the save, then spend the use, so a reroll that fails costs nothing.
+ * @param {ChatMessage5e} message
+ * @param {Item5e} item  The Indomitable feature.
+ */
+async function rerollWithIndomitable(message, item) {
   const rolls = message.rolls.map(r => Roll.fromData(r.toJSON()));
   const before = rolls[0].total;
   const [old, values] = await rerollD20(rolls[0], message);
@@ -104,20 +144,26 @@ export async function useIndomitable(message) {
     const { NumericTerm, OperatorTerm } = foundry.dice.terms;
     rolls[0].terms.push(
       OperatorTerm.fromData({ class: "OperatorTerm", operator: "+", evaluated: true }),
-      NumericTerm.fromData({ class: "NumericTerm", number: bonus, options: { flavor: "Fighter level" }, evaluated: true })
+      NumericTerm.fromData({
+        class: "NumericTerm", number: bonus, options: { flavor: localize("ROBEAR.Indomitable.FighterLevel") }, evaluated: true
+      })
     );
     finalize(rolls[0]);
-    bonusText = ` + ${bonus} (Fighter level)`;
+    bonusText = localize("ROBEAR.Indomitable.LevelBonus", { bonus });
   }
 
-  const dice = values.length > 1 ? "both d20s" : "the d20";
+  const detail = localize("ROBEAR.Indomitable.Log", {
+    dice: describeD20s(values), old: old.join(", "), new: values.join(", "), bonus: bonusText, before,
+    after: rolls[0].total
+  });
   const entry = {
-    text: `${item.name}: rerolled ${dice} (${old.join(", ")} → ${values.join(", ")})${bonusText}: ${before} → ${rolls[0].total}`,
+    text: localize("ROBEAR.Cards.Log.Entry", { card: item.name, detail }),
     card: item.name,
     icon: "fa-solid fa-shield-halved",
     by: item.actor.name
   };
   const log = [...(message.getFlag(MODULE_ID, "log") ?? []), entry];
+  await item.update({ "system.uses.spent": (item.system.uses.spent ?? 0) + 1 });
   await message.update({ rolls: rolls.map(r => r.toJSON()), [`flags.${MODULE_ID}.log`]: log });
 }
 
@@ -135,9 +181,11 @@ export function createIndomitableButton(message, { compact=false }={}) {
   const button = document.createElement("button");
   button.type = "button";
   button.className = compact ? "robear-feature-button icon" : "robear-feature-button";
-  button.dataset.tooltip = `Use ${item.name} (${item.system.uses.value} left)`;
-  button.setAttribute("aria-label", `Use ${item.name}`);
-  button.innerHTML = `<i class="fa-solid fa-shield-halved" inert></i>${compact ? "" : ` Use ${item.name}`}`;
+  const label = localize("ROBEAR.Indomitable.Button", { name: item.name });
+  button.dataset.tooltip = localize("ROBEAR.Indomitable.ButtonTooltip", { name: item.name, uses: item.system.uses.value });
+  button.setAttribute("aria-label", label);
+  button.innerHTML = '<i class="fa-solid fa-shield-halved" inert></i>';
+  if ( !compact ) button.append(` ${label}`);
   button.addEventListener("click", async event => {
     event.preventDefault();
     event.stopPropagation();

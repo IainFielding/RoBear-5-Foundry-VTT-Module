@@ -2,8 +2,8 @@
  * The GM's window for asking for rolls.
  */
 
-import { MODULE_ID } from "./robear-cards.mjs";
-import { CHALLENGE_PARTS, DICE, DIVINE_RANGE, MODES, createRequest } from "./roll-requests.mjs";
+import { MODULE_ID, localize } from "./robear-cards.mjs";
+import { CHALLENGE_PARTS, DICE, DIVINE_RANGE, MODES, createRequest, getPartLabel } from "./roll-requests.mjs";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { FormDataExtended } = foundry.applications.ux;
@@ -31,7 +31,7 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
     classes: ["robear-card-dialog", "robear-request-config"],
     tag: "form",
     window: {
-      title: "Request RoBear-E Rolls",
+      title: "ROBEAR.Request.WindowTitle",
       icon: "fa-solid fa-anchor fa-rotate-90",
       contentClasses: ["standard-form"]
     },
@@ -87,19 +87,31 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
     // Contests keep their own rolls, one per side, so they start as d20 against d20 whatever the other modes hold.
     let rows = [];
     if ( mode.contest ) {
-      rows = mode.sides.map((side, index) => ({ label: `${side} Roll`, field: `sideRolls.${index}`, roll: draft.sideRolls[draft.mode][index] }));
+      rows = mode.sides.map((side, index) => ({
+        label: localize("ROBEAR.Request.Config.SideRoll", { side: localize(side) }),
+        field: `sideRolls.${index}`,
+        roll: draft.sideRolls[draft.mode][index]
+      }));
     }
-    else if ( challenge ) rows = Array.from({ length: CHALLENGE_PARTS }, (_, i) => ({ label: `Roll ${i + 1}`, hasDC: true }));
+    else if ( challenge ) {
+      rows = Array.from({ length: CHALLENGE_PARTS }, (_, i) => ({
+        label: localize("ROBEAR.Request.Config.NumberedRoll", { number: i + 1 }), hasDC: true
+      }));
+    }
     // A standard roll keeps its own roll too, starting as a d20.
-    else if ( draft.mode === "standard" ) rows = [{ label: "Roll", hasDC: true, field: "standard", ...draft.standard }];
-    else if ( draft.mode !== "divine" ) rows = [{ label: "Roll", hasDC: true }];
+    else if ( draft.mode === "standard" ) {
+      rows = [{ label: localize("ROBEAR.Request.Config.Roll"), hasDC: true, field: "standard", ...draft.standard }];
+    }
+    else if ( draft.mode !== "divine" ) rows = [{ label: localize("ROBEAR.Request.Config.Roll"), hasDC: true }];
     rows.forEach((row, index) => {
       if ( !row.field ) Object.assign(row, { field: `parts.${index}`, ...draft.parts[index] });
     });
 
     const choice = (actor, index, checked) => ({ index, name: actor.name, img: actor.img, checked });
     return Object.assign(context, {
-      modes: Object.entries(MODES).map(([value, m]) => ({ value, ...m, checked: value === draft.mode })),
+      modes: Object.entries(MODES).map(([value, m]) => ({
+        value, icon: m.icon, label: localize(m.label), hint: localize(m.hint), checked: value === draft.mode
+      })),
       rows,
       rollOptions,
       challenge,
@@ -108,10 +120,12 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
       range: draft.range,
       rangeLimits: DIVINE_RANGE,
       successes: draft.successes,
-      successOptions: Array.from({ length: CHALLENGE_PARTS }, (_, i) => i + 1),
+      successOptions: Array.from({ length: CHALLENGE_PARTS }, (_, i) => ({
+        value: i + 1, label: localize("ROBEAR.Request.Config.SuccessesOf", { count: i + 1, total: CHALLENGE_PARTS })
+      })),
       actors: this.#actors.map((a, i) => choice(a, i, draft.actors.includes(a.uuid))),
       sides: mode.contest ? mode.sides.map((label, side) => ({
-        label,
+        label: localize(label),
         side,
         single: draft.mode === "rolloff",
         actors: this.#actors.map((a, i) => choice(a, i, draft.mode === "rolloff"
@@ -120,7 +134,7 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
       })) : null,
       showDC: draft.showDC,
       rollMode: draft.rollMode,
-      buttons: [{ type: "submit", icon: "fa-solid fa-paper-plane", label: "Send Request" }]
+      buttons: [{ type: "submit", icon: "fa-solid fa-paper-plane", label: "ROBEAR.Request.Config.Send" }]
     });
   }
 
@@ -245,17 +259,18 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
     if ( mode.contest ) {
       const sides = draft.mode === "rolloff" ? draft.rivals.map(uuid => uuid ? [uuid] : []) : draft.teams;
       if ( sides.some(s => !s.length) ) {
-        throw new Error(`Choose who rolls for the ${mode.sides[sides.findIndex(s => !s.length)]}.`);
+        const side = localize(mode.sides[sides.findIndex(s => !s.length)]);
+        throw new Error(localize("ROBEAR.Request.Config.ChooseSide", { side }));
       }
-      if ( sides[0].some(uuid => sides[1].includes(uuid)) ) throw new Error("No one can be on both sides.");
+      if ( sides[0].some(uuid => sides[1].includes(uuid)) ) throw new Error(localize("ROBEAR.Request.Config.BothSides"));
       const parts = draft.sideRolls[draft.mode].map(roll => toPart({ roll, dc: null }));
       Object.assign(request, { parts, sides, actors: sides.flat() });
     } else {
-      if ( !draft.actors.length ) throw new Error("Choose at least one actor to roll.");
+      if ( !draft.actors.length ) throw new Error(localize("ROBEAR.Request.Config.ChooseActor"));
       const count = draft.mode === "challenge" ? CHALLENGE_PARTS : 1;
       const parts = draft.mode === "standard" ? [toPart(draft.standard)] : draft.parts.slice(0, count).map(toPart);
       if ( (draft.mode === "challenge") && parts.some(p => p.dc === null) ) {
-        throw new Error("Each roll in a skill challenge needs a DC.");
+        throw new Error(localize("ROBEAR.Request.Config.ChallengeDC"));
       }
       Object.assign(request, { parts, actors: draft.actors });
       if ( draft.mode === "divine" ) {
@@ -297,27 +312,27 @@ function getCandidates() {
  * @returns {{ label: string, options: { value: string, label: string }[] }[]}
  */
 function getRollGroups(dice) {
-  const abilities = Object.entries(CONFIG.DND5E.abilities);
+  const abilities = Object.keys(CONFIG.DND5E.abilities);
   const sorted = options => options.sort((a, b) => a.label.localeCompare(b.label, game.i18n.lang));
   return [
     {
-      label: "Dice",
+      label: localize("ROBEAR.Request.Config.Groups.Dice"),
       options: dice.map(die => ({ value: die, label: DICE[die].label }))
     },
     {
-      label: "Skills",
+      label: localize("ROBEAR.Request.Config.Groups.Skills"),
       options: sorted(Object.entries(CONFIG.DND5E.skills).map(([key, s]) => ({ value: `skill.${key}`, label: s.label })))
     },
     {
-      label: "Ability Checks",
-      options: abilities.map(([key, a]) => ({ value: `check.${key}`, label: `${a.label} Check` }))
+      label: localize("ROBEAR.Request.Config.Groups.Checks"),
+      options: abilities.map(key => ({ value: `check.${key}`, label: getPartLabel({ type: "check", key }) }))
     },
     {
-      label: "Saving Throws",
-      options: abilities.map(([key, a]) => ({ value: `save.${key}`, label: `${a.label} Save` }))
+      label: localize("ROBEAR.Request.Config.Groups.Saves"),
+      options: abilities.map(key => ({ value: `save.${key}`, label: getPartLabel({ type: "save", key }) }))
     },
     {
-      label: "Tools",
+      label: localize("ROBEAR.Request.Config.Groups.Tools"),
       options: sorted(Object.keys(CONFIG.DND5E.tools).map(key => ({
         value: `tool.${key}`,
         label: dnd5e.documents.Trait.keyLabel(key, { trait: "tool" }) ?? key

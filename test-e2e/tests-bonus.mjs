@@ -165,6 +165,61 @@ test("bonus rolls: a player subtracts from the GM's roll, and the GM applies it"
     { bonus, moduleId: MODULE_ID }, "the bonus to be marked as spent");
 });
 
+test("bonus rolls: a player can't spend someone else's die, even by asking the GM directly", async ({ gm, player }) => {
+  await forceDice(gm, [d6(6)]);
+  const bonus = await rollBonus(gm, "GM's Inspiration", async () => {
+    await new Roll("1d6").toMessage({ flavor: "GM's Inspiration" });
+  });
+  await waitFor(player, id => !!document.querySelector(`#chat .chat-log li.chat-message[data-message-id="${id}"]`), bonus,
+    "the GM's die to reach the player");
+  await forceDice(player, [d20(8)]);
+  const aria = await player.eval(async () => {
+    const before = new Set(game.messages.keys());
+    await game.actors.getName("Aria").rollSkill({ skill: "ath" }, { configure: false });
+    return game.messages.contents.find(m => !before.has(m.id))?.id;
+  });
+
+  const entries = await contextEntries(player, bonus);
+  assert(!entries.some(e => /to a roll|from a roll/.test(e)), `The GM's die is offered to the player: ${entries.join(", ")}`);
+  await closeContextMenu(player);
+
+  // The socket request the menu would have sent, made by hand.
+  await player.eval(({ bonus, aria, moduleId }) => {
+    game.socket.emit(`module.${moduleId}`, { action: "applyBonus", source: bonus, target: aria, sign: 1 });
+  }, { bonus, aria, moduleId: MODULE_ID });
+  await gm.page.waitForTimeout(1500);
+  const after = await gm.eval(({ bonus, aria, moduleId }) => ({
+    used: game.messages.get(bonus).getFlag(moduleId, "bonusUsed") ?? null,
+    total: game.messages.get(aria).rolls[0].total,
+    log: game.messages.get(aria).getFlag(moduleId, "log") ?? null
+  }), { bonus, aria, moduleId: MODULE_ID });
+  assertEqual(after, { used: null, total: 8, log: null }, "the GM's die and Aria's roll after the forged request");
+});
+
+test("bonus rolls: a die is spent once, however quickly it is used twice", async ({ gm, player }) => {
+  await forceDice(player, [d20(8), d20(9)]);
+  const [first, second] = await player.eval(async () => {
+    const ids = [];
+    for ( const skill of ["ath", "acr"] ) {
+      const before = new Set(game.messages.keys());
+      await game.actors.getName("Aria").rollSkill({ skill }, { configure: false });
+      ids.push(game.messages.contents.find(m => !before.has(m.id))?.id);
+    }
+    return ids;
+  });
+  await forceDice(player, [d6(3)]);
+  const bonus = await rollBonus(player, "Song of Rest", async () => {
+    await new Roll("1d6").toMessage({ flavor: "Song of Rest" });
+  });
+  await player.eval(async ({ bonus, first, second, moduleId }) => {
+    const { applyBonus } = await import(`/modules/${moduleId}/scripts/bonus-rolls.mjs`);
+    const [source, a, b] = [bonus, first, second].map(id => game.messages.get(id));
+    await Promise.all([applyBonus(source, a, 1), applyBonus(source, b, 1)]);
+  }, { bonus, first, second, moduleId: MODULE_ID });
+  const totals = await gm.eval(ids => ids.map(id => game.messages.get(id).rolls[0].total), [first, second]);
+  assertEqual(totals.filter((t, i) => t !== [8, 9][i]).length, 1, `rolls the die went on (totals ${totals.join(", ")})`);
+});
+
 test("bonus rolls: checks, saves and attacks are not offered as bonuses", async ({ player }) => {
   for ( const kind of ["skill", "save", "attack"] ) {
     await forceDice(player, [d20(8)]);

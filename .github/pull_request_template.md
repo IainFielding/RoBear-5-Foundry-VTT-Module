@@ -25,7 +25,7 @@ CI runs `npm run validate:json` and `npm run lint` automatically. Neither covers
 Foundry itself, so please also say what you clicked through in a real world.
 -->
 
-- [ ] `npm run check` passes locally (manifest validation, lint)
+- [ ] `npm run check` passes locally (manifest validation, lint, unit tests)
 - [ ] Verified in Foundry VTT
 
 **Manual testing steps:**

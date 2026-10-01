@@ -189,3 +189,28 @@ test("pop-ups: a player who reloads mid-request gets the pop-up back", async (ct
   await player.eval(() => { ui.sidebar.expand(); ui.sidebar.changeTab("chat", "primary"); });
   assertEqual(await waitForPopup(player), ["Aria"], "the pop-up after reloading");
 });
+
+test("pop-ups: an open pop-up redraws when the GM shows the result, and a closed one stays closed", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  await setSetting(gm, player, "popupPlayers", true);
+  const id = await postRequest(ctx, { mode: "standard", parts: [athletics(12)], actors: [ids.aria, ids.borin] });
+  await waitForPopup(player);
+  await forceDice(player, [d20(14)]);
+  await popupRollButton(player, "Aria").click({ modifiers: ["Shift"] });
+  await waitForRoll(gm, id, ids.aria);
+  const aria = popup(player).locator('li.robear-request-actor:has(.robear-request-name:text-is("Aria"))');
+  await aria.locator(".robear-request-result").waitFor({ timeout: 10_000 });
+  assertEqual(await aria.evaluate(li => li.classList.contains("success")), false, "Aria's pass, before the GM shows it");
+
+  const reveal = revealed => gm.eval(({ id, moduleId, revealed }) => game.messages.get(id).setFlag(moduleId, "revealed", revealed),
+    { id, moduleId: MODULE_ID, revealed });
+  await reveal(true);
+  await waitFor(player, () => !!document.querySelector(".robear-request-popup li.robear-request-actor.success"), null,
+    "the pop-up to show Aria's pass");
+
+  await player.eval(id => foundry.applications.instances.get(`robear-request-popup-${id}`)?.close(), id);
+  await waitForPopupToClose(player);
+  await reveal(false);
+  await player.page.waitForTimeout(1000);
+  assertEqual(await popupActors(player), null, "the pop-up after the player closed it and the request changed");
+});

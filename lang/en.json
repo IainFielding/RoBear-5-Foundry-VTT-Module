@@ -1,0 +1,239 @@
+{
+  "ROBEAR": {
+    "Common": {
+      "Cancel": "Cancel",
+      "Someone": "Someone",
+      "Unknown": "Unknown"
+    },
+    "Settings": {
+      "LockNaturals": {
+        "Name": "Natural 1s and 20s lock RoBear-E Cards",
+        "Hint": "No RoBear-E Card can be played on a roll whose d20 shows a natural 1 or 20. Turn this off to allow them, though Luck still can't be played on a natural 1 or 20."
+      },
+      "ShowPlayedCards": {
+        "Name": "Show played cards on screen",
+        "Hint": "When a RoBear-E Card is played, its art appears in the middle of the screen for a moment, for everyone who can see the roll. Either way, chat keeps a record of it, with a thumbnail of the card."
+      },
+      "ShowDCDefault": {
+        "Name": "Show the DC to players by default",
+        "Hint": "Whether Show DC to Players starts ticked when you open the request window. You can still change it for each request."
+      },
+      "AttachRolls": {
+        "Name": "Attach rolls to the request card",
+        "Hint": "Rolls made for a roll request are shown on its card, rather than as messages of their own. Click a result on the card to see its dice."
+      },
+      "PopupPlayers": {
+        "Name": "Pop up roll requests for players",
+        "Hint": "When the GM posts a roll request, a window opens for each player with a character in it, with a Roll button for each of their characters. The chat card works either way."
+      },
+      "PopupGM": {
+        "Name": "Pop up roll requests for the GM",
+        "Hint": "When a roll request includes NPCs, or any actor no player owns, a window opens for the GM with their Roll buttons. Otherwise the GM rolls for them from the chat card."
+      }
+    },
+    "RollKind": {
+      "Attack": "Attack",
+      "Damage": "Damage",
+      "Check": "Check",
+      "Save": "Save",
+      "Initiative": "Initiative",
+      "Divine": "Divine Intervention"
+    },
+    "Cards": {
+      "NoneLeft": "You have no RoBear-E Cards left until your next long rest.",
+      "ChooseFromSheet": "Choose a card to play. It will be spent until your next long rest.",
+      "ChooseOnRoll": "Choose a card to play on this roll. It will be spent until your next long rest.",
+      "NextRollAdvantage": "{name}'s next attack roll, ability check, or saving throw will be made with advantage.",
+      "ButtonTooltip": "Use a RoBear-E Card on this roll",
+      "Button": "RoBear-E Card",
+      "DialogTitle": "Use a RoBear-E Card",
+      "LegacyLabel": "RoBear-E:",
+      "Plays": "{name} plays",
+      "Log": {
+        "Entry": "{card}: {detail}",
+        "Inspiration": "added {formula} ({bonus}): {before} + {bonus} = {after}",
+        "RerollDamage": "rerolled damage dice: {before} → {after}",
+        "RerollD100": "rerolled the d100: {before} → {after}",
+        "RerollD20": "rerolled {dice} ({old} → {new}): {before} → {after}",
+        "TheD20": "the d20",
+        "BothD20s": "both d20s",
+        "DivineAdvantage": "rolled with advantage ({first} and {second}), keeping {total}",
+        "CancelDisadvantage": "cancelled disadvantage: {before} → {after}",
+        "Advantage": "rolled with advantage ({first} and {second}): {before} → {after}"
+      }
+    },
+    "Indomitable": {
+      "MenuLabel": "Use Indomitable",
+      "Button": "Use {name}",
+      "ButtonTooltip": "Use {name} ({uses} left)",
+      "ConfirmNoDC": "This save has no DC, so it can't be checked whether it failed. Spend a use of {name} ({uses} left) to reroll it?",
+      "FighterLevel": "Fighter level",
+      "LevelBonus": " + {bonus} (Fighter level)",
+      "Log": "rerolled {dice} ({old} → {new}){bonus}: {before} → {after}"
+    },
+    "Bonus": {
+      "MenuAdd": "Add to a roll…",
+      "MenuSubtract": "Subtract from a roll…",
+      "AddTitle": "Add {label}",
+      "AddHint": "Add {formula} ({total}) to which roll?",
+      "SubtractTitle": "Subtract {label}",
+      "SubtractHint": "Subtract {formula} ({total}) from which roll?",
+      "AddedTo": "Added to {target}",
+      "SubtractedFrom": "Subtracted from {target}",
+      "DefaultLabel": "Bonus roll",
+      "NoTargets": "There is no roll in chat this can be added to.",
+      "SentToGM": "Sent to the GM to apply.",
+      "Log": {
+        "Added": "added {formula} ({bonus}): {before} → {after}",
+        "Subtracted": "subtracted {formula} ({bonus}): {before} → {after}"
+      }
+    },
+    "Request": {
+      "WindowTitle": "Request RoBear-E Rolls",
+      "PopupTitle": "Roll Request",
+      "DeleteGMOnly": "Only the GM can delete a roll made for a roll request.",
+      "DC": "DC {dc}",
+      "Versus": "vs",
+      "Roll": "Roll",
+      "RollTooltip": "Roll {roll}",
+      "Waiting": "Waiting to roll",
+      "Success": "Success",
+      "Failure": "Failure",
+      "Modes": {
+        "Standard": {
+          "Label": "Standard Roll",
+          "Hint": "Each actor rolls once against the DC."
+        },
+        "Team": {
+          "Label": "Team Challenge",
+          "Hint": "The party's rolls are averaged. A natural 1 removes the highest roll, and a natural 20 the lowest."
+        },
+        "Challenge": {
+          "Label": "Skill Challenge",
+          "Hint": "Each actor faces three rolls in turn, and needs enough of them to succeed."
+        },
+        "RollOff": {
+          "Label": "Roll-Off",
+          "Hint": "Two actors roll against each other, and the higher total wins."
+        },
+        "Versus": {
+          "Label": "Team vs Team",
+          "Hint": "Two teams are averaged like a Team Challenge, and the higher average wins."
+        },
+        "Divine": {
+          "Label": "Divine Intervention",
+          "Hint": "Each actor picks a run of numbers, then must roll one of them on a d100."
+        }
+      },
+      "Sides": {
+        "Challenger": "Challenger",
+        "Opponent": "Opponent",
+        "Players": "Players",
+        "NPCs": "NPCs"
+      },
+      "Labels": {
+        "Check": "{name} Check",
+        "Save": "{name} Save",
+        "DieRoll": "{die} Roll"
+      },
+      "Subtitle": {
+        "Challenge": "{count} of {total} to succeed",
+        "Divine": "{count} numbers in a row on a d100"
+      },
+      "Team": {
+        "RemovedHighest": "Highest roll, removed by {name}'s natural 1",
+        "RemovedLowest": "Lowest roll, removed by {name}'s natural 20",
+        "ExactAverage": "Exact average {average}",
+        "Hidden": "The team's result is hidden.",
+        "Average": "Team average {average}{removed}",
+        "Removed": " · {count} removed"
+      },
+      "Contest": {
+        "Tie": "Tie",
+        "Wins": "{name} wins",
+        "TeamWins": "{name} win",
+        "Hidden": "The result is hidden."
+      },
+      "Challenge": {
+        "Done": "Done",
+        "DoneTooltip": "Finished. The GM will show how it went.",
+        "Passed": "Challenge passed",
+        "Failed": "Challenge failed"
+      },
+      "Result": {
+        "Hidden": "Hidden roll",
+        "TotalWithD20": "{total} (d20: {natural})",
+        "Numbered": "Roll {number}: {result}",
+        "ClickForDice": "{result}. Click for the dice."
+      },
+      "Summary": {
+        "Standard": "{count} of {total} succeeded",
+        "Challenge": "{count} of {total} passed the challenge",
+        "Divine": "{count} of {total} answered"
+      },
+      "Divine": {
+        "Answered": "The gods answer",
+        "NoAnswer": "No answer",
+        "Picked": "The numbers picked",
+        "DialogTitle": "Divine Intervention: {name}",
+        "DialogHint": "Pick {count} numbers in a row. You then roll a d100, and must roll one of them.",
+        "NonePicked": "No numbers picked yet.",
+        "Need": "You need {start}–{end}.",
+        "Roll": "Roll d100"
+      },
+      "Reveal": {
+        "Show": "Show to players",
+        "Shown": "Shown",
+        "ShowNPC": "Show NPC roll",
+        "NPCShown": "NPC roll shown",
+        "ShownTooltip": "Players can see this. Click to hide it.",
+        "HiddenTooltip": "Only you can see this."
+      },
+      "Flavor": {
+        "Die": "{mode}: {die}",
+        "Range": "{mode}: {die}, needing {start}–{end}"
+      },
+      "Invalid": {
+        "Mode": "Unknown kind of roll request: {mode}.",
+        "NoActors": "A roll request needs at least one actor to roll.",
+        "MissingRoll": "A roll request is missing a roll.",
+        "EmptySide": "Each side of a contest needs at least one actor."
+      },
+      "Config": {
+        "KindOfRoll": "Kind of Roll",
+        "Rolls": "Rolls",
+        "Roll": "Roll",
+        "NumberedRoll": "Roll {number}",
+        "SideRoll": "{side} Roll",
+        "DC": "DC",
+        "SuccessesNeeded": "Successes Needed",
+        "SuccessesOf": "{count} of {total}",
+        "ChallengeHint": "An actor stops rolling as soon as they have passed or failed the challenge.",
+        "ContestHint": "Each side makes its own roll, and the higher result wins.",
+        "NumbersToPick": "Numbers to Pick",
+        "DivineHint": "Each player picks this many numbers in a row, then rolls a d100 and must roll one of them.",
+        "WhoRolls": "Who Rolls",
+        "SelectAll": "Select or clear everyone",
+        "NoActors": "Select tokens, or give players characters, to choose who rolls.",
+        "Options": "Options",
+        "ShowDC": "Show DC to Players",
+        "Visibility": "Roll Visibility",
+        "Public": "Public",
+        "Private": "Private GM Roll",
+        "PrivateHint": "With private rolls, each player sees only their own results.",
+        "Send": "Send Request",
+        "ChooseSide": "Choose who rolls for the {side}.",
+        "BothSides": "No one can be on both sides.",
+        "ChooseActor": "Choose at least one actor to roll.",
+        "ChallengeDC": "Each roll in a skill challenge needs a DC.",
+        "Groups": {
+          "Dice": "Dice",
+          "Skills": "Skills",
+          "Checks": "Ability Checks",
+          "Saves": "Saving Throws",
+          "Tools": "Tools"
+        }
+      }
+    }
+  }
+}

@@ -2,7 +2,7 @@
 
     {{!-- Mode --}}
     <fieldset class="robear-request-modes">
-        <legend>Kind of Roll</legend>
+        <legend>{{localize "ROBEAR.Request.Config.KindOfRoll"}}</legend>
         {{#each modes as |mode|}}
         <label class="robear-request-mode">
             <input type="radio" name="mode" value="{{mode.value}}" {{checked mode.checked}}>
@@ -15,7 +15,7 @@
 
     {{!-- Rolls --}}
     <fieldset class="robear-request-parts">
-        <legend>Rolls</legend>
+        <legend>{{localize "ROBEAR.Request.Config.Rolls"}}</legend>
         {{#each rows as |row|}}
         <div class="form-group">
             <label>{{row.label}}</label>
@@ -31,7 +31,7 @@
                 </select>
                 {{#if row.hasDC}}
                 <label class="robear-request-dc">
-                    DC <input type="number" name="{{row.field}}.dc" value="{{row.dc}}" min="0" step="1" placeholder="—">
+                    {{localize "ROBEAR.Request.Config.DC"}} <input type="number" name="{{row.field}}.dc" value="{{row.dc}}" min="0" step="1" placeholder="—">
                 </label>
                 {{/if}}
             </div>
@@ -39,27 +39,27 @@
         {{/each}}
         {{#if challenge}}
         <div class="form-group">
-            <label>Successes Needed</label>
+            <label>{{localize "ROBEAR.Request.Config.SuccessesNeeded"}}</label>
             <div class="form-fields">
                 <select name="successes">
-                    {{#each successOptions as |n|}}
-                    <option value="{{n}}" {{#if (eq n @root.successes)}}selected{{/if}}>{{n}} of 3</option>
+                    {{#each successOptions as |option|}}
+                    <option value="{{option.value}}" {{#if (eq option.value @root.successes)}}selected{{/if}}>{{option.label}}</option>
                     {{/each}}
                 </select>
             </div>
-            <p class="hint">An actor stops rolling as soon as they have passed or failed the challenge.</p>
+            <p class="hint">{{localize "ROBEAR.Request.Config.ChallengeHint"}}</p>
         </div>
         {{/if}}
         {{#if contest}}
-        <p class="hint">Each side makes its own roll, and the higher result wins.</p>
+        <p class="hint">{{localize "ROBEAR.Request.Config.ContestHint"}}</p>
         {{/if}}
         {{#if divine}}
         <div class="form-group">
-            <label>Numbers to Pick</label>
+            <label>{{localize "ROBEAR.Request.Config.NumbersToPick"}}</label>
             <div class="form-fields">
                 <range-picker name="range" value="{{range}}" min="{{rangeLimits.min}}" max="{{rangeLimits.max}}" step="1"></range-picker>
             </div>
-            <p class="hint">Each player picks this many numbers in a row, then rolls a d100 and must roll one of them.</p>
+            <p class="hint">{{localize "ROBEAR.Request.Config.DivineHint"}}</p>
         </div>
         {{/if}}
     </fieldset>
@@ -68,13 +68,13 @@
     {{#if contest}}
     <div class="robear-request-sides">
         {{#each sides as |side|}}
-        {{#if side.side}}<div class="robear-request-versus" aria-hidden="true">vs</div>{{/if}}
+        {{#if side.side}}<div class="robear-request-versus" aria-hidden="true">{{localize "ROBEAR.Request.Versus"}}</div>{{/if}}
         <fieldset class="robear-request-side">
             <legend>
                 {{side.label}}
                 {{#unless side.single}}
                 <button type="button" class="robear-request-select-all" data-action="selectAll"
-                        data-tooltip aria-label="Select or clear everyone">
+                        data-tooltip aria-label="{{localize 'ROBEAR.Request.Config.SelectAll'}}">
                     <i class="fa-solid fa-check-double" inert></i>
                 </button>
                 {{/unless}}
@@ -98,9 +98,9 @@
     {{else}}
     <fieldset>
         <legend>
-            Who Rolls
+            {{localize "ROBEAR.Request.Config.WhoRolls"}}
             <button type="button" class="robear-request-select-all" data-action="selectAll"
-                    data-tooltip aria-label="Select or clear everyone">
+                    data-tooltip aria-label="{{localize 'ROBEAR.Request.Config.SelectAll'}}">
                 <i class="fa-solid fa-check-double" inert></i>
             </button>
         </legend>
@@ -112,7 +112,7 @@
                 <span>{{actor.name}}</span>
             </label>
             {{else}}
-            <p class="hint">Select tokens, or give players characters, to choose who rolls.</p>
+            <p class="hint">{{localize "ROBEAR.Request.Config.NoActors"}}</p>
             {{/each}}
         </div>
     </fieldset>
@@ -120,24 +120,24 @@
 
     {{!-- Options --}}
     <fieldset>
-        <legend>Options</legend>
+        <legend>{{localize "ROBEAR.Request.Config.Options"}}</legend>
         {{#unless (or contest divine)}}
         <div class="form-group">
-            <label>Show DC to Players</label>
+            <label>{{localize "ROBEAR.Request.Config.ShowDC"}}</label>
             <div class="form-fields">
                 <input type="checkbox" name="showDC" {{checked showDC}}>
             </div>
         </div>
         {{/unless}}
         <div class="form-group">
-            <label>Roll Visibility</label>
+            <label>{{localize "ROBEAR.Request.Config.Visibility"}}</label>
             <div class="form-fields">
                 <select name="rollMode">
-                    <option value="public" {{#if (eq rollMode "public")}}selected{{/if}}>Public</option>
-                    <option value="gm" {{#if (eq rollMode "gm")}}selected{{/if}}>Private GM Roll</option>
+                    <option value="public" {{#if (eq rollMode "public")}}selected{{/if}}>{{localize "ROBEAR.Request.Config.Public"}}</option>
+                    <option value="gm" {{#if (eq rollMode "gm")}}selected{{/if}}>{{localize "ROBEAR.Request.Config.Private"}}</option>
                 </select>
             </div>
-            <p class="hint">With private rolls, each player sees only their own results.</p>
+            <p class="hint">{{localize "ROBEAR.Request.Config.PrivateHint"}}</p>
         </div>
     </fieldset>
 

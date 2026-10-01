@@ -5,50 +5,51 @@
  * tagged roll messages each time the card renders, so deleting a roll message lets that actor roll again.
  */
 
-import { MODULE_ID, createCardButton, getCardOptions, renderLog } from "./robear-cards.mjs";
+import { MODULE_ID, createCardButton, getCardOptions, localize, renderLog } from "./robear-cards.mjs";
 import { createIndomitableButton } from "./class-features.mjs";
 import RollRequestConfig from "./roll-request-config.mjs";
 
 /**
  * Kinds of request the GM can make. Contests set two sides against each other, each with its own roll.
+ * Labels, hints and side names are keys in the language file.
  */
 export const MODES = {
   standard: {
-    label: "Standard Roll",
+    label: "ROBEAR.Request.Modes.Standard.Label",
     icon: "fa-solid fa-dice-d20",
-    hint: "Each actor rolls once against the DC.",
+    hint: "ROBEAR.Request.Modes.Standard.Hint",
     dice: ["d20", "d6", "d8", "d10", "d12", "d100"]
   },
   team: {
-    label: "Team Challenge",
+    label: "ROBEAR.Request.Modes.Team.Label",
     icon: "fa-solid fa-people-group",
-    hint: "The party's rolls are averaged. A natural 1 removes the highest roll, and a natural 20 the lowest."
+    hint: "ROBEAR.Request.Modes.Team.Hint"
   },
   challenge: {
-    label: "Skill Challenge",
+    label: "ROBEAR.Request.Modes.Challenge.Label",
     icon: "fa-solid fa-layer-group",
-    hint: "Each actor faces three rolls in turn, and needs enough of them to succeed."
+    hint: "ROBEAR.Request.Modes.Challenge.Hint"
   },
   rolloff: {
-    label: "Roll-Off",
+    label: "ROBEAR.Request.Modes.RollOff.Label",
     icon: "fa-solid fa-scale-balanced",
-    hint: "Two actors roll against each other, and the higher total wins.",
+    hint: "ROBEAR.Request.Modes.RollOff.Hint",
     contest: true,
-    sides: ["Challenger", "Opponent"],
+    sides: ["ROBEAR.Request.Sides.Challenger", "ROBEAR.Request.Sides.Opponent"],
     dice: ["d20", "d6", "d8", "d10", "d12", "d100"]
   },
   versus: {
-    label: "Team vs Team",
+    label: "ROBEAR.Request.Modes.Versus.Label",
     icon: "fa-solid fa-people-arrows",
-    hint: "Two teams are averaged like a Team Challenge, and the higher average wins.",
+    hint: "ROBEAR.Request.Modes.Versus.Hint",
     contest: true,
-    sides: ["Players", "NPCs"],
+    sides: ["ROBEAR.Request.Sides.Players", "ROBEAR.Request.Sides.NPCs"],
     dice: ["d20"]
   },
   divine: {
-    label: "Divine Intervention",
+    label: "ROBEAR.Request.Modes.Divine.Label",
     icon: "fa-solid fa-hands-praying",
-    hint: "Each actor picks a run of numbers, then must roll one of them on a d100."
+    hint: "ROBEAR.Request.Modes.Divine.Hint"
   }
 };
 
@@ -86,18 +87,27 @@ const rolling = new Set();
  */
 const expandedRolls = new Set();
 
+/**
+ * The IDs of the roll messages made for each request, keyed by request message ID, so drawing a request card does not
+ * search the whole chat log. Built from the chat log the first time it is needed, then kept up to date as roll
+ * messages are created. A deleted message is simply no longer found.
+ * @type {{ source: object, rolls: Map<string, Set<string>> }|null}
+ */
+let rollIndex = null;
+
 /* -------------------------------------------- */
 /*  Hooks                                       */
 /* -------------------------------------------- */
 
-Hooks.once("init", registerSettings);
-Hooks.once("ready", () => {
+Hooks.once("init", () => {
+  registerSettings();
   game.modules.get(MODULE_ID).api = { requestRolls: openRollRequest };
 });
 Hooks.on("renderChatInput", onRenderChatInput);
 Hooks.on("getSceneControlButtons", onGetSceneControlButtons);
 Hooks.on("dnd5e.renderChatMessage", onRenderChatMessage);
-Hooks.on("createChatMessage", refreshRequest);
+Hooks.on("preDeleteChatMessage", onPreDeleteChatMessage);
+Hooks.on("createChatMessage", onCreateChatMessage);
 Hooks.on("updateChatMessage", refreshRequest);
 Hooks.on("deleteChatMessage", refreshRequest);
 
@@ -106,18 +116,16 @@ Hooks.on("deleteChatMessage", refreshRequest);
  */
 function registerSettings() {
   game.settings.register(MODULE_ID, "showDCDefault", {
-    name: "Show the DC to players by default",
-    hint: "Whether Show DC to Players starts ticked when you open the request window. You can still change it "
-      + "for each request.",
+    name: "ROBEAR.Settings.ShowDCDefault.Name",
+    hint: "ROBEAR.Settings.ShowDCDefault.Hint",
     scope: "world",
     config: true,
     type: Boolean,
     default: false
   });
   game.settings.register(MODULE_ID, "attachRolls", {
-    name: "Attach rolls to the request card",
-    hint: "Rolls made for a roll request are shown on its card, rather than as messages of their own. Click a "
-      + "result on the card to see its dice.",
+    name: "ROBEAR.Settings.AttachRolls.Name",
+    hint: "ROBEAR.Settings.AttachRolls.Hint",
     scope: "world",
     config: true,
     type: Boolean,
@@ -158,8 +166,8 @@ function onRenderChatInput(_app, elements) {
   const button = document.createElement("button");
   button.type = "button";
   button.className = "ui-control icon fa-solid fa-anchor fa-rotate-90 robear-request-control";
-  button.dataset.tooltip = "Request RoBear-E Rolls";
-  button.setAttribute("aria-label", "Request RoBear-E Rolls");
+  button.dataset.tooltip = localize("ROBEAR.Request.WindowTitle");
+  button.setAttribute("aria-label", localize("ROBEAR.Request.WindowTitle"));
   button.addEventListener("click", openRollRequest);
   controls.prepend(button);
 }
@@ -175,11 +183,39 @@ function onGetSceneControlButtons(controls) {
   controls.tokens.tools.robearRequest = {
     name: "robearRequest",
     order: Object.keys(controls.tokens.tools).length + 1,
-    title: "Request RoBear-E Rolls",
+    title: "ROBEAR.Request.WindowTitle",
     icon: "fa-solid fa-anchor fa-rotate-90",
     button: true,
     onChange: openRollRequest
   };
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Only the GM may delete a roll made for a request that is still in chat. Deleting it lets that actor roll again, so a
+ * player could otherwise throw away a bad roll.
+ * @param {ChatMessage5e} message
+ * @returns {boolean|void}  False to stop the deletion.
+ */
+function onPreDeleteChatMessage(message) {
+  if ( game.user.isGM ) return;
+  const requestId = message.getFlag(MODULE_ID, "requestRoll")?.request;
+  if ( !requestId || !game.messages.has(requestId) ) return;
+  ui.notifications.warn(localize("ROBEAR.Request.DeleteGMOnly"));
+  return false;
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Note a new roll message against its request, then redraw the request.
+ * @param {ChatMessage5e} message
+ */
+function onCreateChatMessage(message) {
+  const requestId = message.getFlag(MODULE_ID, "requestRoll")?.request;
+  if ( requestId && rollIndex ) indexRoll(rollIndex.rolls, requestId, message.id);
+  refreshRequest(message);
 }
 
 /* -------------------------------------------- */
@@ -193,9 +229,7 @@ function onGetSceneControlButtons(controls) {
 function refreshRequest(message, changes) {
   // Showing or hiding a request's result changes what its rolls offer, such as Indomitable on a failed save.
   if ( changes?.flags?.[MODULE_ID] && ("revealed" in changes.flags[MODULE_ID]) ) {
-    for ( const roll of game.messages ) {
-      if ( roll.getFlag(MODULE_ID, "requestRoll")?.request === message.id ) ui.chat?.updateMessage(roll);
-    }
+    for ( const roll of getRollMessages(message.id) ) ui.chat?.updateMessage(roll);
   }
   const requestId = message.getFlag(MODULE_ID, "requestRoll")?.request;
   const request = game.messages.get(requestId);
@@ -229,13 +263,33 @@ function refreshRequest(message, changes) {
  * Post a roll request to chat.
  * @param {RollRequest} request
  * @returns {Promise<ChatMessage5e>}
+ * @throws {Error}  If the request has no one to roll, or a contest has an empty side.
  */
 export async function createRequest(request) {
+  validateRequest(request);
   return ChatMessage.create({
     speaker: { alias: "RoBear-E" },
-    content: `<p>${getRequestTitle(request)}</p>`,
+    content: `<p>${foundry.utils.escapeHTML(getRequestTitle(request))}</p>`,
     flags: { [MODULE_ID]: { request } }
   });
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Check a request can be rolled before it is posted. The request window checks the same things with friendlier
+ * messages, but a macro can call createRequest directly.
+ * @param {RollRequest} request
+ * @throws {Error}
+ */
+export function validateRequest(request) {
+  if ( !(request?.mode in MODES) ) throw new Error(localize("ROBEAR.Request.Invalid.Mode", { mode: request?.mode }));
+  if ( !request.actors?.length ) throw new Error(localize("ROBEAR.Request.Invalid.NoActors"));
+  const parts = isContest(request) ? request.sides?.length : (request.mode === "challenge" ? CHALLENGE_PARTS : 1);
+  if ( (request.parts?.length ?? 0) < parts ) throw new Error(localize("ROBEAR.Request.Invalid.MissingRoll"));
+  if ( isContest(request) && ((request.sides?.length !== 2) || request.sides.some(s => !s?.length)) ) {
+    throw new Error(localize("ROBEAR.Request.Invalid.EmptySide"));
+  }
 }
 
 /* -------------------------------------------- */
@@ -245,11 +299,12 @@ export async function createRequest(request) {
  * @returns {string}  Name of the roll, e.g. "Athletics Check", "Dexterity Save" or "d100".
  */
 export function getPartLabel({ type, key }) {
+  const check = name => localize("ROBEAR.Request.Labels.Check", { name });
   switch ( type ) {
-    case "skill": return `${CONFIG.DND5E.skills[key]?.label ?? key} Check`;
-    case "check": return `${CONFIG.DND5E.abilities[key]?.label ?? key} Check`;
-    case "save": return `${CONFIG.DND5E.abilities[key]?.label ?? key} Save`;
-    case "tool": return `${dnd5e.documents.Trait.keyLabel(key, { trait: "tool" }) ?? key} Check`;
+    case "skill": return check(CONFIG.DND5E.skills[key]?.label ?? key);
+    case "check": return check(CONFIG.DND5E.abilities[key]?.label ?? key);
+    case "save": return localize("ROBEAR.Request.Labels.Save", { name: CONFIG.DND5E.abilities[key]?.label ?? key });
+    case "tool": return check(dnd5e.documents.Trait.keyLabel(key, { trait: "tool" }) ?? key);
   }
   return DICE[type]?.label ?? type;
 }
@@ -271,9 +326,9 @@ export function isContest(request) {
  * @returns {string}
  */
 export function getRequestTitle(request) {
-  if ( ["challenge", "divine"].includes(request.mode) || isContest(request) ) return MODES[request.mode].label;
+  if ( ["challenge", "divine"].includes(request.mode) || isContest(request) ) return localize(MODES[request.mode].label);
   const label = getPartLabel(request.parts[0]);
-  return request.parts[0].type in DICE ? `${label} Roll` : label;
+  return request.parts[0].type in DICE ? localize("ROBEAR.Request.Labels.DieRoll", { die: label }) : label;
 }
 
 /* -------------------------------------------- */
@@ -283,10 +338,12 @@ export function getRequestTitle(request) {
  * @returns {string}  What the request asks for, under its title.
  */
 export function getRequestSubtitle(request) {
-  if ( request.mode === "challenge" ) return `${request.successes} of ${request.parts.length} to succeed`;
-  if ( isContest(request) ) return request.parts.map(getPartLabel).join(" vs ");
-  if ( request.mode === "divine" ) return `${request.range} numbers in a row on a d100`;
-  return [MODES[request.mode].label, getDCText(request, request.parts[0].dc)].filterJoin(" · ");
+  if ( request.mode === "challenge" ) {
+    return localize("ROBEAR.Request.Subtitle.Challenge", { count: request.successes, total: request.parts.length });
+  }
+  if ( isContest(request) ) return request.parts.map(getPartLabel).join(` ${localize("ROBEAR.Request.Versus")} `);
+  if ( request.mode === "divine" ) return localize("ROBEAR.Request.Subtitle.Divine", { count: request.range });
+  return [localize(MODES[request.mode].label), getDCText(request, request.parts[0].dc)].filterJoin(" · ");
 }
 
 /* -------------------------------------------- */
@@ -298,7 +355,7 @@ export function getRequestSubtitle(request) {
  */
 function getDCText(request, dc) {
   if ( !Number.isNumeric(dc) ) return "";
-  return `DC ${request.showDC || game.user.isGM ? dc : "?"}`;
+  return localize("ROBEAR.Request.DC", { dc: request.showDC || game.user.isGM ? dc : "?" });
 }
 
 /* -------------------------------------------- */
@@ -316,8 +373,54 @@ function getDCText(request, dc) {
  */
 
 /**
+ * @param {Map<string, Set<string>>} rolls  The index being built or kept up to date.
+ * @param {string} requestId
+ * @param {string} messageId  A roll message made for the request.
+ */
+function indexRoll(rolls, requestId, messageId) {
+  if ( !rolls.has(requestId) ) rolls.set(requestId, new Set());
+  rolls.get(requestId).add(messageId);
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {string} requestId  The request message's ID.
+ * @returns {ChatMessage5e[]}  The roll messages made for the request that are still in chat.
+ */
+export function getRollMessages(requestId) {
+  // The index is rebuilt if the chat log itself has been replaced, as it is when Foundry reloads it.
+  if ( rollIndex?.source !== game.messages ) {
+    rollIndex = { source: game.messages, rolls: new Map() };
+    for ( const m of game.messages ) {
+      const id = m.getFlag(MODULE_ID, "requestRoll")?.request;
+      if ( id ) indexRoll(rollIndex.rolls, id, m.id);
+    }
+  }
+  const ids = rollIndex.rolls.get(requestId) ?? [];
+  return [...ids].map(id => game.messages.get(id)).filter(Boolean);
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {ChatMessage5e} roll  A roll message made for a request.
+ * @param {string} uuid         The actor it was made for.
+ * @returns {boolean}  Whether it counts: it was made by the GM, or by someone who owns the actor.
+ */
+function isRollByOwner(roll, uuid) {
+  const author = roll.author;
+  if ( !author ) return false;
+  if ( author.isGM ) return true;
+  return !!fromUuidSync(uuid)?.testUserPermission?.(author, "OWNER");
+}
+
+/* -------------------------------------------- */
+
+/**
  * Find the results of each actor's rolls, from the roll messages tagged with this request.
  * In a contest each actor makes one roll, the one for their side. If a roll was made more than once, the latest counts.
+ * A roll only counts if it was made by the GM or by one of the actor's owners.
  * @param {ChatMessage5e} message  The request message.
  * @returns {Map<string, (PartResult|null)[]>}  Results for each roll, keyed by actor UUID.
  */
@@ -326,14 +429,14 @@ export function getResults(message) {
   const contest = isContest(request);
   const length = contest ? 1 : request.parts.length;
   const results = new Map(request.actors.map(uuid => [uuid, Array.from({ length }, () => null)]));
-  const rolls = game.messages.filter(m => m.getFlag(MODULE_ID, "requestRoll")?.request === message.id)
-    .sort((a, b) => a.timestamp - b.timestamp);
+  const rolls = getRollMessages(message.id).sort((a, b) => a.timestamp - b.timestamp);
 
   for ( const roll of rolls ) {
     const { actor, part, range } = roll.getFlag(MODULE_ID, "requestRoll");
     const first = roll.rolls[0];
     if ( !results.has(actor) || !first || !(part in request.parts) ) continue;
     if ( contest && !request.sides[part]?.includes(actor) ) continue;
+    if ( !isRollByOwner(roll, actor) ) continue;
     const dc = request.parts[part].dc;
     let success = Number.isNumeric(dc) ? first.total >= dc : null;
     if ( range ) success = (first.total >= range.start) && (first.total <= range.end);
@@ -381,6 +484,7 @@ export function getChallengeState(results, needed) {
  *   The average rounded down, the exact average, and why each removed actor's roll was removed.
  */
 export function poolTeamRolls(entries) {
+  if ( !entries.length ) return { average: NaN, exact: NaN, removed: new Map() };
   const sorted = [...entries].sort((a, b) => a.total - b.total);
   const fumbles = entries.filter(e => e.natural === 1);
   const crits = entries.filter(e => e.natural === 20);
@@ -394,11 +498,13 @@ export function poolTeamRolls(entries) {
   lows = Math.min(lows, sorted.length - 1 - highs);
 
   const removed = new Map();
-  const byName = e => fromUuidSync(e.uuid)?.name ?? "Someone";
-  sorted.slice(sorted.length - highs).reverse()
-    .forEach((e, i) => removed.set(e.uuid, `Highest roll, removed by ${byName(fumbles[i])}'s natural 1`));
-  sorted.slice(0, lows)
-    .forEach((e, i) => removed.set(e.uuid, `Lowest roll, removed by ${byName(crits[i])}'s natural 20`));
+  const byName = e => fromUuidSync(e.uuid)?.name ?? localize("ROBEAR.Common.Someone");
+  sorted.slice(sorted.length - highs).reverse().forEach((e, i) => {
+    removed.set(e.uuid, localize("ROBEAR.Request.Team.RemovedHighest", { name: byName(fumbles[i]) }));
+  });
+  sorted.slice(0, lows).forEach((e, i) => {
+    removed.set(e.uuid, localize("ROBEAR.Request.Team.RemovedLowest", { name: byName(crits[i]) }));
+  });
 
   const pool = sorted.filter(e => !removed.has(e.uuid));
   const exact = pool.reduce((sum, e) => sum + e.total, 0) / pool.length;
@@ -424,7 +530,9 @@ export function poolTeamRolls(entries) {
  * @returns {GroupOutcome}
  */
 export function getGroupOutcome(uuids, results, pooled) {
-  const entries = uuids.map(uuid => ({ uuid, result: results.get(uuid)[0] }));
+  // A group with no one in it never has a result.
+  if ( !uuids?.length ) return { complete: false, hidden: false, removed: new Map() };
+  const entries = uuids.map(uuid => ({ uuid, result: results.get(uuid)?.[0] ?? null }));
   const complete = entries.every(e => e.result);
   const hidden = entries.some(e => e.result && !e.result.visible);
   if ( !complete || hidden ) return { complete, hidden, removed: new Map() };
@@ -488,7 +596,9 @@ function renderRequest(message, request) {
   if ( request.mode === "challenge" ) {
     const steps = document.createElement("ol");
     steps.className = "robear-request-steps";
-    steps.innerHTML = request.parts.map(p => `<li>${getPartLabel(p)} <span>${getDCText(request, p.dc)}</span></li>`).join("");
+    steps.innerHTML = request.parts.map(p => {
+    return `<li>${foundry.utils.escapeHTML(getPartLabel(p))} <span>${getDCText(request, p.dc)}</span></li>`;
+  }).join("");
     card.append(steps);
   }
 
@@ -517,13 +627,14 @@ function renderRequest(message, request) {
  * @returns {HTMLElement}
  */
 export function renderHeader(icon, title, subtitle) {
+  const { escapeHTML } = foundry.utils;
   const header = document.createElement("header");
   header.className = "robear-request-header";
   header.innerHTML = `
-    <i class="${icon}" inert></i>
+    <i class="${escapeHTML(icon)}" inert></i>
     <div>
-      <h3>${title}</h3>
-      <span class="robear-request-subtitle">${subtitle}</span>
+      <h3>${escapeHTML(title)}</h3>
+      <span class="robear-request-subtitle">${escapeHTML(subtitle)}</span>
     </div>
   `;
   return header;
@@ -544,7 +655,7 @@ function renderContest(card, message, request, results) {
   const settled = groups.every(isSettled);
   const [a, b] = groups.map(g => g.score);
   const winner = !settled ? undefined : (a > b ? 0 : (b > a ? 1 : null));
-  const names = MODES[request.mode].sides;
+  const names = MODES[request.mode].sides.map(side => localize(side));
 
   const sides = document.createElement("div");
   sides.className = "robear-request-sides";
@@ -556,8 +667,8 @@ function renderContest(card, message, request, results) {
     const score = pooled && isSettled(group) ? `<span class="robear-request-score"${exactTooltip(group)}>${group.score}</span>` : "";
     block.innerHTML = `
       <header>
-        <h4>${names[side]}</h4>
-        <span>${getPartLabel(request.parts[side])}</span>
+        <h4>${foundry.utils.escapeHTML(names[side])}</h4>
+        <span>${foundry.utils.escapeHTML(getPartLabel(request.parts[side]))}</span>
         ${score}
       </header>
       <ul class="robear-request-actors"></ul>
@@ -570,7 +681,7 @@ function renderContest(card, message, request, results) {
     if ( side === 0 ) {
       const divider = document.createElement("div");
       divider.className = "robear-request-versus";
-      divider.textContent = "vs";
+      divider.textContent = localize("ROBEAR.Request.Versus");
       sides.append(divider);
     }
   });
@@ -581,11 +692,15 @@ function renderContest(card, message, request, results) {
   if ( winner !== undefined ) {
     const label = side => (pooled ? names[side] : fromUuidSync(request.sides[side][0])?.name) ?? names[side];
     const scores = `${label(0)} ${a} · ${label(1)} ${b}`;
-    const verdict = winner === null ? "Tie" : `${foundry.utils.escapeHTML(label(winner))} ${pooled ? "win" : "wins"}`;
+    const verdict = winner === null ? localize("ROBEAR.Request.Contest.Tie")
+      : localize(pooled ? "ROBEAR.Request.Contest.TeamWins" : "ROBEAR.Request.Contest.Wins", { name: label(winner) });
     summary.classList.add(winner === null ? "tie" : "success");
-    summary.innerHTML = `<span>${foundry.utils.escapeHTML(scores)}</span><strong>${verdict}</strong>`;
+    summary.innerHTML = "<span></span><strong></strong>";
+    summary.querySelector("span").textContent = scores;
+    summary.querySelector("strong").textContent = verdict;
   } else if ( groups.every(g => g.complete) ) {
-    summary.innerHTML = "<span>The result is hidden.</span>";
+    summary.innerHTML = "<span></span>";
+    summary.querySelector("span").textContent = localize("ROBEAR.Request.Contest.Hidden");
   }
   const reveal = game.user.isGM ? renderRivalRevealButton(request, results) : null;
   if ( reveal ) summary.append(reveal);
@@ -599,7 +714,9 @@ function renderContest(card, message, request, results) {
  * @returns {string}  A tooltip attribute showing the exact average, if it was rounded.
  */
 function exactTooltip(group) {
-  return group.exact === group.score ? "" : ` data-tooltip="Exact average ${group.exact.toFixed(2)}"`;
+  if ( group.exact === group.score ) return "";
+  const tooltip = localize("ROBEAR.Request.Team.ExactAverage", { average: group.exact.toFixed(2) });
+  return ` data-tooltip="${foundry.utils.escapeHTML(tooltip)}"`;
 }
 
 /* -------------------------------------------- */
@@ -619,9 +736,10 @@ export function renderActorRow(message, request, uuid, results, { team=null, sid
   const challenge = request.mode === "challenge";
   const row = document.createElement("li");
   row.className = "robear-request-actor";
+  const { escapeHTML } = foundry.utils;
   row.innerHTML = `
-    <img src="${actor?.img ?? CONST.DEFAULT_TOKEN}" alt="">
-    <span class="robear-request-name">${foundry.utils.escapeHTML(actor?.name ?? "Unknown")}</span>
+    <img src="${escapeHTML(actor?.img ?? CONST.DEFAULT_TOKEN)}" alt="">
+    <span class="robear-request-name">${escapeHTML(actor?.name ?? localize("ROBEAR.Common.Unknown"))}</span>
     <span class="robear-request-rolls"></span>
   `;
   const slots = row.querySelector(".robear-request-rolls");
@@ -647,7 +765,7 @@ export function renderActorRow(message, request, uuid, results, { team=null, sid
     if ( result?.range && result.visible ) {
       const range = document.createElement("span");
       range.className = "robear-request-range";
-      range.dataset.tooltip = "The numbers picked";
+      range.dataset.tooltip = localize("ROBEAR.Request.Divine.Picked");
       range.textContent = `${result.range.start}–${result.range.end}`;
       slots.append(range);
     }
@@ -673,12 +791,14 @@ export function renderActorRow(message, request, uuid, results, { team=null, sid
     if ( hideOutcome ) {
       // Players see only that the actor is finished, not how it went.
       if ( success !== null ) {
-        badge.textContent = "Done";
-        badge.dataset.tooltip = "Finished. The GM will show how it went.";
+        badge.textContent = localize("ROBEAR.Request.Challenge.Done");
+        badge.dataset.tooltip = localize("ROBEAR.Request.Challenge.DoneTooltip");
       }
     } else {
       badge.textContent = hidden ? "?" : `${passed}/${request.successes}`;
-      if ( !hidden && (success !== null) ) badge.dataset.tooltip = success ? "Challenge passed" : "Challenge failed";
+      if ( !hidden && (success !== null) ) {
+        badge.dataset.tooltip = localize(success ? "ROBEAR.Request.Challenge.Passed" : "ROBEAR.Request.Challenge.Failed");
+      }
     }
     row.append(badge);
   }
@@ -763,20 +883,22 @@ function renderResult(result, part, row) {
   pill.className = "robear-request-result";
   if ( !result.visible ) {
     pill.textContent = "?";
-    pill.dataset.tooltip = "Hidden roll";
+    pill.dataset.tooltip = localize("ROBEAR.Request.Result.Hidden");
     return pill;
   }
   pill.textContent = result.total;
   if ( result.natural === 20 ) pill.classList.add("critical");
   if ( result.natural === 1 ) pill.classList.add("fumble");
   if ( result.success !== null ) pill.classList.add(result.success ? "success" : "failure");
-  const prefix = part === null ? "" : `Roll ${part + 1}: `;
-  pill.dataset.tooltip = `${prefix}${result.total}${result.natural ? ` (d20: ${result.natural})` : ""}`;
+  let tooltip = result.natural
+    ? localize("ROBEAR.Request.Result.TotalWithD20", { total: result.total, natural: result.natural })
+    : String(result.total);
+  if ( part !== null ) tooltip = localize("ROBEAR.Request.Result.Numbered", { number: part + 1, result: tooltip });
   if ( game.settings.get(MODULE_ID, "attachRolls") ) {
     pill.classList.add("expandable");
     pill.role = "button";
     pill.tabIndex = 0;
-    pill.dataset.tooltip += ". Click for the dice.";
+    tooltip = localize("ROBEAR.Request.Result.ClickForDice", { result: tooltip });
     const toggle = event => {
       if ( (event.type === "keydown") && !["Enter", " "].includes(event.key) ) return;
       event.preventDefault();
@@ -786,6 +908,7 @@ function renderResult(result, part, row) {
     pill.addEventListener("click", toggle);
     pill.addEventListener("keydown", toggle);
   }
+  pill.dataset.tooltip = tooltip;
   return pill;
 }
 
@@ -797,7 +920,7 @@ function renderResult(result, part, row) {
 function renderPending() {
   const pending = document.createElement("span");
   pending.className = "robear-request-pending";
-  pending.dataset.tooltip = "Waiting to roll";
+  pending.dataset.tooltip = localize("ROBEAR.Request.Waiting");
   return pending;
 }
 
@@ -815,8 +938,9 @@ function renderRollButton(message, request, actor, part) {
   const button = document.createElement("button");
   button.type = "button";
   button.className = "robear-request-roll";
-  button.dataset.tooltip = `Roll ${getPartLabel(request.parts[part])}`;
-  button.innerHTML = `<i class="fa-solid fa-dice-d20" inert></i>${request.mode === "challenge" ? ` ${part + 1}` : " Roll"}`;
+  button.dataset.tooltip = localize("ROBEAR.Request.RollTooltip", { roll: getPartLabel(request.parts[part]) });
+  button.innerHTML = '<i class="fa-solid fa-dice-d20" inert></i>';
+  button.append(` ${request.mode === "challenge" ? part + 1 : localize("ROBEAR.Request.Roll")}`);
   button.addEventListener("click", async event => {
     event.preventDefault();
     event.stopPropagation();
@@ -846,19 +970,22 @@ function renderSummary(message, request, results, team) {
   if ( team ) {
     if ( !team.complete ) return;
     if ( team.hidden ) {
-      summary.innerHTML = "The team's result is hidden.";
+      summary.textContent = localize("ROBEAR.Request.Team.Hidden");
       return summary;
     }
     // The GM decides when players see the team's result.
     const revealed = !!message.getFlag(MODULE_ID, "revealed");
     if ( !revealed && !game.user.isGM ) return;
     const dc = request.parts[0].dc;
-    const removed = team.removed.size ? ` · ${team.removed.size} removed` : "";
-    summary.innerHTML = `<span${exactTooltip(team)}>Team average <strong>${team.score}</strong>${removed}</span>`;
+    const removed = team.removed.size ? localize("ROBEAR.Request.Team.Removed", { count: team.removed.size }) : "";
+    const average = localize("ROBEAR.Request.Team.Average", { average: `<strong>${team.score}</strong>`, removed });
+    summary.innerHTML = `<span${exactTooltip(team)}>${average}</span>`;
     if ( Number.isNumeric(dc) ) {
       const success = team.score >= dc;
       summary.classList.add(success ? "success" : "failure");
-      summary.insertAdjacentHTML("beforeend", `<strong>${success ? "Success" : "Failure"}</strong>`);
+      const verdict = document.createElement("strong");
+      verdict.textContent = localize(success ? "ROBEAR.Request.Success" : "ROBEAR.Request.Failure");
+      summary.append(verdict);
     }
     if ( game.user.isGM ) summary.append(renderRevealButton(message, revealed));
     return summary;
@@ -871,7 +998,8 @@ function renderSummary(message, request, results, team) {
     // The GM decides when players see how the challenge went.
     const revealed = !!message.getFlag(MODULE_ID, "revealed");
     if ( !revealed && !game.user.isGM ) return;
-    summary.innerHTML = `<span>${states.filter(s => s.success).length} of ${rows.length} passed the challenge</span>`;
+    const text = localize("ROBEAR.Request.Summary.Challenge", { count: states.filter(s => s.success).length, total: rows.length });
+    summary.innerHTML = `<span>${text}</span>`;
     if ( game.user.isGM ) summary.append(renderRevealButton(message, revealed));
     return summary;
   }
@@ -880,8 +1008,8 @@ function renderSummary(message, request, results, team) {
   if ( request.mode === "divine" ) {
     const answered = rows.filter(r => r[0].success).length;
     summary.classList.add(answered ? "success" : "failure");
-    summary.innerHTML = `<span>${answered} of ${rows.length} answered</span>`
-      + `<strong>${answered ? "The gods answer" : "No answer"}</strong>`;
+    summary.innerHTML = `<span>${localize("ROBEAR.Request.Summary.Divine", { count: answered, total: rows.length })}</span>`
+      + `<strong>${localize(answered ? "ROBEAR.Request.Divine.Answered" : "ROBEAR.Request.Divine.NoAnswer")}</strong>`;
     return summary;
   }
   if ( !Number.isNumeric(request.parts[0].dc) ) return;
@@ -889,7 +1017,8 @@ function renderSummary(message, request, results, team) {
   // The GM decides when players see how many succeeded.
   const revealed = !!message.getFlag(MODULE_ID, "revealed");
   if ( !revealed && !game.user.isGM ) return;
-  summary.innerHTML = `<span>${rows.filter(r => r[0].success).length} of ${rows.length} succeeded</span>`;
+  const text = localize("ROBEAR.Request.Summary.Standard", { count: rows.filter(r => r[0].success).length, total: rows.length });
+  summary.innerHTML = `<span>${text}</span>`;
   if ( game.user.isGM ) summary.append(renderRevealButton(message, revealed));
   return summary;
 }
@@ -902,7 +1031,7 @@ function renderSummary(message, request, results, team) {
  * @returns {HTMLButtonElement}    A GM button to show the summary to players, or hide it again.
  */
 function renderRevealButton(message, revealed) {
-  return renderToggleButton(revealed, { hidden: "Show to players", shown: "Shown" },
+  return renderToggleButton(revealed, { hidden: "ROBEAR.Request.Reveal.Show", shown: "ROBEAR.Request.Reveal.Shown" },
     () => message.setFlag(MODULE_ID, "revealed", !revealed));
 }
 
@@ -918,15 +1047,19 @@ function renderToggleButton(revealed, labels, toggle) {
   const button = document.createElement("button");
   button.type = "button";
   button.className = `robear-request-reveal${revealed ? " revealed" : ""}`;
-  button.dataset.tooltip = revealed ? "Players can see this. Click to hide it." : "Only you can see this.";
-  button.innerHTML = revealed
-    ? `<i class="fa-solid fa-eye" inert></i> ${labels.shown}`
-    : `<i class="fa-solid fa-eye-slash" inert></i> ${labels.hidden}`;
+  button.dataset.tooltip = localize(revealed ? "ROBEAR.Request.Reveal.ShownTooltip" : "ROBEAR.Request.Reveal.HiddenTooltip");
+  button.innerHTML = `<i class="fa-solid ${revealed ? "fa-eye" : "fa-eye-slash"}" inert></i>`;
+  button.append(` ${localize(revealed ? labels.shown : labels.hidden)}`);
   button.addEventListener("click", async event => {
     event.preventDefault();
     event.stopPropagation();
     button.disabled = true;
-    await toggle();
+    // On success the card is redrawn with a new button; on failure this one must work again.
+    try {
+      await toggle();
+    } finally {
+      button.disabled = false;
+    }
   });
   return button;
 }
@@ -956,7 +1089,7 @@ function renderRivalRevealButton(request, results) {
   if ( !rolls.length ) return;
   const revealed = rolls.every(m => !m.whisper.length);
   const whisper = revealed ? ChatMessage.getWhisperRecipients("GM").map(u => u.id) : [];
-  return renderToggleButton(revealed, { hidden: "Show NPC roll", shown: "NPC roll shown" },
+  return renderToggleButton(revealed, { hidden: "ROBEAR.Request.Reveal.ShowNPC", shown: "ROBEAR.Request.Reveal.NPCShown" },
     () => ChatMessage.updateDocuments(rolls.map(m => ({ _id: m.id, whisper }))));
 }
 
@@ -1022,7 +1155,9 @@ async function rollForRequest(message, actor, part, event) {
 async function rollDie(actor, request, die, config, messageConfig) {
   const range = messageConfig.data.flags[MODULE_ID].requestRoll.range;
   Object.assign(messageConfig.data, {
-    flavor: `${MODES[request.mode].label}: ${DICE[die].label}${range ? `, needing ${range.start}–${range.end}` : ""}`,
+    flavor: localize(range ? "ROBEAR.Request.Flavor.Range" : "ROBEAR.Request.Flavor.Die", {
+      mode: localize(MODES[request.mode].label), die: DICE[die].label, start: range?.start, end: range?.end
+    }),
     speaker: ChatMessage.getSpeaker({ actor })
   });
   // dnd5e sets each roll's advantage mode on `options`, and expects it to exist.
@@ -1053,22 +1188,25 @@ async function chooseRange(actor, size) {
   let start;
   return foundry.applications.api.DialogV2.wait({
     classes: ["robear-card-dialog", "robear-divine-dialog"],
-    window: { title: `Divine Intervention: ${actor.name}`, icon: "fa-solid fa-hands-praying" },
+    window: {
+      title: localize("ROBEAR.Request.Divine.DialogTitle", { name: actor.name }),
+      icon: "fa-solid fa-hands-praying"
+    },
     position: { width: 460 },
     content: `
-      <p class="robear-card-hint">Pick ${size} numbers in a row. You then roll a d100, and must roll one of them.</p>
+      <p class="robear-card-hint">${localize("ROBEAR.Request.Divine.DialogHint", { count: size })}</p>
       <div class="robear-divine-grid">${cells}</div>
-      <p class="robear-divine-choice">No numbers picked yet.</p>
+      <p class="robear-divine-choice">${localize("ROBEAR.Request.Divine.NonePicked")}</p>
     `,
     buttons: [
       {
         action: "roll",
-        label: "Roll d100",
+        label: "ROBEAR.Request.Divine.Roll",
         icon: "fa-solid fa-hands-praying",
         default: true,
         callback: () => start
       },
-      { action: "cancel", label: "Cancel", icon: "fa-solid fa-xmark" }
+      { action: "cancel", label: "ROBEAR.Common.Cancel", icon: "fa-solid fa-xmark" }
     ],
     render: (_event, dialog) => {
       const numbers = [...dialog.element.querySelectorAll(".robear-divine-number")];
@@ -1084,7 +1222,7 @@ async function chooseRange(actor, size) {
         el.addEventListener("click", () => {
           start = from;
           mark(start, "picked");
-          choice.textContent = `You need ${start}–${start + size - 1}.`;
+          choice.textContent = localize("ROBEAR.Request.Divine.Need", { start, end: start + size - 1 });
           roll.disabled = false;
         });
       }

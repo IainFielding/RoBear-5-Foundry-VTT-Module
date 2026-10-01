@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { actorNames } from "./helpers/foundry-shims.mjs";
+import { actorNames, actorOwners } from "./helpers/foundry-shims.mjs";
 import { requestMessage, rollMessage } from "./helpers/messages.mjs";
 import {
-  DIVINE_RANGE, MODES, getChallengeState, getGroupOutcome, getPartLabel, getResults, isContest, poolTeamRolls
+  DIVINE_RANGE, MODES, getChallengeState, getGroupOutcome, getPartLabel, getResults, isContest, poolTeamRolls,
+  validateRequest
 } from "../scripts/roll-requests.mjs";
 
 const entries = rows => rows.map(([uuid, total, natural]) => ({ uuid, total, natural }));
@@ -11,6 +12,7 @@ const fail = { success: false };
 
 beforeEach(() => {
   actorNames.clear();
+  actorOwners.clear();
   for ( const name of ["A", "B", "C", "D"] ) actorNames.set(name, name);
   game.messages = [];
 });
@@ -178,6 +180,60 @@ describe("Results from tagged roll messages", () => {
     game.messages = [rollMessage({ actor: "A", total: 12, visible: false })];
     expect(getResults(message).get("A")[0].visible).toBe(false);
   });
+
+  it("counts a player's roll for their own actor, but not for someone else's", () => {
+    const message = requestMessage({ mode: "standard", actors: ["A", "B"], parts: [{ type: "skill", key: "ath", dc: 12 }] });
+    const player = { id: "p1", isGM: false };
+    actorOwners.set("A", ["p1"]);
+    game.messages = [
+      rollMessage({ actor: "A", total: 14, author: player }),
+      rollMessage({ actor: "B", total: 20, author: player })
+    ];
+    const results = getResults(message);
+    expect(results.get("A")[0].total).toBe(14);
+    expect(results.get("B")).toEqual([null]);
+  });
+
+  it("ignores a roll with no author", () => {
+    const message = requestMessage({ mode: "standard", actors: ["A"], parts: [{ type: "skill", key: "ath", dc: 12 }] });
+    game.messages = [rollMessage({ actor: "A", total: 14, author: null })];
+    expect(getResults(message).get("A")).toEqual([null]);
+  });
+
+  it("finds rolls made after the request card was first drawn", () => {
+    const message = requestMessage({ mode: "standard", actors: ["A", "B"], parts: [{ type: "skill", key: "ath", dc: 12 }] });
+    game.messages = [rollMessage({ actor: "A", total: 14 })];
+    expect(getResults(message).get("B")).toEqual([null]);
+    game.messages = [...game.messages, rollMessage({ actor: "B", total: 9 })];
+    expect(getResults(message).get("B")[0].total).toBe(9);
+  });
+});
+
+/* -------------------------------------------- */
+
+describe("Checking a request before it is posted", () => {
+  const part = { type: "d20", dc: null };
+
+  it("accepts a well-formed request of each kind", () => {
+    expect(() => validateRequest({ mode: "standard", actors: ["A"], parts: [part] })).not.toThrow();
+    expect(() => validateRequest({ mode: "challenge", actors: ["A"], parts: [part, part, part] })).not.toThrow();
+    expect(() => validateRequest({ mode: "rolloff", actors: ["A", "B"], sides: [["A"], ["B"]], parts: [part, part] }))
+      .not.toThrow();
+  });
+
+  it("refuses a request with no one to roll", () => {
+    expect(() => validateRequest({ mode: "standard", actors: [], parts: [part] })).toThrow();
+  });
+
+  it("refuses a contest with an empty side", () => {
+    expect(() => validateRequest({ mode: "versus", actors: ["A"], sides: [["A"], []], parts: [part, part] })).toThrow();
+    expect(() => validateRequest({ mode: "rolloff", actors: ["A"], sides: [["A"]], parts: [part, part] })).toThrow();
+  });
+
+  it("refuses an unknown mode, or a skill challenge without its three rolls", () => {
+    expect(() => validateRequest({ mode: "nonsense", actors: ["A"], parts: [part] })).toThrow();
+    expect(() => validateRequest({ mode: "challenge", actors: ["A"], parts: [part] })).toThrow();
+  });
 });
 
 /* -------------------------------------------- */
@@ -196,6 +252,11 @@ describe("Group outcomes", () => {
 
   it("scores a single roll-off side by its total", () => {
     expect(getGroupOutcome(["A"], results({ A: roll(73) }), false)).toMatchObject({ score: 73 });
+  });
+
+  it("never settles a side with no one on it", () => {
+    expect(getGroupOutcome([], new Map(), true)).toMatchObject({ complete: false, hidden: false });
+    expect(getGroupOutcome([], new Map(), false).score).toBeUndefined();
   });
 
   it("scores a team by its pooled average, with the 1 and 20 rule", () => {

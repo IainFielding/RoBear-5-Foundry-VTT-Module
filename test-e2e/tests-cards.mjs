@@ -552,3 +552,42 @@ test("cards: a roll keeps its note once no card is left to play on it", async ({
   const note = await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-card-log`).count();
   assertEqual(note, 1, "notes on the roll");
 });
+
+/* -------------------------------------------- */
+
+test("played cards: a note's art is never run as HTML, on the screen or in its tooltip", async ({ gm, player }) => {
+  const id = await player.eval(async () => (await ChatMessage.create({ content: "A roll" })).id);
+  await waitFor(gm, id => game.messages.has(id), id, "the message to reach the GM");
+  // Written by hand, as only a player meddling from the console could.
+  await player.eval(async ({ id, moduleId }) => {
+    const img = 'x" onerror="window.__robearInjected = true';
+    await game.messages.get(id).setFlag(moduleId, "log", [{ text: "Luck: rerolled", card: "<b>Luck</b>", img, by: "Aria" }]);
+  }, { id, moduleId: MODULE_ID });
+  await waitFor(gm, () => !!document.getElementById("robear-played-card"), null, "the played card on the GM's screen");
+  await gm.page.waitForTimeout(500);
+  const seen = await gm.eval(id => ({
+    injected: !!window.__robearInjected,
+    src: document.querySelector("#robear-played-card img")?.getAttribute("src"),
+    name: document.querySelector("#robear-played-card .robear-played-card-name")?.textContent,
+    tooltip: document.querySelector(`#chat .chat-log li[data-message-id="${id}"] .robear-card-log-art`)?.dataset.tooltipHtml
+  }), id);
+  assertEqual(seen.injected, false, "script run from the note's art");
+  assertEqual(seen.src, 'x" onerror="window.__robearInjected = true', "the played card's art, kept as plain text");
+  assertEqual(seen.name, "<b>Luck</b>", "the played card's name, kept as plain text");
+  assert(seen.tooltip?.startsWith('<img src="x&quot; onerror'), `The note's tooltip wasn't escaped: ${seen.tooltip}`);
+});
+
+test("played cards: a card played on a roll the player can't see isn't shown to them", async ({ gm, player }) => {
+  const id = await gm.eval(async () => {
+    const roll = await new Roll("1d20").evaluate();
+    return (await roll.toMessage({ flavor: "Secret" }, { rollMode: "gmroll" })).id;
+  });
+  await player.page.waitForTimeout(500);
+  await gm.eval(async ({ id, moduleId }) => {
+    const img = `modules/${moduleId}/assets/images/luckdc20.webp`;
+    await game.messages.get(id).setFlag(moduleId, "log", [{ text: "Luck: rerolled", card: "Luck", img, by: "Goblin" }]);
+  }, { id, moduleId: MODULE_ID });
+  await waitFor(gm, () => !!document.getElementById("robear-played-card"), null, "the played card on the GM's screen");
+  await player.page.waitForTimeout(500);
+  assertEqual(await player.eval(() => !!document.getElementById("robear-played-card")), false, "the card on the player's screen");
+});

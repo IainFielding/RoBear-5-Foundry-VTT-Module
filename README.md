@@ -27,8 +27,8 @@ This module includes the following compendium packs, organized under the "RoBear
 Give a character the **RoBear-E Cards** feature from the Items compendium. Each card can be
 played once, and comes back after a long rest.
 
-However a card is played, its art appears in the middle of everyone's screen for a moment, with
-who played it. Click it to dismiss it early. Chat keeps a short record of it. The GM can turn the
+However a card is played, its art appears in the middle of the screen for a moment, with who
+played it, for everyone who can see the roll it was played on. Click it to dismiss it early. Chat keeps a short record of it. The GM can turn the
 on-screen card off with **Show played cards on screen** in **Configure Settings → RoBear-E**.
 
 ### Playing a card from the character sheet
@@ -82,6 +82,7 @@ roll request's card updates too.
 
 - The roll changed gets a note, such as "Bardic Inspiration: added 1d6 (4): 9 → 13", and the die's
   own message says which roll it went to. A die can only be used once.
+- Only the player who rolled the die can spend it, or the GM.
 - Any roll you can see can be chosen. If it isn't yours to change, such as a monster's roll for
   Cutting Words, the GM's Foundry applies it, so a GM needs to be logged in.
 - Checks, saves, attacks and damage can't be used as the die.
@@ -91,7 +92,8 @@ roll request's card updates too.
 A Fighter with the **Indomitable** feature from D&D 5e's compendiums can use it on a saving throw
 they failed. A **Use Indomitable** button appears on the failed save, and on its row of a roll
 request's card. It's also in the save's right-click menu. Using it spends one use of the feature
-and rerolls the d20, and the new roll stands. Under the 2024 rules the reroll also adds the
+and rerolls the d20, and the new roll stands. A save rolled with no DC can't be known to have
+failed, so the button is offered on it either way, and asks you to confirm before spending a use. Under the 2024 rules the reroll also adds the
 Fighter's level; under the 2014 rules it doesn't. The save notes what happened, e.g.
 "Indomitable: rerolled the d20 (6 → 8) + 9 (Fighter level): 6 → 17".
 
@@ -127,11 +129,17 @@ scene.
 
 A few things to know:
 
-- To let someone roll again, delete their roll message and the **Roll** button comes back.
+- A roll only counts on the request if it was made by the GM or by one of the actor's owners.
+- To let someone roll again, the GM deletes their roll message and the **Roll** button comes back.
+  Players can't delete a roll made for a request, so a bad roll can't be thrown away.
 - With **Show DC to Players** off, players see "DC ?", and the DC is kept off their roll so
   D&D 5e doesn't show success or failure on it. It starts off for each new request; the GM can
   make it start on with **Show the DC to players by default** in **Configure Settings → RoBear-E**.
 - With **Private GM Roll**, each player sees only their own results.
+- **What "hidden" means.** The DC, and results the GM hasn't shown yet, are hidden on the chat card,
+  but they still reach every player's Foundry as part of the request. A player who opens the browser
+  console can read them. That's how Foundry shares chat messages, so treat the hiding as keeping the
+  table honest rather than keeping a secret.
 - **Attached rolls.** By default the rolls made for a request don't get messages of their own: they show on
   the request card, as dnd5e does for an item's saves. Click a result to see its dice; notes on any cards
   played show under the row. Turn off **Attach rolls to the request card** in **Configure Settings →
