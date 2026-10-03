@@ -15,6 +15,7 @@ beforeEach(() => {
   actorOwners.clear();
   for ( const name of ["A", "B", "C", "D"] ) actorNames.set(name, name);
   game.messages = [];
+  settingValues.set("showDCDefault", false);
 });
 
 /* -------------------------------------------- */
@@ -356,7 +357,6 @@ describe("Filling in what a macro leaves out", () => {
   it("follows the GM's Show DC setting", () => {
     settingValues.set("showDCDefault", true);
     expect(withDefaults({ mode: "standard" }).showDC).toBe(true);
-    settingValues.set("showDCDefault", false);
   });
 
   it("keeps what the macro gave, and fills in a value it left as null", () => {

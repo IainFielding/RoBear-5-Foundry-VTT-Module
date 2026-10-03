@@ -93,8 +93,9 @@ globalThis.game = {
     localize,
     // Foundry's own getListFormatter (client/helpers/localization.mjs).
     getListFormatter: ({ style = "long", type = "conjunction" } = {}) => new Intl.ListFormat("en", { style, type }),
-    // Foundry's own format (client/helpers/localization.mjs): each {name} is replaced by data.name.
-    format: (key, data = {}) => localize(key).replace(/{[^}]+}/g, k => String(data[k.slice(1, -1)] ?? k))
+    // Foundry's own format, which is its localize given data (client/helpers/localization.mjs): each {name} is
+    // replaced by data.name, so a value left out reads "undefined", as it would in Foundry.
+    format: (key, data = {}) => localize(key).replace(/{[^}]+}/g, k => data[k.slice(1, -1)])
   },
   get messages() {
     return messages;

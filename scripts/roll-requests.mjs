@@ -1567,7 +1567,7 @@ async function chooseRange(actor, size) {
 
   const { escapeHTML } = foundry.utils;
   let start;
-  return foundry.applications.api.DialogV2.wait({
+  const result = await foundry.applications.api.DialogV2.wait({
     classes: ["robear-card-dialog", "robear-divine-dialog"],
     window: {
       title: localize("ROBEAR.Request.Divine.DialogTitle", { name: actor.name }),
@@ -1610,5 +1610,7 @@ async function chooseRange(actor, size) {
       dialog.element.querySelector(".robear-divine-grid").addEventListener("pointerleave", () => mark(undefined, "preview"));
     },
     rejectClose: false
-  }).then(result => (result === "cancel" ? undefined : result));
+  });
+  // Only a picked number starts the run. Anything else, such as the dialog's own action name, rolls nothing.
+  return Number.isInteger(result) ? result : undefined;
 }

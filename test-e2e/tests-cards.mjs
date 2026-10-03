@@ -125,6 +125,26 @@ test("cards: offered on the player's own roll, and not on rolls by someone witho
   assertEqual(await cardButton(player, goblin).count(), 0, "card buttons for the player on the GM's roll");
 });
 
+test("cards: a double click opens one card chooser, so only one card is spent", async ({ player }) => {
+  await forceDice(player, [d20(5)]);
+  const id = await roll(player, "Aria", "skill");
+  const before = await usesLeft(player, "Luck");
+  // Both clicks land before the chooser opens, as a quick double click's would.
+  await cardButton(player, id).first().evaluate(button => {
+    button.click();
+    button.click();
+  });
+  await player.page.waitForTimeout(500);
+  const choosers = player.page.locator(".robear-card-dialog.application:has(.robear-card-choice)");
+  assertEqual(await choosers.count(), 1, "card choosers open");
+
+  await forceDice(player, [d20(14)]);
+  await choosers.locator(".robear-card-choice", { hasText: "Luck" }).first().click();
+  const after = await afterCard(player, id);
+  assertEqual(after.log.length, 1, "cards noted on the roll");
+  assertEqual(await usesLeft(player, "Luck"), before - 1, "Luck uses left");
+});
+
 test("cards: none on a death saving throw", async ({ player }) => {
   await forceDice(player, [d20(5)]);
   const id = await roll(player, "Aria", "death");

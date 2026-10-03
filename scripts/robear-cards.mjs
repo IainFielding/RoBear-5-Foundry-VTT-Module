@@ -69,6 +69,13 @@ const CARD_ART = {
 const retroactiveUses = new Set();
 
 /**
+ * Roll messages a card is being chosen for or played on from this client, from when the card picker opens until the
+ * card is applied, so a second click cannot open another picker and spend a second card on the same roll.
+ * @type {Set<string>}
+ */
+const playing = new Set();
+
+/**
  * How long a played card's art stays on screen.
  */
 const PLAYED_CARD_MS = 3000;
@@ -693,15 +700,17 @@ function createPlayedCard(entry) {
  * @param {HTMLButtonElement} button
  */
 async function promptCard(message, button) {
+  // One card at a time on a roll: two pickers open at once would spend two cards, of which only one would be applied.
+  if ( playing.has(message.id) ) return;
   const options = getCardOptions(message);
   if ( !options.length ) return;
-  const option = await chooseCard(options, localize("ROBEAR.Cards.ChooseOnRoll"));
-  if ( !option ) return;
-
+  playing.add(message.id);
   button.disabled = true;
   try {
-    await applyCard(message, option);
+    const option = await chooseCard(options, localize("ROBEAR.Cards.ChooseOnRoll"));
+    if ( option ) await applyCard(message, option);
   } finally {
+    playing.delete(message.id);
     button.disabled = false;
   }
 }
