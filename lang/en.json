@@ -142,7 +142,8 @@
       },
       "Subtitle": {
         "Challenge": "{count} of {total} to succeed",
-        "Divine": "{count} numbers in a row on a d100"
+        "Divine": "{count} numbers in a row on a d100",
+        "DivineOne": "1 number on a d100"
       },
       "Team": {
         "RemovedHighest": "Highest roll, removed by {name}'s natural 1",
@@ -183,8 +184,9 @@
         "Picked": "The numbers picked",
         "DialogTitle": "Divine Intervention: {name}",
         "DialogHint": "Pick {count} numbers in a row. You then roll a d100, and must roll one of them.",
+        "DialogHintOne": "Pick a number. You then roll a d100, and must roll it.",
         "NonePicked": "No numbers picked yet.",
-        "Need": "You need {start}–{end}.",
+        "Need": "You need {numbers}.",
         "Roll": "Roll d100"
       },
       "EditDC": {
@@ -209,7 +211,7 @@
       },
       "Flavor": {
         "Die": "{mode}: {die}",
-        "Range": "{mode}: {die}, needing {start}–{end}"
+        "Range": "{mode}: {die}, needing {numbers}"
       },
       "Invalid": {
         "Mode": "Unknown kind of roll request: {mode}.",

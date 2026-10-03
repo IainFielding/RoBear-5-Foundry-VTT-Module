@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { actorNames, actorOwners, settingValues } from "./helpers/foundry-shims.mjs";
 import { requestMessage, rollMessage } from "./helpers/messages.mjs";
 import {
-  DIVINE_RANGE, MAX_CHOICES, MODES, createRequest, getChallengeState, getChoiceLabel, getChoices, getGroupOutcome, getPartLabel,
+  DIVINE_RANGE, MAX_CHOICES, MODES, createRequest, formatRun, getChallengeState, getChoiceLabel, getChoices, getGroupOutcome, getPartLabel,
   getRequestSubtitle, getRequestTitle, getResults, getRowGroup, isContest, poolTeamRolls, validateRequest, withDefaults
 } from "../scripts/roll-requests.mjs";
 
@@ -588,6 +588,12 @@ describe("A choice of rolls", () => {
     expect(getRequestSubtitle({ mode: "rolloff", parts: [{ type: "d20" }, { type: "skill", key: "ath" }] }))
       .toBe("d20 vs Athletics Check");
     expect(getRequestSubtitle({ mode: "divine", range: 16, parts: [{ type: "d100" }] })).toBe("16 numbers in a row on a d100");
+    expect(getRequestSubtitle({ mode: "divine", range: 1, parts: [{ type: "d100" }] })).toBe("1 number on a d100");
+  });
+
+  it("shows Divine Intervention's picked numbers as a run, or as one number when only one was picked", () => {
+    expect(formatRun(40, 55)).toBe("40–55");
+    expect(formatRun(40, 40)).toBe("40");
   });
 
   it("puts the GM's DC button in the subtitle, in place of the DC", () => {

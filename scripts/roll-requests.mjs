@@ -508,7 +508,10 @@ export function getRequestSubtitle(request, dc=null) {
     return localize("ROBEAR.Request.Subtitle.Challenge", { count: request.successes, total: request.parts.length });
   }
   if ( isContest(request) ) return request.parts.map(getPartLabel).join(` ${localize("ROBEAR.Request.Versus")} `);
-  if ( request.mode === "divine" ) return localize("ROBEAR.Request.Subtitle.Divine", { count: request.range });
+  if ( request.mode === "divine" ) {
+    if ( request.range === 1 ) return localize("ROBEAR.Request.Subtitle.DivineOne");
+    return localize("ROBEAR.Request.Subtitle.Divine", { count: request.range });
+  }
   const label = localize(MODES[request.mode].label);
   if ( dc ) return [label, " · ", dc];
   return [label, getDCText(request, request.parts[0].dc)].filterJoin(" · ");
@@ -644,6 +647,17 @@ export function getResults(message) {
 function isPickedRange(range, size) {
   const { start, end } = range ?? {};
   return Number.isInteger(start) && (start >= 1) && (end === start + size - 1) && (end <= 100);
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {number} start
+ * @param {number} end
+ * @returns {string}  A run of numbers picked for Divine Intervention, e.g. "40–55", or "40" when it is one number.
+ */
+export function formatRun(start, end) {
+  return start === end ? String(start) : `${start}–${end}`;
 }
 
 /* -------------------------------------------- */
@@ -1062,7 +1076,7 @@ export function renderActorRow(message, request, uuid, results, { team=null, sid
       const range = document.createElement("span");
       range.className = "robear-request-range";
       range.dataset.tooltipText = localize("ROBEAR.Request.Divine.Picked");
-      range.textContent = `${result.range.start}–${result.range.end}`;
+      range.textContent = formatRun(result.range.start, result.range.end);
       slots.append(range);
     }
     // Only a DC decides success, so pooled rolls are not marked as passing or failing on their own.
@@ -1545,7 +1559,7 @@ async function rollDie(actor, request, die, config, messageConfig) {
   const range = messageConfig.data.flags[MODULE_ID].requestRoll.range;
   Object.assign(messageConfig.data, {
     flavor: localize(range ? "ROBEAR.Request.Flavor.Range" : "ROBEAR.Request.Flavor.Die", {
-      mode: localize(MODES[request.mode].label), die: DICE[die].label, start: range?.start, end: range?.end
+      mode: localize(MODES[request.mode].label), die: DICE[die].label, numbers: range && formatRun(range.start, range.end)
     }),
     speaker: ChatMessage.getSpeaker({ actor })
   });
@@ -1614,7 +1628,8 @@ async function chooseRange(actor, size) {
     },
     position: { width: 460 },
     content: `
-      <p class="robear-card-hint">${escapeHTML(localize("ROBEAR.Request.Divine.DialogHint", { count: size }))}</p>
+      <p class="robear-card-hint">${escapeHTML(size === 1 ? localize("ROBEAR.Request.Divine.DialogHintOne")
+        : localize("ROBEAR.Request.Divine.DialogHint", { count: size }))}</p>
       <div class="robear-divine-grid">${cells}</div>
       <p class="robear-divine-choice">${escapeHTML(localize("ROBEAR.Request.Divine.NonePicked"))}</p>
     `,
@@ -1642,7 +1657,7 @@ async function chooseRange(actor, size) {
         el.addEventListener("click", () => {
           start = from;
           mark(start, "picked");
-          choice.textContent = localize("ROBEAR.Request.Divine.Need", { start, end: start + size - 1 });
+          choice.textContent = localize("ROBEAR.Request.Divine.Need", { numbers: formatRun(start, start + size - 1) });
           roll.disabled = false;
         });
       }

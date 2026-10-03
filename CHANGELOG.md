@@ -33,6 +33,9 @@ All notable changes to RoBear-E.
   so if changing the roll failed, the card was lost with nothing to show for it. It is now given
   back, as a use of Indomitable already was.
 
+- **Divine Intervention reads right with one number to pick.** The card said "1 numbers in a row",
+  and the picked run showed as "40–40". It now says "1 number on a d100", and shows "40".
+
 - **A failed action says why.** The Roll button, the RoBear-E Card button, Use Indomitable, and
   Add to or Subtract from a roll did nothing visible when something went wrong. They now show
   the error.
