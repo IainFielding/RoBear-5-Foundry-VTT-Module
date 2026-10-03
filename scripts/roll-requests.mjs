@@ -393,6 +393,8 @@ export function validateRequest(request) {
     const { range } = request;
     const { min, max } = DIVINE_RANGE;
     check(between(range, min, max), "ROBEAR.Request.Invalid.Range", { range, min, max });
+    // The picked numbers are 1 to 100, so only a d100 can land in them.
+    check(parts[0].type === "d100", "ROBEAR.Request.Invalid.DivineRoll", { type: parts[0].type });
   }
 }
 

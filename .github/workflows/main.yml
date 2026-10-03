@@ -7,7 +7,7 @@
 #
 # Troubleshooting Checklist:
 #   - Is the module's manifest file valid JSON?
-#     You can test your manifest file using https://jsonlint.com/.
+#     `npm run validate:json` checks it locally, as CI does on every push.
 #
 #   - Does the module's manifest have all the required keys?
 #     See https://foundryvtt.com/article/module-development/#manifest for more
@@ -80,36 +80,39 @@ jobs:
       #
       # The version will be used by later steps to fill in the value for the
       # "version" key required for a valid module manifest.
+      # A tag in any other form would become the module's version as it is, which Foundry can't
+      # compare to tell whether an update is available.
       - name: Extract Version From Tag
         id: get_version
         run: |
           TAG="${GITHUB_REF_NAME}"
           VERSION="${TAG#v}"
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::The release tag must be v1.2.3 or 1.2.3, not \"$TAG\"."
+            exit 1
+          fi
           echo "version-without-v=$VERSION" >> "$GITHUB_OUTPUT"
 
 
-      # Modify "module.json" with values specific to the release.
-      # Since the values for the "version" and "url" keys aren't known ahead of
-      # time, the manifest file in the repository is updated with these values.
+      # Fill in "module.json" with values specific to the release. They aren't known ahead of
+      # time, so the committed manifest holds #{TOKEN}# placeholders in their place. jq sets the
+      # fields directly, which also fails the step if the manifest isn't valid JSON.
       #
       # While this does modify the manifest file in-place, the changes are not
       # commited to the repository, and only exist in the action's filesystem.
       - name: Modify Module Manifest With Release-Specific Values
-        id: sub_manifest_link_version
-        uses: cschleiden/replace-tokens@v1.4
-        with:
-          files: 'module.json'
         env:
-          VERSION: ${{steps.get_version.outputs.version-without-v}}
-          URL: ${{ env.project_url }}
-          MANIFEST: ${{ env.latest_manifest_url }}
-          DOWNLOAD: ${{ env.release_module_url }}
-
-
-      # Validate that module.json is still valid JSON after token replacement.
-      # Catches syntax errors before they reach users.
-      - name: Validate Module Manifest
-        run: jq empty module.json
+          VERSION: ${{ steps.get_version.outputs.version-without-v }}
+        run: |
+          jq --arg version "$VERSION" --arg url "$project_url" --arg manifest "$latest_manifest_url" \
+            --arg download "$release_module_url" \
+            '.version = $version | .url = $url | .manifest = $manifest | .download = $download' \
+            module.json > module.json.tmp
+          mv module.json.tmp module.json
+          if grep -q '#{' module.json; then
+            echo "::error::module.json still holds a #{TOKEN}# placeholder."
+            exit 1
+          fi
 
 
       # The compendium packs are committed as YAML in src/packs/, and built into the LevelDB
@@ -122,6 +125,10 @@ jobs:
 
       - name: Install Dependencies
         run: npm ci
+
+      # The same checks as CI, so a commit that fails them can't be released.
+      - name: Validate, Lint and Unit Test
+        run: npm run check
 
       - name: Build Compendium Packs
         run: npm run build:packs
@@ -156,16 +163,9 @@ jobs:
           # additional files or directories!
 
 
-      # Update the GitHub release with the manifest and module archive files.
+      # Attach the manifest and module archive to the release, replacing any from an earlier run.
+      # GitHub's own CLI is on the runner, so no third-party action is handed this job's write token.
       - name: Update Release With Files
-        id: create_version_release
-        uses: ncipollo/release-action@v1
-        with:
-          allowUpdates: true
-          name: ${{ github.event.release.name }}
-          draft: ${{ github.event.release.unpublished }}
-          prerelease: ${{ github.event.release.prerelease }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-          artifacts: './module.json, ./module.zip'
-          tag: ${{ github.event.release.tag_name }}
-          body: ${{ github.event.release.body }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "$GITHUB_REF_NAME" module.json module.zip --clobber --repo "$GITHUB_REPOSITORY"

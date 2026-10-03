@@ -25,6 +25,10 @@ All notable changes to RoBear-E.
 - **A contest's pop-up opens when a macro lists someone on neither side.** It failed to draw,
   trying to give that actor a roll. Now only those on a side are given one.
 
+- **A macro's Divine Intervention must roll a d100.** `createRequest` accepted any roll for it,
+  such as a skill check, which was then scored against the numbers picked. It now refuses
+  anything but a d100, as the README already said.
+
 - **Card dice use the actor's Dice So Nice appearance.** Dice rolled by a RoBear-E Card, or by
   the Fighter's Indomitable, were shown in the player's own dice, not the ones set for that
   actor. They now look like the dice of the roll they change.

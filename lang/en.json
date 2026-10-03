@@ -224,6 +224,7 @@
         "DC": "A DC must be a number, or null for none: {dc}.",
         "Successes": "A skill challenge needs from 1 to {total} successes, not {successes}.",
         "Range": "Divine Intervention needs from {min} to {max} numbers to pick, not {range}.",
+        "DivineRoll": "Divine Intervention's roll is a d100, not {type}.",
         "Choices": "Only a Standard Roll, Team Challenge or Skill Challenge can offer a choice of rolls, and at most {max} to choose from, given as a list of alternatives."
       },
       "Config": {

@@ -292,6 +292,12 @@ describe("Checking a request before it is posted", () => {
       .toBe(`Divine Intervention needs from 1 to ${DIVINE_RANGE.max} numbers to pick, not ${DIVINE_RANGE.max + 1}.`);
   });
 
+  it("refuses Divine Intervention with any roll but a d100, which is all the picked numbers can be rolled on", () => {
+    expect(errorFor({ ...valid.divine, parts: [{ type: "skill", key: "ath", dc: null }] }))
+      .toBe("Divine Intervention's roll is a d100, not skill.");
+    expect(errorFor({ ...valid.divine, parts: [{ type: "d20", dc: null }] })).not.toBeNull();
+  });
+
   it("refuses a Roll-Off with more than one actor on a side, whose second roll would never count", () => {
     expect(errorFor({ ...valid.rolloff, actors: ["A", "B", "C"], sides: [["A", "C"], ["B"]] }))
       .toBe("Each side of a Roll-Off needs exactly one actor.");
