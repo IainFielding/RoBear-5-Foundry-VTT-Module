@@ -1,3 +1,16 @@
+{{!-- The roll picker, for a roll and each of its alternatives. --}}
+{{#*inline "robearRollSelect"}}
+<select name="{{name}}">
+    {{#each @root.rollOptions as |group|}}
+    <optgroup label="{{group.label}}">
+        {{#each group.options as |option|}}
+        <option value="{{option.value}}" {{#if (eq option.value ../../selected)}}selected{{/if}}>{{option.label}}</option>
+        {{/each}}
+    </optgroup>
+    {{/each}}
+</select>
+{{/inline}}
+
 <div class="robear-request-form">
 
     {{!-- Mode --}}
@@ -20,15 +33,13 @@
         <div class="form-group">
             <label>{{row.label}}</label>
             <div class="form-fields">
-                <select name="{{row.field}}.roll">
-                    {{#each @root.rollOptions as |group|}}
-                    <optgroup label="{{group.label}}">
-                        {{#each group.options as |option|}}
-                        <option value="{{option.value}}" {{#if (eq option.value row.roll)}}selected{{/if}}>{{option.label}}</option>
-                        {{/each}}
-                    </optgroup>
-                    {{/each}}
-                </select>
+                {{> robearRollSelect name=(concat row.field ".roll") selected=row.roll}}
+                {{#if row.canChoose}}
+                <button type="button" class="robear-request-choice-button" data-action="addChoice" data-field="{{row.field}}"
+                        data-tooltip aria-label="{{localize 'ROBEAR.Request.Config.AddChoice'}}" {{disabled row.full}}>
+                    <i class="fa-solid fa-plus" inert></i>
+                </button>
+                {{/if}}
                 {{#if row.hasDC}}
                 <label class="robear-request-dc">
                     {{localize "ROBEAR.Request.Config.DC"}} <input type="number" name="{{row.field}}.dc" value="{{row.dc}}" min="0" step="1" placeholder="—">
@@ -36,6 +47,20 @@
                 {{/if}}
             </div>
         </div>
+        {{#each row.alternatives as |choice|}}
+        <div class="form-group robear-request-choice">
+            <label>{{localize "ROBEAR.Request.Config.Or"}}</label>
+            <div class="form-fields">
+                {{> robearRollSelect name=(concat row.field ".alternatives." choice.index) selected=choice.roll}}
+                <button type="button" class="robear-request-choice-button" data-action="removeChoice"
+                        data-field="{{row.field}}" data-index="{{choice.index}}"
+                        data-tooltip aria-label="{{localize 'ROBEAR.Request.Config.RemoveChoice'}}">
+                    <i class="fa-solid fa-xmark" inert></i>
+                </button>
+                <span class="robear-request-dc" aria-hidden="true"></span>
+            </div>
+        </div>
+        {{/each}}
         {{/each}}
         {{#if challenge}}
         <div class="form-group">

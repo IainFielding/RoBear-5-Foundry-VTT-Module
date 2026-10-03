@@ -11,24 +11,28 @@ import RollRequestConfig from "./roll-request-config.mjs";
 
 /**
  * Kinds of request the GM can make. Contests set two sides against each other, each with its own roll.
- * Labels, hints and side names are keys in the language file.
+ * Labels, hints and side names are keys in the language file. In a mode with `choices`, each roll may offer
+ * alternatives, of which each actor makes one, and the GM may change its DC from the request card.
  */
 export const MODES = {
   standard: {
     label: "ROBEAR.Request.Modes.Standard.Label",
     icon: "fa-solid fa-dice-d20",
     hint: "ROBEAR.Request.Modes.Standard.Hint",
-    dice: ["d20", "d6", "d8", "d10", "d12", "d100"]
+    dice: ["d20", "d6", "d8", "d10", "d12", "d100"],
+    choices: true
   },
   team: {
     label: "ROBEAR.Request.Modes.Team.Label",
     icon: "fa-solid fa-people-group",
-    hint: "ROBEAR.Request.Modes.Team.Hint"
+    hint: "ROBEAR.Request.Modes.Team.Hint",
+    choices: true
   },
   challenge: {
     label: "ROBEAR.Request.Modes.Challenge.Label",
     icon: "fa-solid fa-layer-group",
-    hint: "ROBEAR.Request.Modes.Challenge.Hint"
+    hint: "ROBEAR.Request.Modes.Challenge.Hint",
+    choices: true
   },
   rolloff: {
     label: "ROBEAR.Request.Modes.RollOff.Label",
@@ -74,6 +78,11 @@ export const DICE = {
  * Number of rolls in a skill challenge.
  */
 export const CHALLENGE_PARTS = 3;
+
+/**
+ * The most rolls an actor may choose between for one part of a request.
+ */
+export const MAX_CHOICES = 4;
 
 /**
  * Kinds of roll a request part can ask for, besides the plain dice.
@@ -265,8 +274,10 @@ function onDeleteChatMessage(message) {
  * @param {object} [changes]  For an update, what changed.
  */
 function refreshRequest(message, changes) {
-  // Showing or hiding a request's result changes what its rolls offer, such as Indomitable on a failed save.
-  if ( changes?.flags?.[MODULE_ID] && ("revealed" in changes.flags[MODULE_ID]) ) {
+  // Showing or hiding a request's result, or changing its DC, changes what its rolls offer, such as Indomitable on a
+  // failed save.
+  const changed = changes?.flags?.[MODULE_ID];
+  if ( changed && (("revealed" in changed) || ("request" in changed)) ) {
     for ( const roll of getRollMessages(message.id) ) ui.chat?.updateMessage(roll);
   }
   const requestId = message.getFlag(MODULE_ID, "requestRoll")?.request;
@@ -283,6 +294,8 @@ function refreshRequest(message, changes) {
  * @property {"skill"|"check"|"save"|"tool"|"d20"|"d100"} type
  * @property {string} [key]     Skill, ability or tool ID.
  * @property {number|null} dc
+ * @property {{ type: string, key?: string }[]} [alternatives]  Other rolls the actor may make instead, against the same
+ *   DC. Only in a mode with choices.
  */
 
 /**
@@ -359,9 +372,15 @@ export function validateRequest(request) {
   const parts = request.parts?.slice(0, count) ?? [];
   check(parts.length >= count, "ROBEAR.Request.Invalid.MissingRoll");
   for ( const part of parts ) {
-    check((part?.type in DICE) || PART_TYPES.includes(part?.type), "ROBEAR.Request.Invalid.Roll", { type: part?.type });
-    const keys = getPartKeys(part.type);
-    if ( keys ) check(keys.includes(part.key), "ROBEAR.Request.Invalid.Key", { type: part.type, key: part.key, keys: keys.join(", ") });
+    const alternatives = part?.alternatives ?? [];
+    check(Array.isArray(alternatives) && (!alternatives.length || MODES[request.mode].choices)
+      && (alternatives.length < MAX_CHOICES) && alternatives.every(a => a && (typeof a === "object")),
+    "ROBEAR.Request.Invalid.Choices", { max: MAX_CHOICES });
+    for ( const { type, key } of getChoices(part ?? {}) ) {
+      check((type in DICE) || PART_TYPES.includes(type), "ROBEAR.Request.Invalid.Roll", { type });
+      const keys = getPartKeys(type);
+      if ( keys ) check(keys.includes(key), "ROBEAR.Request.Invalid.Key", { type, key, keys: keys.join(", ") });
+    }
     check((part.dc ?? null) === null || Number.isNumeric(part.dc), "ROBEAR.Request.Invalid.DC", { dc: part.dc });
   }
 
@@ -412,6 +431,29 @@ export function getPartLabel({ type, key }) {
 /* -------------------------------------------- */
 
 /**
+ * @param {RequestPart} part
+ * @returns {{ type: string, key: string|null }[]}  The rolls an actor may make for this part: its own, then any
+ *   alternatives.
+ */
+export function getChoices(part) {
+  return [part, ...(part.alternatives ?? [])].map(({ type, key }) => ({ type, key: key ?? null }));
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {RequestPart} part
+ * @returns {string}  The name of the roll, or of each roll the actor may choose between, e.g. "Athletics Check or
+ *   Strength Save".
+ */
+export function getChoiceLabel(part) {
+  const labels = getChoices(part).map(getPartLabel);
+  return labels.length > 1 ? game.i18n.getListFormatter({ type: "disjunction" }).format(labels) : labels[0];
+}
+
+/* -------------------------------------------- */
+
+/**
  * @param {RollRequest} request
  * @returns {boolean}  Whether the request sets two sides against each other.
  */
@@ -427,23 +469,29 @@ export function isContest(request) {
  */
 export function getRequestTitle(request) {
   if ( ["challenge", "divine"].includes(request.mode) || isContest(request) ) return localize(MODES[request.mode].label);
-  const label = getPartLabel(request.parts[0]);
-  return request.parts[0].type in DICE ? localize("ROBEAR.Request.Labels.DieRoll", { die: label }) : label;
+  const part = request.parts[0];
+  if ( part.alternatives?.length ) return getChoiceLabel(part);
+  const label = getPartLabel(part);
+  return part.type in DICE ? localize("ROBEAR.Request.Labels.DieRoll", { die: label }) : label;
 }
 
 /* -------------------------------------------- */
 
 /**
  * @param {RollRequest} request
- * @returns {string}  What the request asks for, under its title.
+ * @param {HTMLElement|null} [dc]  Shown in place of a standard roll's or team challenge's DC, such as the GM's button
+ *   to change it.
+ * @returns {string|(string|HTMLElement)[]}  What the request asks for, under its title.
  */
-export function getRequestSubtitle(request) {
+export function getRequestSubtitle(request, dc=null) {
   if ( request.mode === "challenge" ) {
     return localize("ROBEAR.Request.Subtitle.Challenge", { count: request.successes, total: request.parts.length });
   }
   if ( isContest(request) ) return request.parts.map(getPartLabel).join(` ${localize("ROBEAR.Request.Versus")} `);
   if ( request.mode === "divine" ) return localize("ROBEAR.Request.Subtitle.Divine", { count: request.range });
-  return [localize(MODES[request.mode].label), getDCText(request, request.parts[0].dc)].filterJoin(" · ");
+  const label = localize(MODES[request.mode].label);
+  if ( dc ) return [label, " · ", dc];
+  return [label, getDCText(request, request.parts[0].dc)].filterJoin(" · ");
 }
 
 /* -------------------------------------------- */
@@ -469,6 +517,8 @@ function getDCText(request, dc) {
  * @property {number|void} natural   The d20 that counted.
  * @property {boolean} visible       Whether this user may see the result.
  * @property {boolean|null} success  Null without a DC.
+ * @property {number} choice         Which of the part's choices was rolled: 0 for its own roll, or 1 on for an
+ *   alternative.
  * @property {{ start: number, end: number }} [range]  The numbers picked for Divine Intervention.
  */
 
@@ -535,7 +585,7 @@ export function getResults(message) {
   const rolls = getRollMessages(message.id).sort((a, b) => a.timestamp - b.timestamp);
 
   for ( const roll of rolls ) {
-    const { actor, part, range } = roll.getFlag(MODULE_ID, "requestRoll");
+    const { actor, part, range, choice } = roll.getFlag(MODULE_ID, "requestRoll");
     const first = roll.rolls[0];
     if ( !results.has(actor) || !first || !(part in request.parts) ) continue;
     if ( contest && !request.sides[part]?.includes(actor) ) continue;
@@ -551,6 +601,7 @@ export function getResults(message) {
       natural: first.d20?.results.find(r => r.active)?.result,
       visible: roll.isContentVisible,
       success,
+      choice: choice ?? 0,
       range
     };
   }
@@ -649,6 +700,25 @@ export function getGroupOutcome(uuids, results, pooled) {
 /* -------------------------------------------- */
 
 /**
+ * The pooled group an actor's row is drawn with: a team challenge's team, or their side in a group contest.
+ * @param {ChatMessage5e} message
+ * @param {RollRequest} request
+ * @param {Map<string, (PartResult|null)[]>} results
+ * @param {number} [side]  The actor's side, in a contest.
+ * @returns {GroupOutcome|null}  Null when the request's rolls are not pooled.
+ */
+export function getRowGroup(message, request, results, side) {
+  if ( request.mode === "versus" ) return getGroupOutcome(request.sides[side], results, true);
+  if ( request.mode !== "team" ) return null;
+  const team = getGroupOutcome(request.actors, results, true);
+  // Which rolls a natural 1 or 20 took out of the pool is part of the result, so players see it with the result.
+  if ( game.user.isGM || message.getFlag(MODULE_ID, "revealed") ) return team;
+  return { ...team, removed: new Map() };
+}
+
+/* -------------------------------------------- */
+
+/**
  * @param {GroupOutcome} group
  * @returns {boolean}  Whether the group has a result this user can see.
  */
@@ -692,7 +762,7 @@ function renderRequest(message, request) {
   const results = getResults(message);
   const card = document.createElement("div");
   card.className = `robear-request mode-${request.mode}`;
-  card.append(renderHeader(MODES[request.mode].icon, getRequestTitle(request), getRequestSubtitle(request)));
+  card.append(renderRequestHeader(message, request));
 
   if ( isContest(request) ) {
     renderContest(card, message, request, results);
@@ -702,20 +772,17 @@ function renderRequest(message, request) {
   if ( request.mode === "challenge" ) {
     const steps = document.createElement("ol");
     steps.className = "robear-request-steps";
-    for ( const part of request.parts ) {
+    request.parts.forEach((part, index) => {
       const step = document.createElement("li");
-      const dc = document.createElement("span");
-      dc.textContent = getDCText(request, part.dc);
-      step.append(getPartLabel(part), " ", dc);
+      const dc = game.user.isGM ? renderDCButton(message, request, index) : textElement("span", getDCText(request, part.dc));
+      step.append(getChoiceLabel(part), " ", dc);
       steps.append(step);
-    }
+    });
     card.append(steps);
   }
 
   const team = request.mode === "team" ? getGroupOutcome(request.actors, results, true) : null;
-  // Which rolls a natural 1 or 20 took out of the pool is part of the result, so players see it with the result.
-  const shownTeam = team && !game.user.isGM && !message.getFlag(MODULE_ID, "revealed")
-    ? { ...team, removed: new Map() } : team;
+  const shownTeam = getRowGroup(message, request, results);
   const list = document.createElement("ul");
   list.className = "robear-request-actors";
   for ( const uuid of request.actors ) {
@@ -733,7 +800,7 @@ function renderRequest(message, request) {
 /**
  * @param {string} icon
  * @param {string} title
- * @param {string} subtitle
+ * @param {string|(string|HTMLElement)[]} subtitle
  * @returns {HTMLElement}
  */
 export function renderHeader(icon, title, subtitle) {
@@ -744,10 +811,86 @@ export function renderHeader(icon, title, subtitle) {
     <i class="${escapeHTML(icon)}" inert></i>
     <div>
       <h3>${escapeHTML(title)}</h3>
-      <span class="robear-request-subtitle">${escapeHTML(subtitle)}</span>
+      <span class="robear-request-subtitle"></span>
     </div>
   `;
+  header.querySelector(".robear-request-subtitle").append(...[subtitle].flat());
   return header;
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Draw a request's header. The GM can change a standard roll's or team challenge's DC from it.
+ * @param {ChatMessage5e} message
+ * @param {RollRequest} request
+ * @returns {HTMLElement}
+ */
+export function renderRequestHeader(message, request) {
+  const editDC = game.user.isGM && ["standard", "team"].includes(request.mode);
+  const dc = editDC ? renderDCButton(message, request, 0) : null;
+  return renderHeader(MODES[request.mode].icon, getRequestTitle(request), getRequestSubtitle(request, dc));
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {ChatMessage5e} message
+ * @param {RollRequest} request
+ * @param {number} part
+ * @returns {HTMLButtonElement}  A GM button showing a part's DC, which changes it.
+ */
+function renderDCButton(message, request, part) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "robear-request-dc-edit";
+  button.textContent = getDCText(request, request.parts[part].dc) || localize("ROBEAR.Request.EditDC.None");
+  button.dataset.tooltipText = localize("ROBEAR.Request.EditDC.Tooltip");
+  onAsyncClick(button, () => changeDC(message, part));
+  return button;
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Ask the GM for a new DC for one of a request's rolls, and save it. The rolls already made are scored again when the
+ * card is redrawn, since results are always worked out against the request as it is now.
+ * @param {ChatMessage5e} message  The request message.
+ * @param {number} part
+ */
+export async function changeDC(message, part) {
+  const request = message.getFlag(MODULE_ID, "request");
+  const current = request.parts[part].dc;
+  const required = request.mode === "challenge";
+  const { escapeHTML } = foundry.utils;
+  const data = await foundry.applications.api.DialogV2.input({
+    classes: ["robear-card-dialog", "robear-dc-dialog"],
+    window: { title: localize("ROBEAR.Request.EditDC.Title"), icon: "fa-solid fa-bullseye" },
+    position: { width: 320 },
+    content: `
+      <p class="robear-card-hint">${escapeHTML(localize(required
+        ? "ROBEAR.Request.EditDC.HintRequired" : "ROBEAR.Request.EditDC.Hint"))}</p>
+      <div class="form-group">
+        <label>${escapeHTML(localize("ROBEAR.Request.Config.DC"))}</label>
+        <div class="form-fields">
+          <input type="number" name="dc" value="${current ?? ""}" min="0" step="1" ${required ? "required" : ""} autofocus>
+        </div>
+      </div>
+    `,
+    ok: { label: "ROBEAR.Request.EditDC.Save", icon: "fa-solid fa-check" },
+    rejectClose: false
+  });
+  if ( !data ) return;
+  const dc = Number.isNumeric(data.dc) ? Number(data.dc) : null;
+  if ( (dc === null) && required ) {
+    ui.notifications.warn(localize("ROBEAR.Request.Config.ChallengeDC"));
+    return;
+  }
+  // Read the request again, in case it changed while the dialog was open.
+  const parts = foundry.utils.deepClone(message.getFlag(MODULE_ID, "request").parts);
+  if ( parts[part].dc === dc ) return;
+  parts[part].dc = dc;
+  await message.update({ [`flags.${MODULE_ID}.request.parts`]: parts });
 }
 
 /* -------------------------------------------- */
@@ -857,9 +1000,12 @@ export function renderActorRow(message, request, uuid, results, { team=null, sid
   const hideOutcome = ["standard", "challenge"].includes(request.mode) && !game.user.isGM
     && !message.getFlag(MODULE_ID, "revealed");
   let next = results.findIndex(r => !r);
+  // A challenge's steps after the one that settled it are not counted. They are only rolled when a DC changed after.
+  let counted = results.length;
   if ( challenge ) {
     const state = getChallengeState(results, request.successes);
     next = state.next ?? -1;
+    if ( (state.success !== null) && !hideOutcome ) counted = state.passed + state.failed;
     if ( (state.success !== null) && !hideOutcome ) row.classList.add(state.success ? "success" : "failure");
   } else if ( results[0]?.visible && (results[0].success !== null) && !team && !hideOutcome ) {
     row.classList.add(results[0].success ? "success" : "failure");
@@ -879,8 +1025,16 @@ export function renderActorRow(message, request, uuid, results, { team=null, sid
     }
     // Only a DC decides success, so pooled rolls are not marked as passing or failing on their own.
     if ( result ) {
-      const shown = (team || hideOutcome) ? { ...result, success: null } : result;
-      slots.append(renderResult(shown, challenge ? slot : null, row));
+      const uncounted = slot >= counted;
+      const shown = (team || hideOutcome || uncounted) ? { ...result, success: null } : result;
+      const choices = getChoices(request.parts[side ?? slot]);
+      const chosen = choices.length > 1 ? getPartLabel(choices[result.choice] ?? choices[0]) : null;
+      const pill = renderResult(shown, challenge ? slot : null, row, chosen);
+      if ( uncounted ) {
+        pill.classList.add("uncounted");
+        pill.dataset.tooltipText = localize("ROBEAR.Request.Result.Uncounted", { result: pill.dataset.tooltipText });
+      }
+      slots.append(pill);
     }
     else if ( slot === next ) slots.append(renderRollButton(message, request, actor, side ?? slot));
     else if ( !challenge || (next !== -1) ) slots.append(renderPending());
@@ -996,9 +1150,10 @@ function toggleRollDetail(row, message) {
  * @param {PartResult} result
  * @param {number|null} part  Index shown for skill challenge parts.
  * @param {HTMLLIElement} row  The actor's row, where clicking the result opens its dice when rolls are attached.
+ * @param {string|null} [chosen]  The roll the actor chose, where they had a choice.
  * @returns {HTMLElement}
  */
-function renderResult(result, part, row) {
+function renderResult(result, part, row, chosen=null) {
   const pill = document.createElement("span");
   pill.className = "robear-request-result";
   if ( !result.visible ) {
@@ -1013,6 +1168,7 @@ function renderResult(result, part, row) {
   let tooltip = result.natural
     ? localize("ROBEAR.Request.Result.TotalWithD20", { total: result.total, natural: result.natural })
     : String(result.total);
+  if ( chosen ) tooltip = localize("ROBEAR.Request.Result.Chosen", { roll: chosen, result: tooltip });
   if ( part !== null ) tooltip = localize("ROBEAR.Request.Result.Numbered", { number: part + 1, result: tooltip });
   if ( game.settings.get(MODULE_ID, "attachRolls") ) {
     pill.classList.add("expandable");
@@ -1058,15 +1214,18 @@ function renderRollButton(message, request, actor, part) {
   const button = document.createElement("button");
   button.type = "button";
   button.className = "robear-request-roll";
-  button.dataset.tooltipText = localize("ROBEAR.Request.RollTooltip", { roll: getPartLabel(request.parts[part]) });
-  button.innerHTML = '<i class="fa-solid fa-dice-d20" inert></i>';
+  const choices = getChoices(request.parts[part]);
+  button.dataset.tooltipText = localize("ROBEAR.Request.RollTooltip", { roll: getChoiceLabel(request.parts[part]) });
+  button.innerHTML = `<i class="fa-solid ${choices.length > 1 ? "fa-list-ul" : "fa-dice-d20"}" inert></i>`;
   button.append(` ${request.mode === "challenge" ? part + 1 : localize("ROBEAR.Request.Roll")}`);
   button.addEventListener("click", async event => {
     event.preventDefault();
     event.stopPropagation();
     button.disabled = true;
     try {
-      await rollForRequest(message, actor, part, event);
+      // With a choice of rolls, the modifier keys are taken from the click that picks one.
+      const picked = choices.length > 1 ? await chooseRoll(actor, choices) : { choice: 0, event };
+      if ( picked ) await rollForRequest(message, actor, part, picked.event, picked.choice);
     } finally {
       button.disabled = false;
     }
@@ -1207,18 +1366,32 @@ function renderToggleButton(revealed, labels, toggle) {
   button.dataset.tooltipText = localize(revealed ? "ROBEAR.Request.Reveal.ShownTooltip" : "ROBEAR.Request.Reveal.HiddenTooltip");
   button.innerHTML = `<i class="fa-solid ${revealed ? "fa-eye" : "fa-eye-slash"}" inert></i>`;
   button.append(` ${localize(revealed ? labels.shown : labels.hidden)}`);
+  onAsyncClick(button, toggle);
+  return button;
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Run a GM button's action on click, with the button disabled until it is done. On success the card is redrawn with
+ * a new button; on failure the GM is told why, and this one works again.
+ * @param {HTMLButtonElement} button
+ * @param {() => Promise} action
+ */
+function onAsyncClick(button, action) {
   button.addEventListener("click", async event => {
     event.preventDefault();
     event.stopPropagation();
     button.disabled = true;
-    // On success the card is redrawn with a new button; on failure this one must work again.
     try {
-      await toggle();
+      await action();
+    } catch(err) {
+      console.error(`${MODULE_ID} |`, err);
+      ui.notifications.error(err.message);
     } finally {
       button.disabled = false;
     }
   });
-  return button;
 }
 
 /* -------------------------------------------- */
@@ -1271,20 +1444,23 @@ function renderRivalRevealButton(request, results) {
  * @param {Actor5e} actor
  * @param {number} part
  * @param {PointerEvent} event     Its modifier keys let dnd5e's fast-forward keys still apply.
+ * @param {number} [choice=0]      Which of the part's choices to roll.
  */
-async function rollForRequest(message, actor, part, event) {
+async function rollForRequest(message, actor, part, event, choice=0) {
   const request = message.getFlag(MODULE_ID, "request");
   const key = `${message.id}.${actor.uuid}.${part}`;
   const slot = isContest(request) ? 0 : part;
   if ( rolling.has(key) || getResults(message).get(actor.uuid)?.[slot] ) return;
 
-  const { type, key: id } = request.parts[part];
+  const roll = getChoices(request.parts[part])[choice];
+  if ( !roll ) return;
+  const { type, key: id } = roll;
   // Only the modifier keys are passed on. dnd5e would otherwise treat the request card as the roll's origin.
   const { altKey, ctrlKey, metaKey, shiftKey } = event;
   const config = { event: { altKey, ctrlKey, metaKey, shiftKey } };
   // The DC is never sent with the roll: dnd5e would show the person rolling whether they beat it, before the GM
   // shows the result. The request card scores each roll against the request's DC itself.
-  const requestRoll = { request: message.id, actor: actor.uuid, part };
+  const requestRoll = { request: message.id, actor: actor.uuid, part, choice };
   // An NPC's roll in a roll-off is a private GM roll, until the GM shows it from the request card.
   const rollMode = isHiddenRival(request, actor) ? "gm" : request.rollMode;
   const messageConfig = { rollMode, data: { flags: { [MODULE_ID]: { requestRoll } } } };
@@ -1336,6 +1512,36 @@ async function rollDie(actor, request, die, config, messageConfig) {
   }
   const rollConfig = { ...config, subject: actor, rolls: [{ parts: [DICE[die].formula], options: {} }] };
   await CONFIG.Dice.BasicRoll.build(rollConfig, { configure: false }, messageConfig);
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Ask which of a part's rolls an actor makes.
+ * @param {Actor5e} actor
+ * @param {{ type: string, key: string|null }[]} choices
+ * @returns {Promise<{ choice: number, event: PointerEvent }|null>}  The roll chosen, and the click that chose it, or
+ *   null if the window was closed.
+ */
+async function chooseRoll(actor, choices) {
+  const { escapeHTML } = foundry.utils;
+  return foundry.applications.api.DialogV2.wait({
+    classes: ["robear-card-dialog", "robear-choice-dialog"],
+    window: {
+      title: localize("ROBEAR.Request.Choose.Title", { name: actor.name }),
+      icon: "fa-solid fa-list-ul"
+    },
+    position: { width: 320 },
+    content: `<p class="robear-card-hint">${escapeHTML(localize("ROBEAR.Request.Choose.Hint", { name: actor.name }))}</p>`,
+    buttons: choices.map((roll, choice) => ({
+      action: `choice${choice}`,
+      label: getPartLabel(roll),
+      icon: "fa-solid fa-dice-d20",
+      default: choice === 0,
+      callback: event => ({ choice, event })
+    })),
+    rejectClose: false
+  });
 }
 
 /* -------------------------------------------- */

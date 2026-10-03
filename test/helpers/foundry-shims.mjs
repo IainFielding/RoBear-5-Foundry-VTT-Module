@@ -91,6 +91,8 @@ globalThis.game = {
   i18n: {
     lang: "en",
     localize,
+    // Foundry's own getListFormatter (client/helpers/localization.mjs).
+    getListFormatter: ({ style = "long", type = "conjunction" } = {}) => new Intl.ListFormat("en", { style, type }),
     // Foundry's own format (client/helpers/localization.mjs): each {name} is replaced by data.name.
     format: (key, data = {}) => localize(key).replace(/{[^}]+}/g, k => String(data[k.slice(1, -1)] ?? k))
   },

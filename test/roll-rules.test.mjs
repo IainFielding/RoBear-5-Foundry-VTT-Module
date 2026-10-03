@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { actorNames, actorOwners, settingValues } from "./helpers/foundry-shims.mjs";
 import { requestMessage, rollMessage } from "./helpers/messages.mjs";
 import {
-  DIVINE_RANGE, MODES, getChallengeState, getGroupOutcome, getPartLabel, getResults, isContest, poolTeamRolls,
-  validateRequest, withDefaults
+  DIVINE_RANGE, MAX_CHOICES, MODES, getChallengeState, getChoiceLabel, getChoices, getGroupOutcome, getPartLabel,
+  getRequestTitle, getResults, isContest, poolTeamRolls, validateRequest, withDefaults
 } from "../scripts/roll-requests.mjs";
 
 const entries = rows => rows.map(([uuid, total, natural]) => ({ uuid, total, natural }));
@@ -110,6 +110,24 @@ describe("Results from tagged roll messages", () => {
     const results = getResults(message);
     expect(results.get("A")[0]).toMatchObject({ total: 12, natural: 10, success: true, visible: true });
     expect(results.get("B")[0]).toMatchObject({ total: 11, success: false });
+  });
+
+  it("scores a roll chosen from a choice against the shared DC, noting which was chosen", () => {
+    const part = { type: "skill", key: "ath", dc: 12, alternatives: [{ type: "save", key: "str" }] };
+    const message = requestMessage({ mode: "standard", actors: ["A", "B"], parts: [part] });
+    game.messages = [rollMessage({ actor: "A", total: 13, choice: 1 }), rollMessage({ actor: "B", total: 9 })];
+    const results = getResults(message);
+    expect(results.get("A")[0]).toMatchObject({ choice: 1, success: true });
+    expect(results.get("B")[0]).toMatchObject({ choice: 0, success: false });
+  });
+
+  it("scores rolls already made against a DC changed since, as results are read from the request each time", () => {
+    const request = { mode: "standard", actors: ["A"], parts: [{ type: "skill", key: "ath", dc: 15 }] };
+    const message = requestMessage(request);
+    game.messages = [rollMessage({ actor: "A", total: 13 })];
+    expect(getResults(message).get("A")[0].success).toBe(false);
+    request.parts[0].dc = 12;
+    expect(getResults(message).get("A")[0].success).toBe(true);
   });
 
   it("has no success without a DC", () => {
@@ -287,6 +305,28 @@ describe("Checking a request before it is posted", () => {
     expect(errorFor({ ...valid.standard, rollMode: "blind" })).not.toBeNull();
   });
 
+  it("accepts a choice of rolls in a standard roll, team challenge or skill challenge step", () => {
+    const choice = { type: "skill", key: "ath", dc: 15, alternatives: [{ type: "save", key: "str" }, { type: "d20" }] };
+    expect(errorFor({ ...valid.standard, parts: [choice] })).toBeNull();
+    expect(errorFor({ ...valid.standard, mode: "team", parts: [choice] })).toBeNull();
+    expect(errorFor({ ...valid.challenge, parts: [part, choice, part] })).toBeNull();
+  });
+
+  it("refuses a choice of rolls in a contest, too many choices, or a choice dnd5e can't roll", () => {
+    const alternatives = [{ type: "save", key: "str" }];
+    expect(errorFor({ ...valid.rolloff, parts: [{ ...part, alternatives }, part] })).not.toBeNull();
+    expect(errorFor({ ...valid.divine, parts: [{ type: "d100", dc: null, alternatives }] })).not.toBeNull();
+    const many = Array.from({ length: MAX_CHOICES }, () => ({ type: "save", key: "str" }));
+    expect(errorFor({ ...valid.standard, parts: [{ ...part, alternatives: many }] })).not.toBeNull();
+    expect(errorFor({ ...valid.standard, parts: [{ ...part, alternatives: [{ type: "save", key: "strength" }] }] }))
+      .toBe("Unknown save for a roll: strength. Use one of: str, dex, wis.");
+    expect(errorFor({ ...valid.standard, parts: [{ ...part, alternatives: { type: "save", key: "str" } }] })).not.toBeNull();
+    // Refused with the module's own message, not a TypeError from reading the missing roll.
+    for ( const bad of [null, "str", 4] ) {
+      expect(errorFor({ ...valid.standard, parts: [{ ...part, alternatives: [bad] }] })).toMatch(/^Only a Standard Roll/);
+    }
+  });
+
   it("refuses a skill, check, save or tool that dnd5e doesn't know, which would only fail once someone rolled it", () => {
     expect(errorFor({ ...valid.standard, parts: [{ type: "skill", key: "athletics", dc: 15 }] }))
       .toBe("Unknown skill for a roll: athletics. Use one of: ath, acr.");
@@ -389,5 +429,31 @@ describe("Modes and labels", () => {
     expect(getPartLabel({ type: "d20" })).toBe("d20");
     expect(getPartLabel({ type: "d100" })).toBe("d100");
     for ( const die of ["d6", "d8", "d10", "d12"] ) expect(getPartLabel({ type: die })).toBe(die);
+  });
+});
+
+/* -------------------------------------------- */
+
+describe("A choice of rolls", () => {
+  const part = { type: "skill", key: "ath", dc: 15, alternatives: [{ type: "save", key: "str" }, { type: "tool", key: "thief" }] };
+
+  it("lists the part's own roll first, then its alternatives", () => {
+    expect(getChoices(part)).toEqual([
+      { type: "skill", key: "ath" }, { type: "save", key: "str" }, { type: "tool", key: "thief" }
+    ]);
+    expect(getChoices({ type: "d20", dc: null })).toEqual([{ type: "d20", key: null }]);
+  });
+
+  it("names every roll there is to choose from", () => {
+    expect(getChoiceLabel(part)).toBe("Athletics Check, Strength Save, or Thieves' Tools Check");
+    expect(getChoiceLabel({ type: "skill", key: "acr", alternatives: [{ type: "check", key: "dex" }] }))
+      .toBe("Acrobatics Check or Dexterity Check");
+    expect(getChoiceLabel({ type: "skill", key: "acr" })).toBe("Acrobatics Check");
+  });
+
+  it("titles a standard roll's card with the choice", () => {
+    expect(getRequestTitle({ mode: "standard", parts: [{ type: "d20", alternatives: [{ type: "save", key: "wis" }] }] }))
+      .toBe("d20 or Wisdom Save");
+    expect(getRequestTitle({ mode: "standard", parts: [{ type: "d20" }] })).toBe("d20 Roll");
   });
 });

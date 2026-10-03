@@ -136,6 +136,15 @@ also play a card from the anchor button next to a result on the request.
 The actor lists offer the selected tokens, the player characters and the tokens on the current
 scene.
 
+**A choice of rolls.** In a Standard Roll, Team Challenge or Skill Challenge, click **+** beside a
+roll to let each actor make another roll instead, such as Athletics or Acrobatics, or Persuasion or
+Deception. Up to four rolls can be offered, and they share the DC. Clicking **Roll** then asks which
+one to make, and hovering a result shows which was chosen.
+
+**Changing the DC.** On a Standard Roll, Team Challenge or Skill Challenge card, the GM can click the
+DC to change it, or clear it for no DC (each Skill Challenge roll must keep one). Rolls already made
+are scored again against the new DC.
+
 A few things to know:
 
 - A roll only counts on the request if it was made by the GM or by one of the actor's owners.
@@ -180,7 +189,7 @@ await game.modules.get("sogrom-robear-e").api.createRequest({
 | Field | What it holds |
 |---|---|
 | `mode` | `"standard"`, `"challenge"` (Skill Challenge), `"team"` (Team Challenge), `"rolloff"`, `"versus"` (Team vs Team) or `"divine"`. |
-| `parts` | The rolls: one, three for a Skill Challenge, or one for each side of a Roll-Off or Team vs Team. Each is `{ type, key, dc }`. `type` is `"skill"`, `"check"`, `"save"` or `"tool"`, with `key` naming it as D&D 5e does (`"ath"`, `"dex"`, `"thief"`), or a plain die, `"d20"`, `"d6"`, `"d8"`, `"d10"`, `"d12"` or `"d100"`, with no key. `dc` is a number, or `null` for none. Divine Intervention's part is `{ type: "d100", dc: null }`. |
+| `parts` | The rolls: one, three for a Skill Challenge, or one for each side of a Roll-Off or Team vs Team. Each is `{ type, key, dc }`. `type` is `"skill"`, `"check"`, `"save"` or `"tool"`, with `key` naming it as D&D 5e does (`"ath"`, `"dex"`, `"thief"`), or a plain die, `"d20"`, `"d6"`, `"d8"`, `"d10"`, `"d12"` or `"d100"`, with no key. `dc` is a number, or `null` for none. In a Standard Roll, Team Challenge or Skill Challenge a part may also have `alternatives`, a list of up to three other `{ type, key }` rolls the actor may make instead, against the same DC. Divine Intervention's part is `{ type: "d100", dc: null }`. |
 | `actors` | The actor UUIDs of everyone rolling. |
 | `sides` | For a Roll-Off or Team vs Team, two lists of actor UUIDs, one per side, each also in `actors`. A Roll-Off has exactly one actor on each side. |
 | `successes` | For a Skill Challenge, how many of the three rolls must pass. Defaults to 2. |

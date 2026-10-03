@@ -138,6 +138,21 @@ test("pop-ups: a skill challenge's pop-up stays open until the challenge is sett
   await waitForPopupToClose(player);
 });
 
+test("pop-ups: a team challenge's pop-up marks no one's roll as passing or failing, as the chat card doesn't", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  await setSetting(gm, player, "popupPlayers", true);
+  const id = await postRequest(ctx, { mode: "team", parts: [athletics(15)], actors: [ids.aria, ids.borin] });
+  await waitForPopup(player);
+  await forceDice(player, [d20(3)]);
+  await popupRollButton(player, "Aria").click({ modifiers: ["Shift"] });
+  await waitForRoll(gm, id, ids.aria);
+  const aria = popup(player).locator('li.robear-request-actor:has(.robear-request-name:text-is("Aria"))');
+  await aria.locator(".robear-request-result").waitFor({ timeout: 10_000 });
+  const marked = await aria.evaluate(row => [row, row.querySelector(".robear-request-result")]
+    .some(el => el.classList.contains("success") || el.classList.contains("failure")));
+  assertEqual(marked, false, "Aria's roll marked as passing or failing in the pop-up");
+});
+
 test("pop-ups: a player with nothing to roll gets none", async (ctx) => {
   const { gm, player, ids } = ctx;
   await setSetting(gm, player, "popupPlayers", true);

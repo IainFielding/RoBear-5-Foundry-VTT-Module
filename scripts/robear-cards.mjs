@@ -73,6 +73,17 @@ const retroactiveUses = new Set();
  */
 const PLAYED_CARD_MS = 3000;
 
+/**
+ * How many played cards are shown on screen side by side. Cards played while that many are up wait their turn.
+ */
+const PLAYED_CARD_MAX = 3;
+
+/**
+ * Played cards waiting for room on screen, oldest first.
+ * @type {CardLogEntry[]}
+ */
+const playedCardQueue = [];
+
 /* -------------------------------------------- */
 /*  Localization                                */
 /* -------------------------------------------- */
@@ -607,33 +618,69 @@ export function cardArtHTML(img, label) {
 /* -------------------------------------------- */
 
 /**
- * Show a played card's art large on screen for a moment, with who played it. Clicking it dismisses it.
- * The entry comes from a message's flags, so it is only ever set as text and attributes, never parsed as HTML.
+ * Show a played card's art large on screen for a moment, with who played it. Up to three show side by side; any
+ * more wait until one of those has gone, so every card played is seen for its full time.
  * @param {CardLogEntry} entry
  */
 function showPlayedCard(entry) {
-  document.getElementById("robear-played-card")?.remove();
-  const reveal = document.createElement("div");
-  reveal.id = "robear-played-card";
-  reveal.className = "robear-played-card";
-  reveal.setAttribute("role", "status");
-  reveal.innerHTML = `
+  playedCardQueue.push(entry);
+  showQueuedCards();
+}
+
+/**
+ * Move waiting cards on screen while there is room. A card still fading out keeps its place until it has gone, so
+ * the row never holds more than three.
+ */
+function showQueuedCards() {
+  let overlay = document.getElementById("robear-played-card");
+  while ( playedCardQueue.length && ((overlay?.childElementCount ?? 0) < PLAYED_CARD_MAX) ) {
+    if ( !overlay ) {
+      overlay = document.createElement("div");
+      overlay.id = "robear-played-card";
+      overlay.className = "robear-played-card";
+      overlay.setAttribute("role", "status");
+      document.body.append(overlay);
+    }
+    overlay.classList.remove("leaving");
+    overlay.append(createPlayedCard(playedCardQueue.shift()));
+  }
+}
+
+/**
+ * One played card for the on-screen row, which leaves after a moment or when clicked.
+ * The entry comes from a message's flags, so it is only ever set as text and attributes, never parsed as HTML.
+ * @param {CardLogEntry} entry
+ * @returns {HTMLElement}
+ */
+function createPlayedCard(entry) {
+  const card = document.createElement("div");
+  card.className = "robear-played-card-entry";
+  card.innerHTML = `
     <img alt="">
     <div class="robear-played-card-caption">
       <span class="robear-played-card-by"></span>
       <span class="robear-played-card-name"></span>
     </div>
   `;
-  reveal.querySelector("img").src = entry.img;
-  reveal.querySelector(".robear-played-card-by").textContent = localize("ROBEAR.Cards.Plays", { name: entry.by ?? "" });
-  reveal.querySelector(".robear-played-card-name").textContent = entry.card ?? "";
+  card.querySelector("img").src = entry.img;
+  card.querySelector(".robear-played-card-by").textContent = localize("ROBEAR.Cards.Plays", { name: entry.by ?? "" });
+  card.querySelector(".robear-played-card-name").textContent = entry.card ?? "";
   const dismiss = () => {
-    reveal.classList.add("leaving");
-    setTimeout(() => reveal.remove(), 400);
+    if ( card.classList.contains("leaving") ) return;
+    card.classList.add("leaving");
+    // The last card out takes the backdrop with it.
+    const overlay = card.parentElement;
+    const staying = overlay?.querySelector(".robear-played-card-entry:not(.leaving)");
+    if ( !staying && !playedCardQueue.length ) overlay?.classList.add("leaving");
+    setTimeout(() => {
+      card.remove();
+      if ( overlay && !overlay.childElementCount ) overlay.remove();
+      showQueuedCards();
+    }, 400);
   };
-  reveal.addEventListener("click", dismiss);
-  document.body.append(reveal);
+  card.addEventListener("click", dismiss);
   setTimeout(dismiss, PLAYED_CARD_MS);
+  return card;
 }
 
 /* -------------------------------------------- */

@@ -551,6 +551,45 @@ test("played cards: clicking the card dismisses it early", async ({ player }) =>
   await waitFor(player, () => !document.getElementById("robear-played-card"), null, "the played card to go", 1500);
 });
 
+test("played cards: up to three played together show side by side, and the rest wait their turn", async ({ gm, player }) => {
+  const cards = ["Luck", "Advantage", "Charger", "Relentless"];
+  const ids = await gm.eval(async n => {
+    const messages = await ChatMessage.create(Array.from({ length: n }, (_, i) => ({ content: `Roll ${i}` })));
+    return messages.map(m => m.id);
+  }, cards.length);
+  await waitFor(player, ids => ids.every(id => game.messages.has(id)), ids, "the messages to reach the player");
+  // Every card is played at once, as players acting together would.
+  await gm.eval(({ ids, cards, moduleId }) => Promise.all(ids.map((id, i) => game.messages.get(id).setFlag(moduleId, "log",
+    [{ text: `${cards[i]}: played`, card: cards[i], img: `modules/${moduleId}/assets/images/luckdc20.webp`, by: "Aria" }]
+  ))), { ids, cards, moduleId: MODULE_ID });
+
+  // The updates may arrive in any order, so which card waits is whichever one was not shown first.
+  let first;
+  for ( const session of [gm, player] ) {
+    await waitFor(session, () => document.querySelectorAll("#robear-played-card .robear-played-card-entry").length === 3,
+      null, `three cards on ${session.user}'s screen`, 3000);
+    await session.page.waitForTimeout(300);
+    const shown = await session.eval(() => [...document.querySelectorAll("#robear-played-card .robear-played-card-entry")]
+      .map(el => ({
+        name: el.querySelector(".robear-played-card-name").textContent,
+        top: Math.round(el.querySelector("img").getBoundingClientRect().top)
+      })));
+    assertEqual(shown.length, 3, `cards on ${session.user}'s screen, with one waiting`);
+    assert(shown.every(c => cards.includes(c.name)), `Unexpected cards shown: ${shown.map(c => c.name).join(", ")}`);
+    assertEqual(new Set(shown.map(c => c.top)).size, 1, `rows the cards sit in (${session.user})`);
+    if ( session === player ) first = shown.map(c => c.name);
+  }
+
+  // Once the first three go, the fourth gets its turn.
+  const waiting = cards.find(c => !first.includes(c));
+  await waitFor(player, waiting => {
+    const names = [...document.querySelectorAll("#robear-played-card .robear-played-card-entry:not(.leaving)")]
+      .map(el => el.querySelector(".robear-played-card-name").textContent);
+    return (names.length === 1) && (names[0] === waiting);
+  }, waiting, "the waiting card to be shown", 5000);
+  await waitFor(player, () => !document.getElementById("robear-played-card"), null, "every played card to go", 5000);
+});
+
 test("played cards: the roll's note carries a thumbnail of the card, full size on hover", async ({ player }) => {
   await forceDice(player, [d20(5)]);
   const id = await roll(player, "Aria", "skill");

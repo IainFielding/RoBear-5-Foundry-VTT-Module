@@ -5,7 +5,7 @@
 
 import { MODULE_ID } from "./robear-cards.mjs";
 import {
-  MODES, getChallengeState, getRequestSubtitle, getRequestTitle, getResults, isContest, renderActorRow, renderHeader
+  getChallengeState, getResults, getRowGroup, isContest, renderActorRow, renderRequestHeader
 } from "./roll-requests.mjs";
 
 const { ApplicationV2 } = foundry.applications.api;
@@ -198,13 +198,14 @@ export default class RollRequestPopup extends ApplicationV2 {
     const results = getResults(this.message);
     const card = document.createElement("div");
     card.className = `robear-request mode-${request.mode}`;
-    card.append(renderHeader(MODES[request.mode].icon, getRequestTitle(request), getRequestSubtitle(request)));
+    card.append(renderRequestHeader(this.message, request));
     const list = document.createElement("ul");
     list.className = "robear-request-actors";
     for ( const uuid of getPopupActors(request) ) {
       // In a contest an actor rolls for their own side.
       const side = isContest(request) ? request.sides.findIndex(s => s.includes(uuid)) : undefined;
-      list.append(renderActorRow(this.message, request, uuid, results.get(uuid), { side }));
+      const team = getRowGroup(this.message, request, results, side);
+      list.append(renderActorRow(this.message, request, uuid, results.get(uuid), { team, side }));
     }
     card.append(list);
     return card;

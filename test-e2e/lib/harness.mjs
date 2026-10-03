@@ -172,7 +172,7 @@ export function readCard(session, id) {
         name: text(row.querySelector(".robear-request-name")),
         classes: ["success", "failure", "removed"].filter(c => row.classList.contains(c)),
         results: [...row.querySelectorAll(".robear-request-result")].map(p => ({
-          text: text(p), classes: ["success", "failure", "critical", "fumble"].filter(c => p.classList.contains(c))
+          text: text(p), classes: ["success", "failure", "critical", "fumble", "uncounted"].filter(c => p.classList.contains(c))
         })),
         range: text(row.querySelector(".robear-request-range")),
         rollButtons: row.querySelectorAll(".robear-request-roll").length,

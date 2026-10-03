@@ -3,16 +3,25 @@
  */
 
 import { MODULE_ID, localize } from "./robear-cards.mjs";
-import { CHALLENGE_PARTS, DICE, DIVINE_RANGE, MODES, createRequest, getPartLabel } from "./roll-requests.mjs";
+import {
+  CHALLENGE_PARTS, DICE, DIVINE_RANGE, MAX_CHOICES, MODES, createRequest, getPartLabel
+} from "./roll-requests.mjs";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const { FormDataExtended } = foundry.applications.ux;
 
 /**
+ * @typedef {object} DraftRoll
+ * @property {string} roll            The roll, e.g. "skill.ath" or "d20".
+ * @property {number|null} dc
+ * @property {string[]} alternatives  Other rolls the actor may choose instead.
+ */
+
+/**
  * @typedef {object} RequestDraft
  * @property {string} mode
- * @property {{ roll: string, dc: number|null }[]} parts  Always three: the rolls outside a contest.
- * @property {{ roll: string, dc: number|null }} standard  A standard roll's roll and DC, starting as a d20.
+ * @property {DraftRoll[]} parts  Always three: the rolls outside a contest.
+ * @property {DraftRoll} standard  A standard roll's roll and DC, starting as a d20.
  * @property {Record<string, [string, string]>} sideRolls  Each contest mode's roll for each side, keyed by mode,
  *   starting as d20 against d20.
  * @property {number} successes
@@ -41,7 +50,9 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
       closeOnSubmit: true
     },
     actions: {
-      selectAll: RollRequestConfig.#onSelectAll
+      selectAll: RollRequestConfig.#onSelectAll,
+      addChoice: RollRequestConfig.#onAddChoice,
+      removeChoice: RollRequestConfig.#onRemoveChoice
     }
   };
 
@@ -105,6 +116,10 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
     else if ( draft.mode !== "divine" ) rows = [{ label: localize("ROBEAR.Request.Config.Roll"), hasDC: true }];
     rows.forEach((row, index) => {
       if ( !row.field ) Object.assign(row, { field: `parts.${index}`, ...draft.parts[index] });
+      // Where the mode allows it, a roll can offer others to choose from instead.
+      row.canChoose = !!mode.choices && !!row.hasDC;
+      row.alternatives = row.canChoose ? row.alternatives.map((roll, i) => ({ roll, index: i })) : [];
+      row.full = row.alternatives.length >= MAX_CHOICES - 1;
     });
 
     const choice = (actor, index, checked) => ({ index, name: actor.name, img: actor.img, checked });
@@ -154,6 +169,7 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
       rollMode: "public"
     };
     draft.standard ??= { roll: "d20", dc: 15 };
+    for ( const part of [draft.standard, ...draft.parts] ) part.alternatives ??= [];
     draft.sideRolls ??= {};
     for ( const [key, m] of Object.entries(MODES) ) if ( m.contest ) draft.sideRolls[key] ??= ["d20", "d20"];
     // Who rolls always starts from the current selection rather than the last request, and whether players see the
@@ -178,13 +194,14 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
     const chosen = flags => this.#actors.filter((_, i) => flags?.[i]).map(a => a.uuid);
     const shown = draft.mode;
 
-    for ( const [i, part] of Object.entries(data.parts ?? {}) ) {
-      draft.parts[i] = { roll: part.roll, dc: Number.isNumeric(part.dc) ? Number(part.dc) : null };
-    }
+    const toRoll = ({ roll, dc, alternatives }) => ({
+      roll,
+      dc: Number.isNumeric(dc) ? Number(dc) : null,
+      alternatives: Object.values(alternatives ?? {})
+    });
+    for ( const [i, part] of Object.entries(data.parts ?? {}) ) draft.parts[i] = toRoll(part);
     for ( const [i, side] of Object.entries(data.sideRolls ?? {}) ) draft.sideRolls[shown][i] = side.roll;
-    if ( data.standard ) {
-      draft.standard = { roll: data.standard.roll, dc: Number.isNumeric(data.standard.dc) ? Number(data.standard.dc) : null };
-    }
+    if ( data.standard ) draft.standard = toRoll(data.standard);
     if ( "successes" in data ) draft.successes = Number(data.successes) || 2;
     if ( "range" in data ) {
       draft.range = Math.clamp(Math.round(Number(data.range) || DIVINE_RANGE.initial), DIVINE_RANGE.min, DIVINE_RANGE.max);
@@ -239,15 +256,53 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
   /* -------------------------------------------- */
 
   /**
+   * Offer another roll to choose from instead of a roll, starting as the first that isn't offered already.
+   * @this {RollRequestConfig}
+   * @param {PointerEvent} _event
+   * @param {HTMLElement} target
+   */
+  static #onAddChoice(_event, target) {
+    const row = foundry.utils.getProperty(this.#readForm(), target.dataset.field);
+    if ( !row || (row.alternatives.length >= MAX_CHOICES - 1) ) return;
+    const offered = [row.roll, ...row.alternatives];
+    const next = getRollGroups([]).flatMap(g => g.options).find(o => !offered.includes(o.value));
+    if ( next ) row.alternatives.push(next.value);
+    this.render({ parts: ["form"] });
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Stop offering one of a roll's alternatives.
+   * @this {RollRequestConfig}
+   * @param {PointerEvent} _event
+   * @param {HTMLElement} target
+   */
+  static #onRemoveChoice(_event, target) {
+    const row = foundry.utils.getProperty(this.#readForm(), target.dataset.field);
+    row?.alternatives.splice(Number(target.dataset.index), 1);
+    this.render({ parts: ["form"] });
+  }
+
+  /* -------------------------------------------- */
+
+  /**
    * Post the request to chat. A thrown error is shown as a notification and keeps the window open.
    * @this {RollRequestConfig}
    */
   static async #onSubmit() {
     const draft = this.#readForm();
     const mode = MODES[draft.mode];
-    const toPart = ({ roll, dc }) => {
+    const split = roll => {
       const [type, key] = roll.split(".");
-      return { type, key: key ?? null, dc: mode.contest ? null : dc };
+      return { type, key: key ?? null };
+    };
+    const toPart = ({ roll, dc, alternatives=[] }) => {
+      const part = { ...split(roll), dc: mode.contest ? null : dc };
+      // The same roll offered twice is no choice at all.
+      const others = [...new Set(alternatives)].filter(a => a !== roll);
+      if ( mode.choices && others.length ) part.alternatives = others.map(split);
+      return part;
     };
     const request = {
       mode: draft.mode,

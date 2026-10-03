@@ -4,7 +4,23 @@ All notable changes to RoBear-E.
 
 ## 2.1.0
 
+### New
+
+- **The GM can change the DC after asking for a roll.** Click the DC on a Standard Roll, Team
+  Challenge or Skill Challenge request card to change it, or to clear it. Rolls already made
+  are scored again against the new DC.
+- **A roll can offer a choice.** In the request window, the **+** beside a Standard Roll, Team
+  Challenge or Skill Challenge roll adds another roll the actor may make instead, such as
+  Athletics or Acrobatics, up to four in all. They share the roll's DC. Clicking **Roll** asks
+  which one to make, and the result says which was chosen.
+- **Cards played together are all shown.** Up to three cards played at the same time are shown
+  on screen side by side. Any more wait their turn. Before, each new card replaced the one on
+  screen, so a card played a moment earlier could vanish before anyone saw it.
+
 ### Fixed
+
+- **The token controls' request button is grey.** It had the orange border Foundry gives button
+  tools, unlike the tools beside it.
 
 - **Card dice use the actor's Dice So Nice appearance.** Dice rolled by a RoBear-E Card, or by
   the Fighter's Indomitable, were shown in the player's own dice, not the ones set for that
