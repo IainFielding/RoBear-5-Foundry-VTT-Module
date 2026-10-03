@@ -55,7 +55,31 @@ if ( manifest ) {
   }
 
   await validateStyleUrls(manifest);
+  await validateCardArt();
   await validateLanguages(manifest);
+}
+
+/**
+ * Every card image the scripts name must be in assets/images: a missing one only shows in the game as a broken
+ * picture when the card is played. The scripts name each file as a string literal, such as "luckdc20.webp".
+ */
+async function validateCardArt() {
+  const scripts = (await readdir(resolve(root, "scripts"))).filter(f => f.endsWith(".mjs"));
+  const named = new Set();
+  for ( const file of scripts ) {
+    const source = await readFile(resolve(root, "scripts", file), "utf8");
+    for ( const [, image] of source.matchAll(/["'`]([\w-]+\.webp)["'`]/g) ) named.add(image);
+  }
+  let missing = 0;
+  for ( const image of named ) {
+    try {
+      await access(resolve(root, "assets/images", image));
+    } catch {
+      missing++;
+      fail(`assets/images/${image}: named in the scripts but not found`);
+    }
+  }
+  if ( !missing ) console.log(`ok    ${named.size} card images, all in assets/images`);
 }
 
 /**
