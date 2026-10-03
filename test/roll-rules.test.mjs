@@ -203,6 +203,36 @@ describe("Results from tagged roll messages", () => {
     expect(results.get("A")[0].range).toEqual(range);
   });
 
+  it("fails a Divine Intervention roll whose numbers aren't a run the picker could give", () => {
+    const message = requestMessage({ mode: "divine", range: 16, actors: ["A", "B", "C", "D"], parts: [{ type: "d100", dc: null }] });
+    game.messages = [
+      rollMessage({ actor: "A", total: 70, range: { start: 1, end: 100 } }),
+      rollMessage({ actor: "B", total: 100, range: { start: 90, end: 105 } }),
+      rollMessage({ actor: "C", total: 50 }),
+      rollMessage({ actor: "D", total: 50, range: { start: "40", end: "55" } })
+    ];
+    const results = getResults(message);
+    expect(["A", "B", "C", "D"].map(a => results.get(a)[0].success)).toEqual([false, false, false, false]);
+  });
+
+  it("ignores a roll whose part isn't one of the request's, however it is written", () => {
+    const message = requestMessage({ mode: "standard", actors: ["A"], parts: [{ type: "skill", key: "ath", dc: 12 }] });
+    game.messages = ["length", "0", "constructor", 0.5, null].map(part => rollMessage({ actor: "A", total: 20, part }));
+    expect(getResults(message).get("A")).toEqual([null]);
+  });
+
+  it("reads a choice that isn't one of the part's as its own roll", () => {
+    const part = { type: "skill", key: "ath", dc: 12, alternatives: [{ type: "save", key: "str" }] };
+    const message = requestMessage({ mode: "standard", actors: ["A", "B", "C"], parts: [part] });
+    game.messages = [
+      rollMessage({ actor: "A", total: 13, choice: 2 }),
+      rollMessage({ actor: "B", total: 13, choice: "constructor" }),
+      rollMessage({ actor: "C", total: 13, choice: -1 })
+    ];
+    const results = getResults(message);
+    expect(["A", "B", "C"].map(a => results.get(a)[0].choice)).toEqual([0, 0, 0]);
+  });
+
   it("marks rolls this user may not see", () => {
     const message = requestMessage({ mode: "standard", actors: ["A"], parts: [{ type: "skill", key: "ath", dc: 12 }] });
     game.messages = [rollMessage({ actor: "A", total: 12, visible: false })];

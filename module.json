@@ -45,6 +45,7 @@
     }
   ],
   "styles": [
+    "styles/fonts.css",
     "styles/robear-cards.css",
     "styles/roll-requests.css"
   ],

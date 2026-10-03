@@ -587,27 +587,45 @@ export function getResults(message) {
   const rolls = getRollMessages(message.id).sort((a, b) => a.timestamp - b.timestamp);
 
   for ( const roll of rolls ) {
+    // The flag is written by whoever made the roll, so nothing in it is taken on trust.
     const { actor, part, range, choice } = roll.getFlag(MODULE_ID, "requestRoll");
     const first = roll.rolls[0];
-    if ( !results.has(actor) || !first || !(part in request.parts) ) continue;
+    if ( !results.has(actor) || !first || !Number.isInteger(part) || !(part in request.parts) ) continue;
     if ( contest && !request.sides[part]?.includes(actor) ) continue;
     if ( !isRollByOwner(roll, actor) ) continue;
     const slot = contest ? 0 : part;
     if ( results.get(actor)[slot] ) continue;
     const dc = request.parts[part].dc;
     let success = Number.isNumeric(dc) ? first.total >= dc : null;
-    if ( range ) success = (first.total >= range.start) && (first.total <= range.end);
+    // A Divine Intervention roll lands in the numbers picked, which must be as many as the request allows: a wider
+    // run, such as 1 to 100, can't succeed.
+    if ( request.mode === "divine" ) {
+      success = isPickedRange(range, request.range) && (first.total >= range.start) && (first.total <= range.end);
+    }
+    const choices = getChoices(request.parts[part]).length;
     results.get(actor)[slot] = {
       message: roll,
       total: first.total,
       natural: first.d20?.results.find(r => r.active)?.result,
       visible: roll.isContentVisible,
       success,
-      choice: choice ?? 0,
+      choice: (Number.isInteger(choice) && (choice >= 0) && (choice < choices)) ? choice : 0,
       range
     };
   }
   return results;
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {{ start: number, end: number }|void} range  The numbers a Divine Intervention roll says were picked.
+ * @param {number} size  How many numbers the request lets each actor pick.
+ * @returns {boolean}  Whether they are a run the picker could have given: that many, within 1 to 100.
+ */
+function isPickedRange(range, size) {
+  const { start, end } = range ?? {};
+  return Number.isInteger(start) && (start >= 1) && (end === start + size - 1) && (end <= 100);
 }
 
 /* -------------------------------------------- */

@@ -54,7 +54,40 @@ if ( manifest ) {
     }
   }
 
+  await validateStyleUrls(manifest);
   await validateLanguages(manifest);
+}
+
+/**
+ * Every local file a stylesheet loads, such as a font, must exist: a missing one only shows in the game as text
+ * drawn in a fallback font. A remote URL would have every player's browser contact a third party, so none is allowed.
+ * @param {object} manifest
+ */
+async function validateStyleUrls(manifest) {
+  for ( const rel of (manifest.styles ?? []).map(s => (typeof s === "string" ? s : s.src)) ) {
+    let source;
+    try {
+      source = await readFile(resolve(root, rel), "utf8");
+    } catch {
+      continue; // Already reported as missing above.
+    }
+    let count = 0;
+    const urls = [...source.matchAll(/url\(\s*["']?([^"')]+)["']?\s*\)|@import\s+["']([^"']+)["']/g)].map(m => m[1] ?? m[2]);
+    for ( const url of urls ) {
+      if ( url.startsWith("data:") ) continue;
+      if ( /^[a-z]+:|^\/\//i.test(url) ) {
+        fail(`${rel}: loads ${url} from another site`);
+        continue;
+      }
+      count++;
+      try {
+        await access(resolve(root, dirname(rel), url));
+      } catch {
+        fail(`${rel}: ${url} not found`);
+      }
+    }
+    if ( count ) console.log(`ok    ${rel}: ${count} file(s) it loads`);
+  }
 }
 
 /**

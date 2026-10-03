@@ -52,6 +52,24 @@ test("the token controls' request button has a grey border like the tools beside
   assertEqual(borders.request, borders.other, "request button border");
 });
 
+test("the theme's fonts load from the module, and nothing is fetched from Google", async (ctx) => {
+  const { player, ids } = ctx;
+  await postRequest(ctx, { mode: "standard", parts: [athletics(15)], actors: [ids.aria] });
+  const fonts = await player.eval(async () => {
+    await document.fonts.ready;
+    const loaded = family => [...document.fonts].filter(f => (f.family.replace(/["']/g, "") === family)
+      && (f.status === "loaded")).map(f => `${f.weight} ${f.style}`);
+    return {
+      cinzel: loaded("Cinzel"),
+      spectral: loaded("Spectral"),
+      remote: performance.getEntriesByType("resource").map(e => e.name).filter(n => /fonts\.(googleapis|gstatic)/.test(n))
+    };
+  });
+  assert(fonts.cinzel.length, "No Cinzel font loaded for the request card's heading.");
+  assert(fonts.spectral.length, "No Spectral font loaded for the request card's text.");
+  assertEqual(fonts.remote, [], "font files fetched from Google");
+});
+
 test("the API opens the request window for the GM only", async ({ gm, player }) => {
   const open = s => s.eval(async moduleId => {
     const app = game.modules.get(moduleId).api.requestRolls();

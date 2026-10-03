@@ -29,6 +29,14 @@ All notable changes to RoBear-E.
   such as a skill check, which was then scored against the numbers picked. It now refuses
   anything but a d100, as the README already said.
 
+- **A Divine Intervention roll only lands in numbers the picker could give.** A roll made outside
+  the request card could claim any run of numbers, such as 1 to 100, and always succeed. A run
+  that isn't as long as the request allows, or goes past 100, now fails.
+
+- **The fonts come with the module.** RoBear-E's windows and cards use Cinzel and Spectral, which
+  were loaded from Google Fonts, so every player's browser contacted Google, and a table with no
+  internet fell back to other fonts. They are now part of the module, under their own licence.
+
 - **Card dice use the actor's Dice So Nice appearance.** Dice rolled by a RoBear-E Card, or by
   the Fighter's Indomitable, were shown in the player's own dice, not the ones set for that
   actor. They now look like the dice of the roll they change.
