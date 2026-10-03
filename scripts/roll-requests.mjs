@@ -5,7 +5,7 @@
  * tagged roll messages each time the card renders, so deleting a roll message lets that actor roll again.
  */
 
-import { MODULE_ID, createCardButton, getCardOptions, localize, renderLog } from "./robear-cards.mjs";
+import { MODULE_ID, createCardButton, getCardOptions, localize, renderLog, reportError } from "./robear-cards.mjs";
 import { createIndomitableButton } from "./class-features.mjs";
 import RollRequestConfig from "./roll-request-config.mjs";
 
@@ -1270,6 +1270,8 @@ function renderRollButton(message, request, actor, part) {
       // With a choice of rolls, the modifier keys are taken from the click that picks one.
       const picked = choices.length > 1 ? await chooseRoll(actor, choices) : { choice: 0, event };
       if ( picked ) await rollForRequest(message, actor, part, picked.event, picked.choice);
+    } catch(err) {
+      reportError(err);
     } finally {
       button.disabled = false;
     }
@@ -1430,8 +1432,7 @@ function onAsyncClick(button, action) {
     try {
       await action();
     } catch(err) {
-      console.error(`${MODULE_ID} |`, err);
-      ui.notifications.error(err.message);
+      reportError(err);
     } finally {
       button.disabled = false;
     }

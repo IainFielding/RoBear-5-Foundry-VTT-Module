@@ -29,6 +29,14 @@ All notable changes to RoBear-E.
   such as a skill check, which was then scored against the numbers picked. It now refuses
   anything but a d100, as the README already said.
 
+- **A card is given back if it can't be played.** A card was spent before its roll was changed,
+  so if changing the roll failed, the card was lost with nothing to show for it. It is now given
+  back, as a use of Indomitable already was.
+
+- **A failed action says why.** The Roll button, the RoBear-E Card button, Use Indomitable, and
+  Add to or Subtract from a roll did nothing visible when something went wrong. They now show
+  the error.
+
 - **A macro's request keeps only the rolls its kind uses.** Given more parts than that, such as two
   for a Standard Roll, `createRequest` posted them all, and the card offered each actor a Roll
   button for every extra one. The extras are now left off. A request whose `actors` aren't a list

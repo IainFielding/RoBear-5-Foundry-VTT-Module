@@ -7,7 +7,8 @@
  */
 
 import {
-  MODULE_ID, describeD20s, finalize, getNatural, getRollKind, getRollTarget, isKnownFailure, localize, rerollD20
+  MODULE_ID, describeD20s, finalize, getNatural, getRollKind, getRollTarget, isKnownFailure, localize, rerollD20,
+  reportError
 } from "./robear-cards.mjs";
 
 /**
@@ -34,7 +35,7 @@ function onGetContextOptions(_app, options) {
     label: localize("ROBEAR.Indomitable.MenuLabel"),
     icon: "fa-solid fa-shield-halved",
     visible: li => !!getIndomitable(game.messages.get(li.dataset.messageId)),
-    onClick: (_event, li) => useIndomitable(game.messages.get(li.dataset.messageId))
+    onClick: (_event, li) => useIndomitable(game.messages.get(li.dataset.messageId)).catch(reportError)
   });
 }
 
@@ -205,6 +206,8 @@ export function createIndomitableButton(message, { compact=false }={}) {
     button.disabled = true;
     try {
       await useIndomitable(message);
+    } catch(err) {
+      reportError(err);
     } finally {
       button.disabled = false;
     }

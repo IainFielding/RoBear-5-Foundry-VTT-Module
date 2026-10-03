@@ -1,6 +1,6 @@
 {{!-- The roll picker, for a roll and each of its alternatives. --}}
 {{#*inline "robearRollSelect"}}
-<select name="{{name}}">
+<select name="{{name}}" aria-label="{{label}}">
     {{#each @root.rollOptions as |group|}}
     <optgroup label="{{group.label}}">
         {{#each group.options as |option|}}
@@ -33,7 +33,7 @@
         <div class="form-group">
             <label>{{row.label}}</label>
             <div class="form-fields">
-                {{> robearRollSelect name=(concat row.field ".roll") selected=row.roll}}
+                {{> robearRollSelect name=(concat row.field ".roll") selected=row.roll label=row.label}}
                 {{#if row.canChoose}}
                 <button type="button" class="robear-request-choice-button" data-action="addChoice" data-field="{{row.field}}"
                         data-tooltip aria-label="{{localize 'ROBEAR.Request.Config.AddChoice'}}" {{disabled row.full}}>
@@ -51,7 +51,7 @@
         <div class="form-group robear-request-choice">
             <label>{{localize "ROBEAR.Request.Config.Or"}}</label>
             <div class="form-fields">
-                {{> robearRollSelect name=(concat row.field ".alternatives." choice.index) selected=choice.roll}}
+                {{> robearRollSelect name=(concat row.field ".alternatives." choice.index) selected=choice.roll label=(localize "ROBEAR.Request.Config.Or")}}
                 <button type="button" class="robear-request-choice-button" data-action="removeChoice"
                         data-field="{{row.field}}" data-index="{{choice.index}}"
                         data-tooltip aria-label="{{localize 'ROBEAR.Request.Config.RemoveChoice'}}">

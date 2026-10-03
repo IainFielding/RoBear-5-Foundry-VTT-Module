@@ -105,6 +105,15 @@ export function localize(key, data) {
   return data ? game.i18n.format(key, data) : game.i18n.localize(key);
 }
 
+/**
+ * Tell the user an action they took failed, and log why, rather than leaving a button that silently did nothing.
+ * @param {Error} err
+ */
+export function reportError(err) {
+  console.error(`${MODULE_ID} |`, err);
+  ui.notifications.error(err.message);
+}
+
 /* -------------------------------------------- */
 /*  Hooks                                       */
 /* -------------------------------------------- */
@@ -709,6 +718,8 @@ async function promptCard(message, button) {
   try {
     const option = await chooseCard(options, localize("ROBEAR.Cards.ChooseOnRoll"));
     if ( option ) await applyCard(message, option);
+  } catch(err) {
+    reportError(err);
   } finally {
     playing.delete(message.id);
     button.disabled = false;
@@ -768,6 +779,7 @@ async function chooseCard(options, hint) {
  * @param {{ key: string, activity: Activity, label: string }} option
  */
 async function applyCard(message, { key, activity, label }) {
+  const spent = activity.uses?.spent ?? 0;
   retroactiveUses.add(activity.uuid);
   let used;
   try {
@@ -778,6 +790,28 @@ async function applyCard(message, { key, activity, label }) {
   }
   if ( !used ) return;
 
+  // The card is spent before the roll is changed. If changing it fails, the card is given back, so the player never
+  // loses one without its effect.
+  try {
+    await playOnRoll(message, { key, activity, label });
+  } catch(err) {
+    await activity.item.update({ [`system.activities.${activity.id}.uses.spent`]: spent });
+    throw err;
+  }
+  // The roll now holds the card's effect, so the card stays spent even if the tracker can't be updated.
+  if ( getRollKind(message) === "initiative" ) {
+    await findCombatant(message)?.update({ initiative: message.rolls[0].total }).catch(reportError);
+  }
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Rewrite a message's rolls with a card's effect, and note the card on it.
+ * @param {ChatMessage5e} message
+ * @param {{ key: string, activity: Activity, label: string }} option
+ */
+async function playOnRoll(message, { key, activity, label }) {
   const rolls = message.rolls.map(r => Roll.fromData(r.toJSON()));
   const before = rolls[0].total;
   let detail;
@@ -845,8 +879,6 @@ async function applyCard(message, { key, activity, label }) {
   const entry = { text, card: label, img: getCardArt(activity), by: activity.actor?.name ?? "" };
   const log = [...(message.getFlag(MODULE_ID, "log") ?? []), entry];
   await message.update({ rolls: rolls.map(r => r.toJSON()), [`flags.${MODULE_ID}.log`]: log });
-
-  if ( getRollKind(message) === "initiative" ) await findCombatant(message)?.update({ initiative: rolls[0].total });
 }
 
 /* -------------------------------------------- */

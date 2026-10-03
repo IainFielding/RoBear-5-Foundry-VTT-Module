@@ -6,7 +6,7 @@
  * roll request's result are worked out again. The bonus roll is marked as used, so it can only be spent once.
  */
 
-import { MODULE_ID, findCombatant, finalize, getRollKind, localize, sumTotals } from "./robear-cards.mjs";
+import { MODULE_ID, findCombatant, finalize, getRollKind, localize, reportError, sumTotals } from "./robear-cards.mjs";
 
 /**
  * How many of the latest chat messages are offered as rolls to change.
@@ -50,7 +50,7 @@ function onGetContextOptions(_app, options) {
       label: localize(sign > 0 ? "ROBEAR.Bonus.MenuAdd" : "ROBEAR.Bonus.MenuSubtract"),
       icon: sign > 0 ? "fa-solid fa-plus" : "fa-solid fa-minus",
       visible: li => canSpend(game.messages.get(li.dataset.messageId), game.user),
-      onClick: (_event, li) => chooseTarget(game.messages.get(li.dataset.messageId), sign)
+      onClick: (_event, li) => chooseTarget(game.messages.get(li.dataset.messageId), sign).catch(reportError)
     });
   }
 }
@@ -298,6 +298,10 @@ export async function applyBonus(source, target, sign) {
       await source.unsetFlag(MODULE_ID, "bonusUsed");
       throw err;
     }
+    // The roll now holds the bonus, so it stays spent, and counts as applied, even if the tracker can't be updated.
+    if ( getRollKind(target) === "initiative" ) {
+      await findCombatant(target)?.update({ initiative: target.rolls[0].total }).catch(reportError);
+    }
     return true;
   } finally {
     spending.delete(source.id);
@@ -341,6 +345,4 @@ async function addBonus(source, target, sign) {
   };
   const log = [...(target.getFlag(MODULE_ID, "log") ?? []), entry];
   await target.update({ rolls: rolls.map(r => r.toJSON()), [`flags.${MODULE_ID}.log`]: log });
-
-  if ( getRollKind(target) === "initiative" ) await findCombatant(target)?.update({ initiative: rolls[0].total });
 }

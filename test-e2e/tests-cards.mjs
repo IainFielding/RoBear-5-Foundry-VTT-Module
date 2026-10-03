@@ -145,6 +145,29 @@ test("cards: a double click opens one card chooser, so only one card is spent", 
   assertEqual(await usesLeft(player, "Luck"), before - 1, "Luck uses left");
 });
 
+test("cards: a card is given back, and the player told why, if its roll can't be changed", async ({ player }) => {
+  await forceDice(player, [d20(5)]);
+  const id = await roll(player, "Aria", "skill");
+  const before = await usesLeft(player, "Luck");
+  // The next save of this roll fails, as it would if the server refused it.
+  await player.eval(id => {
+    const message = game.messages.get(id);
+    message.update = async () => {
+      delete message.update;
+      throw new Error("The roll could not be saved.");
+    };
+  }, id);
+
+  await forceDice(player, [d20(14)]);
+  await cardsOffered(player, id, "Luck");
+  await waitFor(player, () => [...document.querySelectorAll("#notifications .notification.error")]
+    .some(n => n.textContent.includes("The roll could not be saved.")), undefined, "the error to be shown");
+  assertEqual(await usesLeft(player, "Luck"), before, "Luck uses left");
+  const log = await player.eval(({ id, moduleId }) => game.messages.get(id).getFlag(moduleId, "log") ?? [],
+    { id, moduleId: MODULE_ID });
+  assertEqual(log, [], "cards noted on the roll");
+});
+
 test("cards: none on a death saving throw", async ({ player }) => {
   await forceDice(player, [d20(5)]);
   const id = await roll(player, "Aria", "death");
