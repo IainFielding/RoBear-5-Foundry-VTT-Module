@@ -281,16 +281,26 @@ describe("Checking a request before it is posted", () => {
 
   /**
    * @param {object} request
-   * @returns {string|null}  Why the request was refused, or null if it was accepted.
+   * @returns {string|null}  Why the request was refused, or null if it was accepted. Any other error, such as a
+   *   TypeError from validation itself failing, is thrown, so a crash can't pass for a refusal.
    */
   const errorFor = request => {
     try {
       validateRequest(request);
     } catch ( err ) {
+      if ( err.constructor !== Error ) throw err;
       return err.message;
     }
     return null;
   };
+
+  /**
+   * @param {string} key   The refusal's key under ROBEAR.Request.Invalid.
+   * @param {object} [data]
+   * @returns {string}  The refusal's message, as the module words it.
+   */
+  const refusal = (key, data) => game.i18n.format(`ROBEAR.Request.Invalid.${key}`, data);
+  const keys = { save: "str, dex, wis", check: "str, dex, wis", tool: "thief" };
 
   it("accepts a well-formed request of each kind", () => {
     for ( const request of Object.values(valid) ) expect(errorFor(request)).toBeNull();
@@ -298,26 +308,28 @@ describe("Checking a request before it is posted", () => {
   });
 
   it("refuses a request with no one to roll", () => {
-    expect(errorFor({ ...valid.standard, actors: [] })).not.toBeNull();
+    expect(errorFor({ ...valid.standard, actors: [] })).toBe(refusal("NoActors"));
   });
 
   it("refuses a contest with an empty side", () => {
-    expect(errorFor({ ...valid.versus, sides: [["A", "B"], []] })).not.toBeNull();
-    expect(errorFor({ ...valid.rolloff, sides: [["A"]] })).not.toBeNull();
+    expect(errorFor({ ...valid.versus, sides: [["A", "B"], []] })).toBe(refusal("EmptySide"));
+    expect(errorFor({ ...valid.rolloff, sides: [["A"]] })).toBe(refusal("EmptySide"));
   });
 
   it("refuses an unknown mode, or a skill challenge without its three rolls", () => {
-    expect(errorFor({ ...valid.standard, mode: "nonsense" })).not.toBeNull();
-    expect(errorFor({ ...valid.challenge, parts: [part] })).not.toBeNull();
+    expect(errorFor({ ...valid.standard, mode: "nonsense" })).toBe(refusal("Mode", { mode: "nonsense" }));
+    expect(errorFor({ ...valid.challenge, parts: [part] })).toBe(refusal("MissingRoll"));
   });
 
   it("refuses a skill challenge needing more successes than it has rolls, or none", () => {
     expect(errorFor({ ...valid.challenge, successes: 4 })).toBe("A skill challenge needs from 1 to 3 successes, not 4.");
-    for ( const successes of [0, undefined, 1.5] ) expect(errorFor({ ...valid.challenge, successes })).not.toBeNull();
+    for ( const successes of [0, undefined, 1.5] ) {
+      expect(errorFor({ ...valid.challenge, successes })).toBe(refusal("Successes", { successes, total: 3 }));
+    }
   });
 
   it("refuses Divine Intervention without a run of numbers to pick, or with too long a run", () => {
-    expect(errorFor({ ...valid.divine, range: undefined })).not.toBeNull();
+    expect(errorFor({ ...valid.divine, range: undefined })).toBe(refusal("Range", { range: undefined, ...DIVINE_RANGE }));
     expect(errorFor({ ...valid.divine, range: DIVINE_RANGE.max + 1 }))
       .toBe(`Divine Intervention needs from 1 to ${DIVINE_RANGE.max} numbers to pick, not ${DIVINE_RANGE.max + 1}.`);
   });
@@ -325,7 +337,7 @@ describe("Checking a request before it is posted", () => {
   it("refuses Divine Intervention with any roll but a d100, which is all the picked numbers can be rolled on", () => {
     expect(errorFor({ ...valid.divine, parts: [{ type: "skill", key: "ath", dc: null }] }))
       .toBe("Divine Intervention's roll is a d100, not skill.");
-    expect(errorFor({ ...valid.divine, parts: [{ type: "d20", dc: null }] })).not.toBeNull();
+    expect(errorFor({ ...valid.divine, parts: [{ type: "d20", dc: null }] })).toBe(refusal("DivineRoll", { type: "d20" }));
   });
 
   it("refuses a Roll-Off with more than one actor on a side, whose second roll would never count", () => {
@@ -334,13 +346,13 @@ describe("Checking a request before it is posted", () => {
   });
 
   it("refuses a contest with someone on a side who isn't one of the request's actors", () => {
-    expect(errorFor({ ...valid.versus, sides: [["A", "B"], ["D"]] })).not.toBeNull();
+    expect(errorFor({ ...valid.versus, sides: [["A", "B"], ["D"]] })).toBe(refusal("SideNotActor"));
   });
 
   it("refuses an unknown roll, a DC that isn't a number, or an unknown visibility", () => {
     expect(errorFor({ ...valid.standard, parts: [{ type: "d7", dc: null }] })).toBe("Unknown kind of roll: d7.");
-    expect(errorFor({ ...valid.standard, parts: [{ type: "d20", dc: "hard" }] })).not.toBeNull();
-    expect(errorFor({ ...valid.standard, rollMode: "blind" })).not.toBeNull();
+    expect(errorFor({ ...valid.standard, parts: [{ type: "d20", dc: "hard" }] })).toBe(refusal("DC", { dc: "hard" }));
+    expect(errorFor({ ...valid.standard, rollMode: "blind" })).toBe(refusal("RollMode", { rollMode: "blind" }));
   });
 
   it("accepts a choice of rolls in a standard roll, team challenge or skill challenge step", () => {
@@ -352,25 +364,29 @@ describe("Checking a request before it is posted", () => {
 
   it("refuses a choice of rolls in a contest, too many choices, or a choice dnd5e can't roll", () => {
     const alternatives = [{ type: "save", key: "str" }];
-    expect(errorFor({ ...valid.rolloff, parts: [{ ...part, alternatives }, part] })).not.toBeNull();
-    expect(errorFor({ ...valid.divine, parts: [{ type: "d100", dc: null, alternatives }] })).not.toBeNull();
+    const choices = refusal("Choices", { max: MAX_CHOICES });
+    expect(errorFor({ ...valid.rolloff, parts: [{ ...part, alternatives }, part] })).toBe(choices);
+    expect(errorFor({ ...valid.divine, parts: [{ type: "d100", dc: null, alternatives }] })).toBe(choices);
     const many = Array.from({ length: MAX_CHOICES }, () => ({ type: "save", key: "str" }));
-    expect(errorFor({ ...valid.standard, parts: [{ ...part, alternatives: many }] })).not.toBeNull();
+    expect(errorFor({ ...valid.standard, parts: [{ ...part, alternatives: many }] })).toBe(choices);
     expect(errorFor({ ...valid.standard, parts: [{ ...part, alternatives: [{ type: "save", key: "strength" }] }] }))
       .toBe("Unknown save for a roll: strength. Use one of: str, dex, wis.");
-    expect(errorFor({ ...valid.standard, parts: [{ ...part, alternatives: { type: "save", key: "str" } }] })).not.toBeNull();
+    expect(errorFor({ ...valid.standard, parts: [{ ...part, alternatives: { type: "save", key: "str" } }] })).toBe(choices);
     // Refused with the module's own message, not a TypeError from reading the missing roll.
     for ( const bad of [null, "str", 4] ) {
-      expect(errorFor({ ...valid.standard, parts: [{ ...part, alternatives: [bad] }] })).toMatch(/^Only a Standard Roll/);
+      expect(errorFor({ ...valid.standard, parts: [{ ...part, alternatives: [bad] }] })).toBe(choices);
     }
   });
 
   it("refuses a skill, check, save or tool that dnd5e doesn't know, which would only fail once someone rolled it", () => {
     expect(errorFor({ ...valid.standard, parts: [{ type: "skill", key: "athletics", dc: 15 }] }))
       .toBe("Unknown skill for a roll: athletics. Use one of: ath, acr.");
-    expect(errorFor({ ...valid.standard, parts: [{ type: "save", key: "strength", dc: 15 }] })).not.toBeNull();
-    expect(errorFor({ ...valid.standard, parts: [{ type: "check", dc: 15 }] })).not.toBeNull();
-    expect(errorFor({ ...valid.standard, parts: [{ type: "tool", key: "lute", dc: 15 }] })).not.toBeNull();
+    expect(errorFor({ ...valid.standard, parts: [{ type: "save", key: "strength", dc: 15 }] }))
+      .toBe(refusal("Key", { type: "save", key: "strength", keys: keys.save }));
+    expect(errorFor({ ...valid.standard, parts: [{ type: "check", dc: 15 }] }))
+      .toBe(refusal("Key", { type: "check", key: null, keys: keys.check }));
+    expect(errorFor({ ...valid.standard, parts: [{ type: "tool", key: "lute", dc: 15 }] }))
+      .toBe(refusal("Key", { type: "tool", key: "lute", keys: keys.tool }));
     for ( const part of [{ type: "check", key: "dex" }, { type: "save", key: "wis" }, { type: "tool", key: "thief" }] ) {
       expect(errorFor({ ...valid.standard, parts: [{ ...part, dc: 15 }] })).toBeNull();
     }
