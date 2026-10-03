@@ -16,7 +16,14 @@ Number.isNumeric = n => {
   return +n === +n;
 };
 
-globalThis.Hooks = { on() {}, once() {}, call() { return true; }, callAll() {} };
+// Foundry's own `Array#filterJoin` (common/primitives/array.mjs): join the parts that aren't empty.
+Object.defineProperty(Array.prototype, "filterJoin", {
+  value: function(sep) {
+    return this.filter(p => !!p).join(sep);
+  }
+});
+
+globalThis.Hooks ={ on() {}, once() {}, call() { return true; }, callAll() {} };
 
 globalThis.foundry = {
   applications: {
@@ -91,8 +98,11 @@ globalThis.game = {
   i18n: {
     lang: "en",
     localize,
-    // Foundry's own format (client/helpers/localization.mjs): each {name} is replaced by data.name.
-    format: (key, data = {}) => localize(key).replace(/{[^}]+}/g, k => String(data[k.slice(1, -1)] ?? k))
+    // Foundry's own getListFormatter (client/helpers/localization.mjs).
+    getListFormatter: ({ style = "long", type = "conjunction" } = {}) => new Intl.ListFormat("en", { style, type }),
+    // Foundry's own format, which is its localize given data (client/helpers/localization.mjs): each {name} is
+    // replaced by data.name, so a value left out reads "undefined", as it would in Foundry.
+    format: (key, data = {}) => localize(key).replace(/{[^}]+}/g, k => data[k.slice(1, -1)])
   },
   get messages() {
     return messages;

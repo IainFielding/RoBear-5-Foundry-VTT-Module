@@ -54,7 +54,64 @@ if ( manifest ) {
     }
   }
 
+  await validateStyleUrls(manifest);
+  await validateCardArt();
   await validateLanguages(manifest);
+}
+
+/**
+ * Every card image the scripts name must be in assets/images: a missing one only shows in the game as a broken
+ * picture when the card is played. The scripts name each file as a string literal, such as "luckdc20.webp".
+ */
+async function validateCardArt() {
+  const scripts = (await readdir(resolve(root, "scripts"))).filter(f => f.endsWith(".mjs"));
+  const named = new Set();
+  for ( const file of scripts ) {
+    const source = await readFile(resolve(root, "scripts", file), "utf8");
+    for ( const [, image] of source.matchAll(/["'`]([\w-]+\.webp)["'`]/g) ) named.add(image);
+  }
+  let missing = 0;
+  for ( const image of named ) {
+    try {
+      await access(resolve(root, "assets/images", image));
+    } catch {
+      missing++;
+      fail(`assets/images/${image}: named in the scripts but not found`);
+    }
+  }
+  if ( !missing ) console.log(`ok    ${named.size} card images, all in assets/images`);
+}
+
+/**
+ * Every local file a stylesheet loads, such as a font, must exist: a missing one only shows in the game as text
+ * drawn in a fallback font. A remote URL would have every player's browser contact a third party, so none is allowed.
+ * @param {object} manifest
+ */
+async function validateStyleUrls(manifest) {
+  for ( const rel of (manifest.styles ?? []).map(s => (typeof s === "string" ? s : s.src)) ) {
+    let source;
+    try {
+      source = await readFile(resolve(root, rel), "utf8");
+    } catch {
+      continue; // Already reported as missing above.
+    }
+    let count = 0;
+    const urls = [...source.matchAll(/url\(\s*["']?([^"')]+)["']?\s*\)|@import\s+["']([^"']+)["']/g)].map(m => m[1] ?? m[2]);
+    for ( const url of urls ) {
+      if ( url.startsWith("data:") ) continue;
+      if ( /^[a-z]+:|^\/\//i.test(url) ) {
+        fail(`${rel}: loads ${url} from another site`);
+        continue;
+      }
+      count++;
+      try {
+        await access(resolve(root, dirname(rel), url));
+      } catch {
+        fail(`${rel}: ${url} not found`);
+      }
+    }
+    if ( count ) console.log(`ok    ${rel}: ${count} file(s) it loads`);
+  }
 }
 
 /**

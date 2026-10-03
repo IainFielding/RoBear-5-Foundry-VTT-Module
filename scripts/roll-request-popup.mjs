@@ -5,7 +5,7 @@
 
 import { MODULE_ID } from "./robear-cards.mjs";
 import {
-  MODES, getChallengeState, getRequestSubtitle, getRequestTitle, getResults, isContest, renderActorRow, renderHeader
+  getChallengeState, getRequest, getResults, getRowGroup, isContest, renderActorRow, renderRequestHeader
 } from "./roll-requests.mjs";
 
 const { ApplicationV2 } = foundry.applications.api;
@@ -112,7 +112,10 @@ function onDeleteMessage(message) {
  * @returns {string[]}  Actor UUIDs.
  */
 export function getPopupActors(request) {
+  // In a contest only those on a side roll, though a macro's request may list others among its actors.
+  const rolling = isContest(request) ? request.sides.flat() : request.actors;
   return request.actors.filter(uuid => {
+    if ( !rolling.includes(uuid) ) return false;
     const actor = fromUuidSync(uuid);
     if ( !actor?.isOwner ) return false;
     return game.user.isGM ? !actor.hasPlayerOwner : true;
@@ -143,7 +146,7 @@ export function hasRollsLeft(message, uuids) {
  * @param {ChatMessage5e} message
  */
 function openPopup(message) {
-  const request = message.getFlag(MODULE_ID, "request");
+  const request = getRequest(message);
   if ( !request ) return;
   if ( !game.settings.get(MODULE_ID, game.user.isGM ? "popupGM" : "popupPlayers") ) return;
   if ( foundry.applications.instances.get(RollRequestPopup.idFor(message.id)) ) return;
@@ -198,13 +201,14 @@ export default class RollRequestPopup extends ApplicationV2 {
     const results = getResults(this.message);
     const card = document.createElement("div");
     card.className = `robear-request mode-${request.mode}`;
-    card.append(renderHeader(MODES[request.mode].icon, getRequestTitle(request), getRequestSubtitle(request)));
+    card.append(renderRequestHeader(this.message, request));
     const list = document.createElement("ul");
     list.className = "robear-request-actors";
     for ( const uuid of getPopupActors(request) ) {
       // In a contest an actor rolls for their own side.
       const side = isContest(request) ? request.sides.findIndex(s => s.includes(uuid)) : undefined;
-      list.append(renderActorRow(this.message, request, uuid, results.get(uuid), { side }));
+      const team = getRowGroup(this.message, request, results, side);
+      list.append(renderActorRow(this.message, request, uuid, results.get(uuid), { team, side }));
     }
     card.append(list);
     return card;

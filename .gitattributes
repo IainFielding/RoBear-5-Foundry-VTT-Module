@@ -3,3 +3,6 @@ packs/** binary
 # The Foundry CLI writes the pack sources with LF line endings, so they're checked out with LF too: with CRLF, every
 # extract on Windows would show them as changed.
 src/packs/** text eol=lf
+
+# The git hooks are shell scripts, which a Unix shell (WSL, Linux, macOS) can't run with CRLF line endings.
+.githooks/* text eol=lf

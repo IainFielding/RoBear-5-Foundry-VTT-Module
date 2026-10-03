@@ -69,9 +69,27 @@ const CARD_ART = {
 const retroactiveUses = new Set();
 
 /**
+ * Roll messages a card is being chosen for or played on from this client, from when the card picker opens until the
+ * card is applied, so a second click cannot open another picker and spend a second card on the same roll.
+ * @type {Set<string>}
+ */
+const playing = new Set();
+
+/**
  * How long a played card's art stays on screen.
  */
 const PLAYED_CARD_MS = 3000;
+
+/**
+ * How many played cards are shown on screen side by side. Cards played while that many are up wait their turn.
+ */
+const PLAYED_CARD_MAX = 3;
+
+/**
+ * Played cards waiting for room on screen, oldest first.
+ * @type {CardLogEntry[]}
+ */
+const playedCardQueue = [];
 
 /* -------------------------------------------- */
 /*  Localization                                */
@@ -85,6 +103,15 @@ const PLAYED_CARD_MS = 3000;
  */
 export function localize(key, data) {
   return data ? game.i18n.format(key, data) : game.i18n.localize(key);
+}
+
+/**
+ * Tell the user an action they took failed, and log why, rather than leaving a button that silently did nothing.
+ * @param {Error} err
+ */
+export function reportError(err) {
+  console.error(`${MODULE_ID} |`, err);
+  ui.notifications.error(err.message);
 }
 
 /* -------------------------------------------- */
@@ -607,33 +634,69 @@ export function cardArtHTML(img, label) {
 /* -------------------------------------------- */
 
 /**
- * Show a played card's art large on screen for a moment, with who played it. Clicking it dismisses it.
- * The entry comes from a message's flags, so it is only ever set as text and attributes, never parsed as HTML.
+ * Show a played card's art large on screen for a moment, with who played it. Up to three show side by side; any
+ * more wait until one of those has gone, so every card played is seen for its full time.
  * @param {CardLogEntry} entry
  */
 function showPlayedCard(entry) {
-  document.getElementById("robear-played-card")?.remove();
-  const reveal = document.createElement("div");
-  reveal.id = "robear-played-card";
-  reveal.className = "robear-played-card";
-  reveal.setAttribute("role", "status");
-  reveal.innerHTML = `
+  playedCardQueue.push(entry);
+  showQueuedCards();
+}
+
+/**
+ * Move waiting cards on screen while there is room. A card still fading out keeps its place until it has gone, so
+ * the row never holds more than three.
+ */
+function showQueuedCards() {
+  let overlay = document.getElementById("robear-played-card");
+  while ( playedCardQueue.length && ((overlay?.childElementCount ?? 0) < PLAYED_CARD_MAX) ) {
+    if ( !overlay ) {
+      overlay = document.createElement("div");
+      overlay.id = "robear-played-card";
+      overlay.className = "robear-played-card";
+      overlay.setAttribute("role", "status");
+      document.body.append(overlay);
+    }
+    overlay.classList.remove("leaving");
+    overlay.append(createPlayedCard(playedCardQueue.shift()));
+  }
+}
+
+/**
+ * One played card for the on-screen row, which leaves after a moment or when clicked.
+ * The entry comes from a message's flags, so it is only ever set as text and attributes, never parsed as HTML.
+ * @param {CardLogEntry} entry
+ * @returns {HTMLElement}
+ */
+function createPlayedCard(entry) {
+  const card = document.createElement("div");
+  card.className = "robear-played-card-entry";
+  card.innerHTML = `
     <img alt="">
     <div class="robear-played-card-caption">
       <span class="robear-played-card-by"></span>
       <span class="robear-played-card-name"></span>
     </div>
   `;
-  reveal.querySelector("img").src = entry.img;
-  reveal.querySelector(".robear-played-card-by").textContent = localize("ROBEAR.Cards.Plays", { name: entry.by ?? "" });
-  reveal.querySelector(".robear-played-card-name").textContent = entry.card ?? "";
+  card.querySelector("img").src = entry.img;
+  card.querySelector(".robear-played-card-by").textContent = localize("ROBEAR.Cards.Plays", { name: entry.by ?? "" });
+  card.querySelector(".robear-played-card-name").textContent = entry.card ?? "";
   const dismiss = () => {
-    reveal.classList.add("leaving");
-    setTimeout(() => reveal.remove(), 400);
+    if ( card.classList.contains("leaving") ) return;
+    card.classList.add("leaving");
+    // The last card out takes the backdrop with it.
+    const overlay = card.parentElement;
+    const staying = overlay?.querySelector(".robear-played-card-entry:not(.leaving)");
+    if ( !staying && !playedCardQueue.length ) overlay?.classList.add("leaving");
+    setTimeout(() => {
+      card.remove();
+      if ( overlay && !overlay.childElementCount ) overlay.remove();
+      showQueuedCards();
+    }, 400);
   };
-  reveal.addEventListener("click", dismiss);
-  document.body.append(reveal);
+  card.addEventListener("click", dismiss);
   setTimeout(dismiss, PLAYED_CARD_MS);
+  return card;
 }
 
 /* -------------------------------------------- */
@@ -646,15 +709,19 @@ function showPlayedCard(entry) {
  * @param {HTMLButtonElement} button
  */
 async function promptCard(message, button) {
+  // One card at a time on a roll: two pickers open at once would spend two cards, of which only one would be applied.
+  if ( playing.has(message.id) ) return;
   const options = getCardOptions(message);
   if ( !options.length ) return;
-  const option = await chooseCard(options, localize("ROBEAR.Cards.ChooseOnRoll"));
-  if ( !option ) return;
-
+  playing.add(message.id);
   button.disabled = true;
   try {
-    await applyCard(message, option);
+    const option = await chooseCard(options, localize("ROBEAR.Cards.ChooseOnRoll"));
+    if ( option ) await applyCard(message, option);
+  } catch(err) {
+    reportError(err);
   } finally {
+    playing.delete(message.id);
     button.disabled = false;
   }
 }
@@ -712,6 +779,7 @@ async function chooseCard(options, hint) {
  * @param {{ key: string, activity: Activity, label: string }} option
  */
 async function applyCard(message, { key, activity, label }) {
+  const spent = activity.uses?.spent ?? 0;
   retroactiveUses.add(activity.uuid);
   let used;
   try {
@@ -722,6 +790,28 @@ async function applyCard(message, { key, activity, label }) {
   }
   if ( !used ) return;
 
+  // The card is spent before the roll is changed. If changing it fails, the card is given back, so the player never
+  // loses one without its effect.
+  try {
+    await playOnRoll(message, { key, activity, label });
+  } catch(err) {
+    await activity.item.update({ [`system.activities.${activity.id}.uses.spent`]: spent });
+    throw err;
+  }
+  // The roll now holds the card's effect, so the card stays spent even if the tracker can't be updated.
+  if ( getRollKind(message) === "initiative" ) {
+    await findCombatant(message)?.update({ initiative: message.rolls[0].total }).catch(reportError);
+  }
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Rewrite a message's rolls with a card's effect, and note the card on it.
+ * @param {ChatMessage5e} message
+ * @param {{ key: string, activity: Activity, label: string }} option
+ */
+async function playOnRoll(message, { key, activity, label }) {
   const rolls = message.rolls.map(r => Roll.fromData(r.toJSON()));
   const before = rolls[0].total;
   let detail;
@@ -789,8 +879,6 @@ async function applyCard(message, { key, activity, label }) {
   const entry = { text, card: label, img: getCardArt(activity), by: activity.actor?.name ?? "" };
   const log = [...(message.getFlag(MODULE_ID, "log") ?? []), entry];
   await message.update({ rolls: rolls.map(r => r.toJSON()), [`flags.${MODULE_ID}.log`]: log });
-
-  if ( getRollKind(message) === "initiative" ) await findCombatant(message)?.update({ initiative: rolls[0].total });
 }
 
 /* -------------------------------------------- */

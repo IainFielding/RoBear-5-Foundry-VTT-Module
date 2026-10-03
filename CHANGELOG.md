@@ -4,11 +4,58 @@ All notable changes to RoBear-E.
 
 ## 2.1.0
 
+### New
+
+- **The GM can change the DC after asking for a roll.** Click the DC on a Standard Roll, Team
+  Challenge or Skill Challenge request card to change it, or to clear it. Rolls already made
+  are scored again against the new DC.
+- **A roll can offer a choice.** In the request window, the **+** beside a Standard Roll, Team
+  Challenge or Skill Challenge roll adds another roll the actor may make instead, such as
+  Athletics or Acrobatics, up to four in all. They share the roll's DC. Clicking **Roll** asks
+  which one to make, and the result says which was chosen.
+- **Cards played together are all shown.** Up to three cards played at the same time are shown
+  on screen side by side. Any more wait their turn. Before, each new card replaced the one on
+  screen, so a card played a moment earlier could vanish before anyone saw it.
+
 ### Fixed
 
+- **A card is given back if it can't be played.** A card was spent before its roll was changed,
+  so if changing the roll failed, the card was lost with nothing to show for it. It is now given
+  back, as a use of Indomitable already was.
+- **A double click spends one card.** Clicking the RoBear-E Card button twice quickly opened two
+  card choosers, and picking in both spent two cards, of which only one took effect.
+- **A failed action says why.** The Roll button, the RoBear-E Card button, Use Indomitable, and
+  Add to or Subtract from a roll did nothing visible when something went wrong. They now show
+  the error.
+- **A bonus on initiative is spent once.** If the combat tracker couldn't be updated after a bonus
+  was added to an initiative roll, the bonus could be spent again, and the player was told
+  nothing had been spent.
 - **Card dice use the actor's Dice So Nice appearance.** Dice rolled by a RoBear-E Card, or by
   the Fighter's Indomitable, were shown in the player's own dice, not the ones set for that
   actor. They now look like the dice of the roll they change.
+- **Divine Intervention reads right with one number to pick.** The card said "1 numbers in a row",
+  and the picked run showed as "40–40". It now says "1 number on a d100", and shows "40".
+- **A Divine Intervention roll only lands in numbers the picker could give.** A roll made outside
+  the request card could claim any run of numbers, such as 1 to 100, and always succeed. A run
+  that isn't as long as the request allows, or goes past 100, now fails.
+- **Only a GM's request is a request.** A player could post a message carrying a request of their
+  own, which drew as a request card and, with pop-ups on, opened a window on everyone else's
+  screen. Now only a request a GM posted is drawn as one or opens pop-ups, and `createRequest`
+  refuses a player with a message saying so.
+- **A contest's pop-up opens when a macro lists someone on neither side.** It failed to draw,
+  trying to give that actor a roll. Now only those on a side are given one.
+- **A macro's request keeps only the rolls its kind uses.** Given more parts than that, such as two
+  for a Standard Roll, `createRequest` posted them all, and the card offered each actor a Roll
+  button for every extra one. The extras are now left off. A request whose `actors` aren't a list
+  of actor UUIDs, each named once, is refused rather than posting a card that can't be drawn.
+- **A macro's Divine Intervention must roll a d100.** `createRequest` accepted any roll for it,
+  such as a skill check, which was then scored against the numbers picked. It now refuses
+  anything but a d100, as the README already said.
+- **The token controls' request button is grey.** It had the orange border Foundry gives button
+  tools, unlike the tools beside it.
+- **The fonts come with the module.** RoBear-E's windows and cards use Cinzel and Spectral, which
+  were loaded from Google Fonts, so every player's browser contacted Google, and a table with no
+  internet fell back to other fonts. They are now part of the module, under their own licence.
 
 ## 2.0.0
 

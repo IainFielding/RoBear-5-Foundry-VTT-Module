@@ -142,7 +142,8 @@
       },
       "Subtitle": {
         "Challenge": "{count} of {total} to succeed",
-        "Divine": "{count} numbers in a row on a d100"
+        "Divine": "{count} numbers in a row on a d100",
+        "DivineOne": "1 number on a d100"
       },
       "Team": {
         "RemovedHighest": "Highest roll, removed by {name}'s natural 1",
@@ -168,7 +169,9 @@
         "Hidden": "Hidden roll",
         "TotalWithD20": "{total} (d20: {natural})",
         "Numbered": "Roll {number}: {result}",
-        "ClickForDice": "{result}. Click for the dice."
+        "ClickForDice": "{result}. Click for the dice.",
+        "Chosen": "{roll}: {result}",
+        "Uncounted": "Not counted: a changed DC decided the challenge before this roll. {result}"
       },
       "Summary": {
         "Standard": "{count} of {total} succeeded",
@@ -181,9 +184,22 @@
         "Picked": "The numbers picked",
         "DialogTitle": "Divine Intervention: {name}",
         "DialogHint": "Pick {count} numbers in a row. You then roll a d100, and must roll one of them.",
+        "DialogHintOne": "Pick a number. You then roll a d100, and must roll it.",
         "NonePicked": "No numbers picked yet.",
-        "Need": "You need {start}–{end}.",
+        "Need": "You need {numbers}.",
         "Roll": "Roll d100"
+      },
+      "EditDC": {
+        "Title": "Change DC",
+        "None": "No DC",
+        "Tooltip": "Change the DC. Rolls already made are scored against the new one.",
+        "Hint": "Rolls already made are scored again against the new DC. Leave it blank for no DC.",
+        "HintRequired": "Rolls already made are scored again against the new DC.",
+        "Save": "Change DC"
+      },
+      "Choose": {
+        "Title": "Choose a Roll: {name}",
+        "Hint": "{name} may make any one of these rolls."
       },
       "Reveal": {
         "Show": "Show to players",
@@ -195,11 +211,13 @@
       },
       "Flavor": {
         "Die": "{mode}: {die}",
-        "Range": "{mode}: {die}, needing {start}–{end}"
+        "Range": "{mode}: {die}, needing {numbers}"
       },
       "Invalid": {
         "Mode": "Unknown kind of roll request: {mode}.",
+        "GMOnly": "Only a GM can post a roll request.",
         "NoActors": "A roll request needs at least one actor to roll.",
+        "Actors": "A roll request's actors must be a list of actor UUIDs, each named once.",
         "MissingRoll": "A roll request is missing a roll.",
         "EmptySide": "Each side of a contest needs at least one actor.",
         "RollOffSide": "Each side of a Roll-Off needs exactly one actor.",
@@ -209,7 +227,9 @@
         "Key": "Unknown {type} for a roll: {key}. Use one of: {keys}.",
         "DC": "A DC must be a number, or null for none: {dc}.",
         "Successes": "A skill challenge needs from 1 to {total} successes, not {successes}.",
-        "Range": "Divine Intervention needs from {min} to {max} numbers to pick, not {range}."
+        "Range": "Divine Intervention needs from {min} to {max} numbers to pick, not {range}.",
+        "DivineRoll": "Divine Intervention's roll is a d100, not {type}.",
+        "Choices": "Only a Standard Roll, Team Challenge or Skill Challenge can offer a choice of rolls, and at most {max} to choose from, given as a list of alternatives."
       },
       "Config": {
         "KindOfRoll": "Kind of Roll",
@@ -239,6 +259,9 @@
         "BothSides": "No one can be on both sides.",
         "ChooseActor": "Choose at least one actor to roll.",
         "ChallengeDC": "Each roll in a skill challenge needs a DC.",
+        "AddChoice": "Offer another roll to choose instead",
+        "RemoveChoice": "Stop offering this roll",
+        "Or": "or",
         "Groups": {
           "Dice": "Dice",
           "Skills": "Skills",

@@ -1,6 +1,17 @@
 /* Roll requests, in the card dialog's "Arcane Midnight" theme. Its colour tokens are defined in robear-cards.css. */
 
 /* -------------------------------------------- */
+/*  Token Controls Button                       */
+/* -------------------------------------------- */
+
+/* Foundry rings a tool that is a button in orange. This one is drawn like the tools beside it instead. */
+#scene-controls .ui-control.button[data-tool="robearRequest"] {
+  --control-border-color: var(--color-cool-4);
+  --control-hover-bg-color: var(--color-cool-5);
+  --control-hover-border-color: var(--color-cool-3);
+}
+
+/* -------------------------------------------- */
 /*  Roll Request Window                         */
 /* -------------------------------------------- */
 
@@ -169,8 +180,9 @@
 
 .robear-request-config .robear-request-dc {
   display: flex;
-  flex: 0 0 auto;
+  flex: 0 0 82px;
   align-items: center;
+  justify-content: flex-end;
   gap: 4px;
   color: var(--cc-muted);
   font-family: var(--cc-font-heading);
@@ -180,6 +192,31 @@
 .robear-request-config .robear-request-dc input {
   width: 52px;
   text-align: center;
+}
+
+/* A roll's alternatives, each on its own line under it. The empty DC slot keeps their pickers lined up with it. */
+.robear-request-config .robear-request-choice > label {
+  color: var(--cc-muted);
+  font-style: italic;
+  text-align: right;
+}
+
+.robear-request-config .robear-request-choice-button {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  min-height: 0;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--cc-line);
+  border-radius: 0;
+  color: var(--cc-muted);
+  font-size: 11px;
+}
+
+.robear-request-config .robear-request-choice-button:hover:not(:disabled) {
+  border-color: var(--cc-open);
+  color: var(--cc-open);
 }
 
 /* Actor choices */
@@ -397,8 +434,13 @@
   opacity: 0.55;
 }
 
-:is(.chat-message, .robear-request-popup) .robear-request-actor.removed .robear-request-result {
+:is(.chat-message, .robear-request-popup) .robear-request-actor.removed .robear-request-result,
+:is(.chat-message, .robear-request-popup) .robear-request-result.uncounted {
   text-decoration: line-through;
+}
+
+:is(.chat-message, .robear-request-popup) .robear-request-result.uncounted {
+  opacity: 0.55;
 }
 
 :is(.chat-message, .robear-request-popup) .robear-request-result {
@@ -653,6 +695,41 @@
 
 .robear-request-config range-picker input[type="range"] {
   accent-color: var(--cc-settled);
+}
+
+/* GM-only DC on the request card, which changes it. */
+:is(.chat-message, .robear-request-popup) .robear-request-dc-edit {
+  display: inline;
+  width: auto;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  border-bottom: 1px dashed currentColor;
+  border-radius: 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  text-transform: inherit;
+}
+
+:is(.chat-message, .robear-request-popup) .robear-request-dc-edit:hover:not(:disabled) {
+  box-shadow: none;
+  color: var(--cc-open);
+}
+
+:is(.chat-message, .robear-request-popup) .robear-request-dc-edit:focus-visible {
+  outline: 2px solid var(--cc-open);
+  outline-offset: 1px;
+}
+
+/* The choice of rolls, one button each. */
+.robear-choice-dialog .form-footer {
+  flex-direction: column;
+  align-items: stretch;
 }
 
 /* GM-only button to show a standard roll's summary to players. */

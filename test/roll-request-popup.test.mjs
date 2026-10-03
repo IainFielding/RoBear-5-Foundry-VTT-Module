@@ -36,6 +36,11 @@ describe("Who a pop-up is for", () => {
   it("skips actors that no longer exist", () => {
     expect(getPopupActors({ actors: ["gone", "aria"] })).toEqual(["aria"]);
   });
+
+  it("gives no one in a contest a roll unless they are on a side, though a macro listed them", () => {
+    const request = { mode: "versus", actors: ["aria", "borin"], sides: [["borin"], ["goblin"]] };
+    expect(getPopupActors(request)).toEqual(["borin"]);
+  });
 });
 
 describe("When a pop-up has nothing left to roll", () => {

@@ -36,6 +36,40 @@ test("the token controls have the request button, rotated like the card button",
   assertEqual(await tool(player), null, "the player's tool");
 });
 
+test("the token controls' request button has a grey border like the tools beside it, not a button's orange", async ({ gm }) => {
+  const borders = await gm.eval(async () => {
+    await ui.controls.activate({ control: "tokens" });
+    const border = button => (button ? getComputedStyle(button).borderTopColor : null);
+    // The active tool is ringed in orange too, so compare with one that isn't active.
+    const other = document.querySelector('#scene-controls-tools button.tool[aria-pressed="false"]:not(.button, .toggle)');
+    return {
+      request: border(document.querySelector('#scene-controls-tools button[data-tool="robearRequest"]')),
+      other: border(other)
+    };
+  });
+  assert(borders.request, "The request button is not drawn in the token controls.");
+  assert(borders.other, "There is no other inactive tool to compare with.");
+  assertEqual(borders.request, borders.other, "request button border");
+});
+
+test("the theme's fonts load from the module, and nothing is fetched from Google", async (ctx) => {
+  const { player, ids } = ctx;
+  await postRequest(ctx, { mode: "standard", parts: [athletics(15)], actors: [ids.aria] });
+  const fonts = await player.eval(async () => {
+    await document.fonts.ready;
+    const loaded = family => [...document.fonts].filter(f => (f.family.replace(/["']/g, "") === family)
+      && (f.status === "loaded")).map(f => `${f.weight} ${f.style}`);
+    return {
+      cinzel: loaded("Cinzel"),
+      spectral: loaded("Spectral"),
+      remote: performance.getEntriesByType("resource").map(e => e.name).filter(n => /fonts\.(googleapis|gstatic)/.test(n))
+    };
+  });
+  assert(fonts.cinzel.length, "No Cinzel font loaded for the request card's heading.");
+  assert(fonts.spectral.length, "No Spectral font loaded for the request card's text.");
+  assertEqual(fonts.remote, [], "font files fetched from Google");
+});
+
 test("the API opens the request window for the GM only", async ({ gm, player }) => {
   const open = s => s.eval(async moduleId => {
     const app = game.modules.get(moduleId).api.requestRolls();
@@ -73,6 +107,19 @@ test("the API posts a request from a macro, filling in what it leaves out, and r
   assert(refused, "The request with an unknown skill was posted.");
   assertEqual(refused.posted, false, "a message posted for the refused request");
   assert(refused.message.startsWith("Unknown skill for a roll: athletics."), `Unexpected refusal: ${refused.message}`);
+
+  // A player's request wouldn't be drawn as one, so they are refused, rather than posting a plain message.
+  const fromPlayer = await player.eval(async ({ moduleId, aria }) => {
+    try {
+      await game.modules.get(moduleId).api.createRequest({
+        mode: "standard", parts: [{ type: "skill", key: "ath", dc: 12 }], actors: [aria]
+      });
+    } catch ( err ) {
+      return err.message;
+    }
+    return null;
+  }, { moduleId: MODULE_ID, aria: ids.aria });
+  assertEqual(fromPlayer, "Only a GM can post a roll request.", "the player's refusal");
 });
 
 /* -------------------------------------------- */
@@ -1042,4 +1089,184 @@ test("attached rolls: turned off, each roll keeps its own chat message", async (
   }
   const expandable = await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-result.expandable`).count();
   assertEqual(expandable, 0, "results that open their dice");
+});
+
+/* -------------------------------------------- */
+/*  Choice of Rolls                             */
+/* -------------------------------------------- */
+
+test("choice of rolls: the request window offers alternatives where the mode allows them", async ({ gm }) => {
+  const app = await openWindow(gm);
+  const addButton = app.locator('[data-action="addChoice"][data-field="standard"]');
+  const alternatives = () => app.evaluate(el => [...el.querySelectorAll('select[name*=".alternatives."]')]
+    .map(s => `${s.name}=${s.value}`));
+  try {
+    await chooseMode(app, "standard");
+    await app.locator('select[name="standard.roll"]').selectOption("skill.ath");
+    await app.locator('input[name="standard.dc"]').fill("15");
+    await addButton.click();
+    // The first roll not already offered.
+    assertEqual(await alternatives(), ["standard.alternatives.0=skill.acr"], "the first alternative");
+    await app.locator('select[name="standard.alternatives.0"]').selectOption("save.str");
+    await addButton.click();
+    assertEqual(await alternatives(), ["standard.alternatives.0=save.str", "standard.alternatives.1=skill.acr"],
+      "a second alternative, keeping the first");
+    await addButton.click();
+    assertEqual(await addButton.isDisabled(), true, "the add button once there are four rolls to choose from");
+    await app.locator('[data-action="removeChoice"][data-field="standard"][data-index="1"]').click();
+    assertEqual(await alternatives(), ["standard.alternatives.0=save.str", "standard.alternatives.1=skill.ani"],
+      "alternatives after removing the second");
+
+    // A contest has no choices, and the standard roll keeps its own when the mode changes back.
+    await chooseMode(app, "rolloff");
+    assertEqual(await app.locator('[data-action="addChoice"]').count(), 0, "add buttons in a roll-off");
+    await chooseMode(app, "challenge");
+    assertEqual(await app.locator('[data-action="addChoice"]').count(), 3, "add buttons in a skill challenge");
+    await chooseMode(app, "standard");
+    assertEqual((await alternatives())[0], "standard.alternatives.0=save.str", "alternatives after switching back");
+
+    await app.locator('button[type="submit"]').click();
+    const request = await waitFor(gm, moduleId => game.messages.contents.at(-1)?.getFlag(moduleId, "request") ?? null,
+      MODULE_ID, "the request message");
+    assertEqual(request.parts, [{
+      type: "skill", key: "ath", dc: 15, alternatives: [{ type: "save", key: "str" }, { type: "skill", key: "ani" }]
+    }], "the parts sent");
+  } finally {
+    await gm.eval(() => foundry.applications.instances.get("robear-roll-request")?.close());
+  }
+});
+
+test("choice of rolls: the player picks one, which is rolled and scored against the shared DC", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const part = { type: "skill", key: "ath", dc: 12, alternatives: [{ type: "save", key: "str" }] };
+  const id = await postRequest(ctx, { mode: "standard", parts: [part], actors: [ids.aria] });
+  assertEqual((await readCard(player, id)).title, "Athletics Check or Strength Save", "the title");
+
+  await forceDice(player, [d20(14)]);
+  await rollButton(player, id, "Aria").click();
+  const dialog = player.page.locator(".robear-choice-dialog");
+  await dialog.waitFor({ timeout: 10_000 });
+  const labels = await dialog.locator(".form-footer button").allTextContents();
+  assertEqual(labels.map(l => l.trim()), ["Athletics Check", "Strength Save"], "the rolls offered");
+  await dialog.locator('button[data-action="choice1"]').click({ modifiers: ["Shift"] });
+
+  const roll = await waitForRoll(gm, id, ids.aria);
+  assertEqual([roll.type, roll.total, roll.flag.choice], ["save", 14, 1], "Aria's roll");
+  const card = await waitForCard(gm, id, c => row(c, "Aria").results.length, "Aria's result");
+  assertEqual(row(card, "Aria").results, [{ text: "14", classes: ["success"] }], "Aria's result");
+  const tooltip = await gm.eval(id => document.querySelector(`#chat .chat-log [data-message-id="${id}"] .robear-request-result`)
+    ?.dataset.tooltipText, id);
+  assert(tooltip?.startsWith("Strength Save: 14"), `The result doesn't say which roll was chosen: ${tooltip}`);
+});
+
+test("choice of rolls: closing the choice makes no roll", async (ctx) => {
+  const { player, ids } = ctx;
+  const part = { type: "skill", key: "ath", dc: 12, alternatives: [{ type: "save", key: "str" }] };
+  const id = await postRequest(ctx, { mode: "standard", parts: [part], actors: [ids.aria] });
+  await rollButton(player, id, "Aria").click();
+  const dialog = player.page.locator(".robear-choice-dialog");
+  await dialog.waitFor({ timeout: 10_000 });
+  await dialog.locator('[data-action="close"]').click();
+  await dialog.waitFor({ state: "detached", timeout: 10_000 });
+  await player.page.waitForTimeout(500);
+  const card = await readCard(player, id);
+  assertEqual([row(card, "Aria").results.length, row(card, "Aria").rollButtons], [0, 1], "Aria's row");
+});
+
+/* -------------------------------------------- */
+/*  Changing the DC                             */
+/* -------------------------------------------- */
+
+/**
+ * Open the DC dialog from one of the request card's DC buttons, as the GM would.
+ * @param {import("./lib/session.mjs").Session} gm
+ * @param {string} id
+ * @param {number} [index=0]  Which DC button on the card.
+ * @returns {Promise<import("playwright").Locator>}  The dialog.
+ */
+async function openDCDialog(gm, id, index = 0) {
+  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-dc-edit`).nth(index).click();
+  const dialog = gm.page.locator(".robear-dc-dialog");
+  await dialog.waitFor({ timeout: 10_000 });
+  return dialog;
+}
+
+/**
+ * Change a DC from the request card.
+ * @param {import("./lib/session.mjs").Session} gm
+ * @param {string} id
+ * @param {string} dc
+ * @param {number} [index=0]
+ */
+async function changeDC(gm, id, dc, index = 0) {
+  const dialog = await openDCDialog(gm, id, index);
+  await dialog.locator('input[name="dc"]').fill(dc);
+  await dialog.locator('button[data-action="ok"]').click();
+  await dialog.waitFor({ state: "detached", timeout: 10_000 });
+}
+
+test("changing the DC: the GM changes it on the card, and rolls already made are scored again", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const id = await postRequest(ctx, { mode: "standard", parts: [athletics(15)], actors: [ids.aria], showDC: true });
+  assertEqual(await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-dc-edit`).count(), 0,
+    "the player's DC buttons");
+  await forceDice(player, [d20(12)]);
+  await clickRoll(player, id, "Aria", { fastForward: true });
+  await waitForCard(gm, id, c => row(c, "Aria").results[0]?.classes.includes("failure"), "Aria failing DC 15");
+
+  await changeDC(gm, id, "10");
+  await waitForCard(gm, id, c => row(c, "Aria").results[0]?.classes.includes("success"), "Aria passing DC 10");
+  const card = await waitForCard(player, id, c => c.subtitle === "Standard Roll · DC 10", "the player's new DC");
+  assertEqual(card.summary, null, "the player's summary, still hidden");
+
+  // Cleared, the request has no DC, so no one passes or fails.
+  await changeDC(gm, id, "");
+  await waitForCard(gm, id, c => (c.subtitle === "Standard Roll · No DC") && !row(c, "Aria").results[0].classes.length,
+    "no DC");
+});
+
+test("changing the DC: each step of a skill challenge has its own, which can't be left blank", async (ctx) => {
+  const { gm, ids } = ctx;
+  const parts = [athletics(10), athletics(15), athletics(20)];
+  const id = await postRequest(ctx, { mode: "challenge", parts, actors: [ids.goblin], successes: 2 });
+  const dcs = () => gm.eval(({ id, moduleId }) => game.messages.get(id).getFlag(moduleId, "request").parts.map(p => p.dc),
+    { id, moduleId: MODULE_ID });
+  await changeDC(gm, id, "13", 1);
+  await waitFor(gm, ({ id, moduleId }) => game.messages.get(id).getFlag(moduleId, "request").parts[1].dc === 13,
+    { id, moduleId: MODULE_ID }, "the second step's DC to change");
+  assertEqual(await dcs(), [10, 13, 20], "the DCs once the second is changed");
+
+  const dialog = await openDCDialog(gm, id, 0);
+  await dialog.locator('input[name="dc"]').fill("");
+  await dialog.locator('button[data-action="ok"]').click();
+  await gm.page.waitForTimeout(500);
+  if ( await dialog.count() ) await dialog.locator('[data-action="close"]').click();
+  assertEqual(await dcs(), [10, 13, 20], "the DCs after trying to clear one");
+});
+
+test("changing the DC: a skill challenge roll made after a new DC settled it is shown as not counted", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const id = await postRequest(ctx, { mode: "challenge", parts: [athletics(10), athletics(10), athletics(10)],
+    actors: [ids.aria], successes: 2 });
+  await forceDice(player, [d20(15), d20(3), d20(15)]);
+  for ( const n of [1, 2, 3] ) {
+    await clickRoll(player, id, "Aria", { fastForward: true });
+    await waitForCard(player, id, c => row(c, "Aria").results.length === n, `roll ${n}`);
+  }
+  await waitForCard(gm, id, c => row(c, "Aria").classes.includes("success"), "the challenge to pass");
+
+  // Failing the first step too, two failures now settle it before the third roll.
+  await changeDC(gm, id, "30", 0);
+  const card = await waitForCard(gm, id, c => row(c, "Aria").classes.includes("failure"), "the challenge to fail");
+  assertEqual(row(card, "Aria").results.map(r => r.classes), [["failure"], ["failure"], ["uncounted"]], "each roll");
+  assertEqual(row(card, "Aria").rollButtons, 0, "Aria's Roll buttons");
+
+  // A card is played on the last roll that counts, not the uncounted one, even before the player is shown which.
+  await waitFor(player, ({ id, moduleId }) => game.messages.get(id).getFlag(moduleId, "request").parts[0].dc === 30,
+    { id, moduleId: MODULE_ID }, "the player to see the new DC");
+  await forceDice(player, [d20(20)]);
+  await playCard(player, id, "Aria", "Advantage");
+  const after = await waitForCard(gm, id, c => row(c, "Aria").classes.includes("success"), "Advantage to win it back");
+  assert(row(after, "Aria").results[1].classes.includes("success"), "Advantage was not played on the second roll.");
+  assert(!row(after, "Aria").results[2].classes.includes("uncounted"), "The third roll still isn't counted.");
 });

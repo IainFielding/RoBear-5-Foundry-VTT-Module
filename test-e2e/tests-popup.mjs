@@ -138,6 +138,21 @@ test("pop-ups: a skill challenge's pop-up stays open until the challenge is sett
   await waitForPopupToClose(player);
 });
 
+test("pop-ups: a team challenge's pop-up marks no one's roll as passing or failing, as the chat card doesn't", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  await setSetting(gm, player, "popupPlayers", true);
+  const id = await postRequest(ctx, { mode: "team", parts: [athletics(15)], actors: [ids.aria, ids.borin] });
+  await waitForPopup(player);
+  await forceDice(player, [d20(3)]);
+  await popupRollButton(player, "Aria").click({ modifiers: ["Shift"] });
+  await waitForRoll(gm, id, ids.aria);
+  const aria = popup(player).locator('li.robear-request-actor:has(.robear-request-name:text-is("Aria"))');
+  await aria.locator(".robear-request-result").waitFor({ timeout: 10_000 });
+  const marked = await aria.evaluate(row => [row, row.querySelector(".robear-request-result")]
+    .some(el => el.classList.contains("success") || el.classList.contains("failure")));
+  assertEqual(marked, false, "Aria's roll marked as passing or failing in the pop-up");
+});
+
 test("pop-ups: a player with nothing to roll gets none", async (ctx) => {
   const { gm, player, ids } = ctx;
   await setSetting(gm, player, "popupPlayers", true);
@@ -160,6 +175,22 @@ test("pop-ups: the GM's pop-up holds only the actors no player owns", async (ctx
   const goblin = await waitForRoll(gm, id, ids.goblin, 1);
   assertEqual(goblin.total, 13, "the Goblin's roll, for the Opponent's side");
   await waitForPopupToClose(gm);
+});
+
+test("pop-ups: a request a player wrote opens no one's pop-up, and draws no request card", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  await setSetting(gm, player, "popupGM", true);
+  // A player can write the request flag on a message of their own, naming an actor only the GM rolls for.
+  const id = await player.eval(async ({ moduleId, goblin }) => (await ChatMessage.create({
+    content: "<p>Fake request</p>",
+    flags: { [moduleId]: { request: { mode: "standard", actors: [goblin], parts: [{ type: "d20", key: null, dc: 10 }],
+      rollMode: "public", showDC: true } } }
+  })).id, { moduleId: MODULE_ID, goblin: ids.goblin });
+  await waitFor(gm, id => !!document.querySelector(`#chat .chat-log [data-message-id="${id}"]`), id, "the message to reach the GM");
+  await gm.page.waitForTimeout(500);
+  assertEqual(await popupActors(gm), null, "the GM's pop-up");
+  const card = await gm.eval(id => !!document.querySelector(`#chat .chat-log [data-message-id="${id}"] .robear-request`), id);
+  assertEqual(card, false, "a request card drawn for the player's message");
 });
 
 test("pop-ups: divine intervention's number picker opens from the pop-up", async (ctx) => {
