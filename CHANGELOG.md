@@ -29,6 +29,11 @@ All notable changes to RoBear-E.
   such as a skill check, which was then scored against the numbers picked. It now refuses
   anything but a d100, as the README already said.
 
+- **A macro's request keeps only the rolls its kind uses.** Given more parts than that, such as two
+  for a Standard Roll, `createRequest` posted them all, and the card offered each actor a Roll
+  button for every extra one. The extras are now left off. A request whose `actors` aren't a list
+  of actor UUIDs, each named once, is refused rather than posting a card that can't be drawn.
+
 - **A Divine Intervention roll only lands in numbers the picker could give.** A roll made outside
   the request card could claim any run of numbers, such as 1 to 100, and always succeed. A run
   that isn't as long as the request allows, or goes past 100, now fails.

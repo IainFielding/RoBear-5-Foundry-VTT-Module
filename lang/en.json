@@ -214,6 +214,7 @@
       "Invalid": {
         "Mode": "Unknown kind of roll request: {mode}.",
         "NoActors": "A roll request needs at least one actor to roll.",
+        "Actors": "A roll request's actors must be a list of actor UUIDs, each named once.",
         "MissingRoll": "A roll request is missing a roll.",
         "EmptySide": "Each side of a contest needs at least one actor.",
         "RollOffSide": "Each side of a Roll-Off needs exactly one actor.",

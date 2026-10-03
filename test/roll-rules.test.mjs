@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { actorNames, actorOwners, settingValues } from "./helpers/foundry-shims.mjs";
 import { requestMessage, rollMessage } from "./helpers/messages.mjs";
 import {
-  DIVINE_RANGE, MAX_CHOICES, MODES, getChallengeState, getChoiceLabel, getChoices, getGroupOutcome, getPartLabel,
+  DIVINE_RANGE, MAX_CHOICES, MODES, createRequest, getChallengeState, getChoiceLabel, getChoices, getGroupOutcome, getPartLabel,
   getRequestSubtitle, getRequestTitle, getResults, getRowGroup, isContest, poolTeamRolls, validateRequest, withDefaults
 } from "../scripts/roll-requests.mjs";
 
@@ -311,6 +311,17 @@ describe("Checking a request before it is posted", () => {
     expect(errorFor({ ...valid.standard, actors: [] })).toBe(refusal("NoActors"));
   });
 
+  it("refuses actors that aren't a list of UUIDs each named once, which the card couldn't draw", () => {
+    for ( const actors of ["A", undefined, [null], ["A", 4], ["A", "A"]] ) {
+      expect(errorFor({ ...valid.standard, actors })).toBe(refusal("Actors"));
+    }
+  });
+
+  it("refuses contest sides that aren't lists of actors", () => {
+    expect(errorFor({ ...valid.versus, sides: ["AB", ["C"]] })).toBe(refusal("EmptySide"));
+    expect(errorFor({ ...valid.versus, sides: "AB" })).toBe(refusal("EmptySide"));
+  });
+
   it("refuses a contest with an empty side", () => {
     expect(errorFor({ ...valid.versus, sides: [["A", "B"], []] })).toBe(refusal("EmptySide"));
     expect(errorFor({ ...valid.rolloff, sides: [["A"]] })).toBe(refusal("EmptySide"));
@@ -390,6 +401,35 @@ describe("Checking a request before it is posted", () => {
     for ( const part of [{ type: "check", key: "dex" }, { type: "save", key: "wis" }, { type: "tool", key: "thief" }] ) {
       expect(errorFor({ ...valid.standard, parts: [{ ...part, dc: 15 }] })).toBeNull();
     }
+  });
+});
+
+/* -------------------------------------------- */
+
+describe("Posting a request", () => {
+  beforeEach(() => {
+    globalThis.ChatMessage = { create: async data => data };
+  });
+
+  it("keeps only the rolls the mode uses, so the card offers no Roll button for an extra one", async () => {
+    const d20 = { type: "d20", dc: 10 };
+    const standard = await createRequest({ mode: "standard", actors: ["A"], parts: [d20, d20] });
+    expect(standard.flags["sogrom-robear-e"].request.parts).toEqual([d20]);
+    const challenge = await createRequest({ mode: "challenge", actors: ["A"], parts: [d20, d20, d20, d20] });
+    expect(challenge.flags["sogrom-robear-e"].request.parts).toHaveLength(3);
+  });
+
+  it("doesn't change the request it was given", async () => {
+    const request = { mode: "standard", actors: ["A"], parts: [{ type: "d20", dc: 10 }, { type: "d20", dc: 10 }] };
+    await createRequest(request);
+    expect(request.parts).toHaveLength(2);
+  });
+
+  it("refuses a request that can't be rolled, posting nothing", async () => {
+    let posted = false;
+    globalThis.ChatMessage = { create: async () => (posted = true) };
+    await expect(createRequest({ mode: "standard", actors: [], parts: [{ type: "d20", dc: 10 }] })).rejects.toThrow();
+    expect(posted).toBe(false);
   });
 });
 

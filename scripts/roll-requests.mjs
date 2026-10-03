@@ -319,6 +319,8 @@ function refreshRequest(message, changes) {
 export async function createRequest(request) {
   request = withDefaults(request);
   validateRequest(request);
+  // Only the rolls the mode uses are kept: the card would otherwise offer a Roll button for each extra one.
+  request.parts = request.parts.slice(0, getPartCount(request));
   return ChatMessage.create({
     speaker: { alias: "RoBear-E" },
     content: `<p>${foundry.utils.escapeHTML(getRequestTitle(request))}</p>`,
@@ -355,21 +357,25 @@ export function validateRequest(request) {
     if ( !ok ) throw new Error(localize(key, data));
   };
   check(request?.mode in MODES, "ROBEAR.Request.Invalid.Mode", { mode: request?.mode });
-  check(request.actors?.length, "ROBEAR.Request.Invalid.NoActors");
+  const { actors } = request;
+  check(Array.isArray(actors) && actors.every(uuid => uuid && (typeof uuid === "string"))
+    && (new Set(actors).size === actors.length), "ROBEAR.Request.Invalid.Actors");
+  check(actors.length, "ROBEAR.Request.Invalid.NoActors");
   check(["public", "gm"].includes(request.rollMode), "ROBEAR.Request.Invalid.RollMode", { rollMode: request.rollMode });
 
   const contest = isContest(request);
   if ( contest ) {
     const { sides } = request;
-    check((sides?.length === 2) && sides.every(s => s?.length), "ROBEAR.Request.Invalid.EmptySide");
+    check(Array.isArray(sides) && (sides.length === 2) && sides.every(s => Array.isArray(s) && s.length),
+      "ROBEAR.Request.Invalid.EmptySide");
     // A roll-off is scored by each side's one roll, so a second actor on a side would never count.
     check((request.mode !== "rolloff") || sides.every(s => s.length === 1), "ROBEAR.Request.Invalid.RollOffSide");
     // Results are only worked out for the request's actors, so anyone on a side must be one of them.
     check(sides.flat().every(uuid => request.actors.includes(uuid)), "ROBEAR.Request.Invalid.SideNotActor");
   }
 
-  const count = contest ? 2 : (request.mode === "challenge" ? CHALLENGE_PARTS : 1);
-  const parts = request.parts?.slice(0, count) ?? [];
+  const count = getPartCount(request);
+  const parts = Array.isArray(request.parts) ? request.parts.slice(0, count) : [];
   check(parts.length >= count, "ROBEAR.Request.Invalid.MissingRoll");
   for ( const part of parts ) {
     const alternatives = part?.alternatives ?? [];
@@ -396,6 +402,18 @@ export function validateRequest(request) {
     // The picked numbers are 1 to 100, so only a d100 can land in them.
     check(parts[0].type === "d100", "ROBEAR.Request.Invalid.DivineRoll", { type: parts[0].type });
   }
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {RollRequest} request
+ * @returns {number}  How many rolls the request's mode uses: one for each side of a contest, three for a skill
+ *   challenge, otherwise one.
+ */
+function getPartCount(request) {
+  if ( isContest(request) ) return 2;
+  return request.mode === "challenge" ? CHALLENGE_PARTS : 1;
 }
 
 /* -------------------------------------------- */
