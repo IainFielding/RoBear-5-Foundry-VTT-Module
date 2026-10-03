@@ -1229,4 +1229,13 @@ test("changing the DC: a skill challenge roll made after a new DC settled it is 
   const card = await waitForCard(gm, id, c => row(c, "Aria").classes.includes("failure"), "the challenge to fail");
   assertEqual(row(card, "Aria").results.map(r => r.classes), [["failure"], ["failure"], ["uncounted"]], "each roll");
   assertEqual(row(card, "Aria").rollButtons, 0, "Aria's Roll buttons");
+
+  // A card is played on the last roll that counts, not the uncounted one, even before the player is shown which.
+  await waitFor(player, ({ id, moduleId }) => game.messages.get(id).getFlag(moduleId, "request").parts[0].dc === 30,
+    { id, moduleId: MODULE_ID }, "the player to see the new DC");
+  await forceDice(player, [d20(20)]);
+  await playCard(player, id, "Aria", "Advantage");
+  const after = await waitForCard(gm, id, c => row(c, "Aria").classes.includes("success"), "Advantage to win it back");
+  assert(row(after, "Aria").results[1].classes.includes("success"), "Advantage was not played on the second roll.");
+  assert(!row(after, "Aria").results[2].classes.includes("uncounted"), "The third roll still isn't counted.");
 });

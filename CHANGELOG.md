@@ -22,6 +22,9 @@ All notable changes to RoBear-E.
 - **The token controls' request button is grey.** It had the orange border Foundry gives button
   tools, unlike the tools beside it.
 
+- **A contest's pop-up opens when a macro lists someone on neither side.** It failed to draw,
+  trying to give that actor a roll. Now only those on a side are given one.
+
 - **Card dice use the actor's Dice So Nice appearance.** Dice rolled by a RoBear-E Card, or by
   the Fighter's Indomitable, were shown in the player's own dice, not the ones set for that
   actor. They now look like the dice of the roll they change.

@@ -781,12 +781,12 @@ function renderRequest(message, request) {
     card.append(steps);
   }
 
-  const team = request.mode === "team" ? getGroupOutcome(request.actors, results, true) : null;
-  const shownTeam = getRowGroup(message, request, results);
+  // Players are only shown which rolls were removed from the pool once they can see the summary too.
+  const team = getRowGroup(message, request, results);
   const list = document.createElement("ul");
   list.className = "robear-request-actors";
   for ( const uuid of request.actors ) {
-    list.append(renderActorRow(message, request, uuid, results.get(uuid), { team: shownTeam }));
+    list.append(renderActorRow(message, request, uuid, results.get(uuid), { team }));
   }
   card.append(list);
 
@@ -880,7 +880,8 @@ export async function changeDC(message, part) {
     ok: { label: "ROBEAR.Request.EditDC.Save", icon: "fa-solid fa-check" },
     rejectClose: false
   });
-  if ( !data ) return;
+  // The request may have been deleted while the dialog was open.
+  if ( !data || !game.messages.has(message.id) ) return;
   const dc = Number.isNumeric(data.dc) ? Number(data.dc) : null;
   if ( (dc === null) && required ) {
     ui.notifications.warn(localize("ROBEAR.Request.Config.ChallengeDC"));
@@ -1001,11 +1002,14 @@ export function renderActorRow(message, request, uuid, results, { team=null, sid
     && !message.getFlag(MODULE_ID, "revealed");
   let next = results.findIndex(r => !r);
   // A challenge's steps after the one that settled it are not counted. They are only rolled when a DC changed after.
+  // How many count, and how many are shown as counting, which players only see once the GM shows the outcome.
+  let settledAt = results.length;
   let counted = results.length;
   if ( challenge ) {
     const state = getChallengeState(results, request.successes);
     next = state.next ?? -1;
-    if ( (state.success !== null) && !hideOutcome ) counted = state.passed + state.failed;
+    if ( state.success !== null ) settledAt = state.passed + state.failed;
+    if ( !hideOutcome ) counted = settledAt;
     if ( (state.success !== null) && !hideOutcome ) row.classList.add(state.success ? "success" : "failure");
   } else if ( results[0]?.visible && (results[0].success !== null) && !team && !hideOutcome ) {
     row.classList.add(results[0].success ? "success" : "failure");
@@ -1040,7 +1044,9 @@ export function renderActorRow(message, request, uuid, results, { team=null, sid
     else if ( !challenge || (next !== -1) ) slots.append(renderPending());
   });
 
-  const latest = results.findLast(r => r);
+  // Cards and features are played on the latest roll that counts, not on one a changed DC has left uncounted, even
+  // before players are shown which that is: a card spent on a roll that doesn't count would be wasted.
+  const latest = results.slice(0, settledAt).findLast(r => r);
   if ( latest && getCardOptions(latest.message).length ) slots.append(createCardButton(latest.message, { compact: true }));
   const indomitable = latest ? createIndomitableButton(latest.message, { compact: true }) : null;
   if ( indomitable ) slots.append(indomitable);

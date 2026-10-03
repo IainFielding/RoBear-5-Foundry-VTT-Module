@@ -112,7 +112,10 @@ function onDeleteMessage(message) {
  * @returns {string[]}  Actor UUIDs.
  */
 export function getPopupActors(request) {
+  // In a contest only those on a side roll, though a macro's request may list others among its actors.
+  const rolling = isContest(request) ? request.sides.flat() : request.actors;
   return request.actors.filter(uuid => {
+    if ( !rolling.includes(uuid) ) return false;
     const actor = fromUuidSync(uuid);
     if ( !actor?.isOwner ) return false;
     return game.user.isGM ? !actor.hasPlayerOwner : true;
