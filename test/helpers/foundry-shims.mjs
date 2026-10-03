@@ -16,7 +16,14 @@ Number.isNumeric = n => {
   return +n === +n;
 };
 
-globalThis.Hooks = { on() {}, once() {}, call() { return true; }, callAll() {} };
+// Foundry's own `Array#filterJoin` (common/primitives/array.mjs): join the parts that aren't empty.
+Object.defineProperty(Array.prototype, "filterJoin", {
+  value: function(sep) {
+    return this.filter(p => !!p).join(sep);
+  }
+});
+
+globalThis.Hooks ={ on() {}, once() {}, call() { return true; }, callAll() {} };
 
 globalThis.foundry = {
   applications: {

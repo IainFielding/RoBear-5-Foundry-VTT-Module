@@ -13,10 +13,13 @@ export const GM = { id: "gm", isGM: true };
 
 /**
  * @param {object} request  The request's flag data.
+ * @param {string} [id="request"]
+ * @param {object} [flags]  The request message's other flags, such as `revealed`.
  * @returns {object}        A request message.
  */
-export function requestMessage(request, id = "request") {
-  return { id, getFlag: (scope, key) => (scope === MODULE_ID && key === "request" ? request : undefined) };
+export function requestMessage(request, id = "request", flags = {}) {
+  const all = { ...flags, request };
+  return { id, getFlag: (scope, key) => (scope === MODULE_ID ? all[key] : undefined) };
 }
 
 /**

@@ -3,7 +3,7 @@ import { actorNames, actorOwners, settingValues } from "./helpers/foundry-shims.
 import { requestMessage, rollMessage } from "./helpers/messages.mjs";
 import {
   DIVINE_RANGE, MAX_CHOICES, MODES, getChallengeState, getChoiceLabel, getChoices, getGroupOutcome, getPartLabel,
-  getRequestTitle, getResults, isContest, poolTeamRolls, validateRequest, withDefaults
+  getRequestSubtitle, getRequestTitle, getResults, getRowGroup, isContest, poolTeamRolls, validateRequest, withDefaults
 } from "../scripts/roll-requests.mjs";
 
 const entries = rows => rows.map(([uuid, total, natural]) => ({ uuid, total, natural }));
@@ -15,6 +15,7 @@ beforeEach(() => {
   actorOwners.clear();
   for ( const name of ["A", "B", "C", "D"] ) actorNames.set(name, name);
   game.messages = [];
+  game.user = { isGM: true };
   settingValues.set("showDCDefault", false);
 });
 
@@ -403,6 +404,39 @@ describe("Group outcomes", () => {
 
 /* -------------------------------------------- */
 
+describe("The group an actor's row is drawn with", () => {
+  const results = new Map([["A", [{ total: 1, natural: 1, visible: true }]], ["B", [{ total: 15, natural: 15, visible: true }]],
+    ["C", [{ total: 10, natural: 10, visible: true }]]]);
+  const team = { mode: "team", actors: ["A", "B", "C"], parts: [{ type: "d20", dc: 10 }] };
+  const removedFor = (request, flags, side) => [...getRowGroup(requestMessage(request, "request", flags), request, results, side)
+    .removed.keys()];
+
+  it("shows the GM which roll a natural 1 or 20 took out of a team's pool", () => {
+    game.user = { isGM: true };
+    expect(removedFor(team, {})).toEqual(["B"]);
+  });
+
+  it("keeps that from players until the GM shows the result", () => {
+    game.user = { isGM: false };
+    expect(removedFor(team, {})).toEqual([]);
+    expect(removedFor(team, { revealed: true })).toEqual(["B"]);
+  });
+
+  it("pools only the actor's own side in Team vs Team", () => {
+    game.user = { isGM: false };
+    const versus = { mode: "versus", actors: ["A", "B", "C"], sides: [["A", "B"], ["C"]], parts: [team.parts[0], team.parts[0]] };
+    expect(removedFor(versus, {}, 0)).toEqual(["B"]);
+    expect(removedFor(versus, {}, 1)).toEqual([]);
+  });
+
+  it("draws no group for rolls that aren't pooled", () => {
+    expect(getRowGroup(requestMessage({}), { mode: "standard" }, results)).toBeNull();
+    expect(getRowGroup(requestMessage({}), { mode: "rolloff" }, results, 0)).toBeNull();
+  });
+});
+
+/* -------------------------------------------- */
+
 describe("Modes and labels", () => {
   it("offers six modes, two of them contests", () => {
     expect(Object.keys(MODES)).toEqual(["standard", "team", "challenge", "rolloff", "versus", "divine"]);
@@ -449,6 +483,25 @@ describe("A choice of rolls", () => {
     expect(getChoiceLabel({ type: "skill", key: "acr", alternatives: [{ type: "check", key: "dex" }] }))
       .toBe("Acrobatics Check or Dexterity Check");
     expect(getChoiceLabel({ type: "skill", key: "acr" })).toBe("Acrobatics Check");
+  });
+
+  it("says under the title what the request asks for, with the DC as this user may see it", () => {
+    const standard = dc => ({ mode: "standard", showDC: false, parts: [{ type: "d20", dc }] });
+    expect(getRequestSubtitle(standard(15))).toBe("Standard Roll · DC 15");
+    game.user = { isGM: false };
+    expect(getRequestSubtitle(standard(15))).toBe("Standard Roll · DC ?");
+    expect(getRequestSubtitle({ ...standard(15), showDC: true })).toBe("Standard Roll · DC 15");
+    expect(getRequestSubtitle(standard(null))).toBe("Standard Roll");
+    expect(getRequestSubtitle({ mode: "challenge", successes: 2, parts: [{}, {}, {}] })).toBe("2 of 3 to succeed");
+    expect(getRequestSubtitle({ mode: "rolloff", parts: [{ type: "d20" }, { type: "skill", key: "ath" }] }))
+      .toBe("d20 vs Athletics Check");
+    expect(getRequestSubtitle({ mode: "divine", range: 16, parts: [{ type: "d100" }] })).toBe("16 numbers in a row on a d100");
+  });
+
+  it("puts the GM's DC button in the subtitle, in place of the DC", () => {
+    const button = { nodeName: "BUTTON" };
+    expect(getRequestSubtitle({ mode: "team", parts: [{ type: "d20", dc: 12 }] }, button))
+      .toEqual(["Team Challenge", " · ", button]);
   });
 
   it("titles a standard roll's card with the choice", () => {

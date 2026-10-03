@@ -2,6 +2,7 @@
  * The e2e test runner, and the helpers tests use to drive the world through its real UI.
  */
 
+import fs from "node:fs";
 import { MODULE_ID } from "../config.mjs";
 
 /* -------------------------------------------- */
@@ -36,6 +37,10 @@ export function test(name, fn) {
  * @returns {Promise<{ passed: number, failed: { name: string, error: string }[] }>}
  */
 export async function runTests(ctx, { filter, beforeEach } = {}) {
+  // A screenshot from an earlier run would look like a failure of this one.
+  for ( const file of fs.readdirSync("test-e2e") ) {
+    if ( /^fail-\d+-(gm|player)\.png$/.test(file) ) fs.rmSync(`test-e2e/${file}`);
+  }
   const failed = [];
   let passed = 0;
   for ( const [i, { name, fn }] of tests.entries() ) {
@@ -101,7 +106,9 @@ export async function waitFor(session, fn, arg, what = "condition", timeout = 10
   try {
     const handle = await session.page.waitForFunction(fn, arg, { timeout, polling: 100 });
     return handle.jsonValue();
-  } catch {
+  } catch ( err ) {
+    // A check that throws is a broken test, not a slow one, so its own error is kept.
+    if ( err.name !== "TimeoutError" ) throw err;
     throw new Error(`Timed out waiting for ${what} (${session.user}).`);
   }
 }
