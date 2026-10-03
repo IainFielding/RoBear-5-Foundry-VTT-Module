@@ -5,7 +5,7 @@
 
 import { MODULE_ID } from "./robear-cards.mjs";
 import {
-  getChallengeState, getResults, getRowGroup, isContest, renderActorRow, renderRequestHeader
+  getChallengeState, getRequest, getResults, getRowGroup, isContest, renderActorRow, renderRequestHeader
 } from "./roll-requests.mjs";
 
 const { ApplicationV2 } = foundry.applications.api;
@@ -146,7 +146,7 @@ export function hasRollsLeft(message, uuids) {
  * @param {ChatMessage5e} message
  */
 function openPopup(message) {
-  const request = message.getFlag(MODULE_ID, "request");
+  const request = getRequest(message);
   if ( !request ) return;
   if ( !game.settings.get(MODULE_ID, game.user.isGM ? "popupGM" : "popupPlayers") ) return;
   if ( foundry.applications.instances.get(RollRequestPopup.idFor(message.id)) ) return;

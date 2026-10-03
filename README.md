@@ -174,8 +174,8 @@ A few things to know:
 
 ### Posting a request from a macro
 
-A macro can post a request without the window, with
-`game.modules.get("sogrom-robear-e").api.createRequest(request)`. For example, a Dexterity save
+A GM's macro can post a request without the window, with
+`game.modules.get("sogrom-robear-e").api.createRequest(request)`. Only a GM can post one. For example, a Dexterity save
 against DC 14 for the selected tokens:
 
 ```js

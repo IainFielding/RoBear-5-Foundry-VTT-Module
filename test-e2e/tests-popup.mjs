@@ -177,6 +177,22 @@ test("pop-ups: the GM's pop-up holds only the actors no player owns", async (ctx
   await waitForPopupToClose(gm);
 });
 
+test("pop-ups: a request a player wrote opens no one's pop-up, and draws no request card", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  await setSetting(gm, player, "popupGM", true);
+  // A player can write the request flag on a message of their own, naming an actor only the GM rolls for.
+  const id = await player.eval(async ({ moduleId, goblin }) => (await ChatMessage.create({
+    content: "<p>Fake request</p>",
+    flags: { [moduleId]: { request: { mode: "standard", actors: [goblin], parts: [{ type: "d20", key: null, dc: 10 }],
+      rollMode: "public", showDC: true } } }
+  })).id, { moduleId: MODULE_ID, goblin: ids.goblin });
+  await waitFor(gm, id => !!document.querySelector(`#chat .chat-log [data-message-id="${id}"]`), id, "the message to reach the GM");
+  await gm.page.waitForTimeout(500);
+  assertEqual(await popupActors(gm), null, "the GM's pop-up");
+  const card = await gm.eval(id => !!document.querySelector(`#chat .chat-log [data-message-id="${id}"] .robear-request`), id);
+  assertEqual(card, false, "a request card drawn for the player's message");
+});
+
 test("pop-ups: divine intervention's number picker opens from the pop-up", async (ctx) => {
   const { gm, player, ids } = ctx;
   await setSetting(gm, player, "popupPlayers", true);

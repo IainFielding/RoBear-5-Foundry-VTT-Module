@@ -3,7 +3,7 @@ import { actorNames, actorOwners, settingValues } from "./helpers/foundry-shims.
 import { requestMessage, rollMessage } from "./helpers/messages.mjs";
 import {
   DIVINE_RANGE, MAX_CHOICES, MODES, createRequest, formatRun, getChallengeState, getChoiceLabel, getChoices, getGroupOutcome, getPartLabel,
-  getRequestSubtitle, getRequestTitle, getResults, getRowGroup, isContest, poolTeamRolls, validateRequest, withDefaults
+  getRequest, getRequestSubtitle, getRequestTitle, getResults, getRowGroup, isContest, poolTeamRolls, validateRequest, withDefaults
 } from "../scripts/roll-requests.mjs";
 
 const entries = rows => rows.map(([uuid, total, natural]) => ({ uuid, total, natural }));
@@ -406,6 +406,27 @@ describe("Checking a request before it is posted", () => {
 
 /* -------------------------------------------- */
 
+describe("Which messages are requests", () => {
+  const request = { mode: "standard", actors: ["A"], parts: [{ type: "d20", dc: 10 }] };
+  const message = (author, flags = { request }) => ({ author, getFlag: (scope, key) => flags[key] });
+
+  it("takes a request a GM posted", () => {
+    expect(getRequest(message({ isGM: true }))).toBe(request);
+  });
+
+  it("ignores the same flag on a player's message, which would draw a card and open everyone's pop-ups", () => {
+    expect(getRequest(message({ isGM: false }))).toBeUndefined();
+    expect(getRequest(message(null))).toBeUndefined();
+  });
+
+  it("finds no request on a message without one, or no message", () => {
+    expect(getRequest(message({ isGM: true }, {}))).toBeUndefined();
+    expect(getRequest(undefined)).toBeUndefined();
+  });
+});
+
+/* -------------------------------------------- */
+
 describe("Posting a request", () => {
   beforeEach(() => {
     globalThis.ChatMessage = { create: async data => data };
@@ -423,6 +444,15 @@ describe("Posting a request", () => {
     const request = { mode: "standard", actors: ["A"], parts: [{ type: "d20", dc: 10 }, { type: "d20", dc: 10 }] };
     await createRequest(request);
     expect(request.parts).toHaveLength(2);
+  });
+
+  it("refuses a player, whose message wouldn't be drawn as a request, posting nothing", async () => {
+    let posted = false;
+    globalThis.ChatMessage = { create: async () => (posted = true) };
+    game.user = { isGM: false };
+    await expect(createRequest({ mode: "standard", actors: ["A"], parts: [{ type: "d20", dc: 10 }] }))
+      .rejects.toThrow("Only a GM can post a roll request.");
+    expect(posted).toBe(false);
   });
 
   it("refuses a request that can't be rolled, posting nothing", async () => {

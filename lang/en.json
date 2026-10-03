@@ -215,6 +215,7 @@
       },
       "Invalid": {
         "Mode": "Unknown kind of roll request: {mode}.",
+        "GMOnly": "Only a GM can post a roll request.",
         "NoActors": "A roll request needs at least one actor to roll.",
         "Actors": "A roll request's actors must be a list of actor UUIDs, each named once.",
         "MissingRoll": "A roll request is missing a roll.",

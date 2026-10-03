@@ -107,6 +107,19 @@ test("the API posts a request from a macro, filling in what it leaves out, and r
   assert(refused, "The request with an unknown skill was posted.");
   assertEqual(refused.posted, false, "a message posted for the refused request");
   assert(refused.message.startsWith("Unknown skill for a roll: athletics."), `Unexpected refusal: ${refused.message}`);
+
+  // A player's request wouldn't be drawn as one, so they are refused, rather than posting a plain message.
+  const fromPlayer = await player.eval(async ({ moduleId, aria }) => {
+    try {
+      await game.modules.get(moduleId).api.createRequest({
+        mode: "standard", parts: [{ type: "skill", key: "ath", dc: 12 }], actors: [aria]
+      });
+    } catch ( err ) {
+      return err.message;
+    }
+    return null;
+  }, { moduleId: MODULE_ID, aria: ids.aria });
+  assertEqual(fromPlayer, "Only a GM can post a roll request.", "the player's refusal");
 });
 
 /* -------------------------------------------- */

@@ -29,6 +29,10 @@ All notable changes to RoBear-E.
   such as a skill check, which was then scored against the numbers picked. It now refuses
   anything but a d100, as the README already said.
 
+- **Only a GM's request is a request.** A player could post a message carrying a request of their
+  own, which drew as a request card and, with pop-ups on, opened a window on everyone else's
+  screen. Now only a request a GM posted is drawn as one or opens pop-ups.
+
 - **A card is given back if it can't be played.** A card was spent before its roll was changed,
   so if changing the roll failed, the card was lost with nothing to show for it. It is now given
   back, as a use of Indomitable already was.

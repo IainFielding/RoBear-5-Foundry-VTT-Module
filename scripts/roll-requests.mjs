@@ -317,6 +317,8 @@ function refreshRequest(message, changes) {
  * @throws {Error}  If the request can't be rolled: see validateRequest.
  */
 export async function createRequest(request) {
+  // Only a GM's message is drawn as a request (see getRequest), so a player's would post as a plain message.
+  if ( !game.user.isGM ) throw new Error(localize("ROBEAR.Request.Invalid.GMOnly"));
   request = withDefaults(request);
   validateRequest(request);
   // Only the rolls the mode uses are kept: the card would otherwise offer a Roll button for each extra one.
@@ -326,6 +328,18 @@ export async function createRequest(request) {
     content: `<p>${foundry.utils.escapeHTML(getRequestTitle(request))}</p>`,
     flags: { [MODULE_ID]: { request } }
   });
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {ChatMessage5e|void} message
+ * @returns {RollRequest|void}  The message's roll request, if it is one a GM posted. A player can write the same flag
+ *   on a message of their own, which would otherwise draw as a request card and open everyone's pop-ups.
+ */
+export function getRequest(message) {
+  const request = message?.getFlag(MODULE_ID, "request");
+  return request && message.author?.isGM ? request : undefined;
 }
 
 /* -------------------------------------------- */
@@ -792,11 +806,11 @@ function onRenderChatMessage(message, html) {
   // it summarises inside their item's card. It is hidden by a class, not the hidden attribute: Foundry keeps a
   // message's hidden attribute when redrawing it, so it would stay hidden once its request is deleted.
   const requestRoll = message.getFlag(MODULE_ID, "requestRoll");
-  if ( requestRoll && game.messages.has(requestRoll.request) && game.settings.get(MODULE_ID, "attachRolls") ) {
+  if ( getRequest(game.messages.get(requestRoll?.request)) && game.settings.get(MODULE_ID, "attachRolls") ) {
     html.classList.add("robear-attached-roll");
     return;
   }
-  const request = message.getFlag(MODULE_ID, "request");
+  const request = getRequest(message);
   const content = html.querySelector(".message-content");
   if ( !request || !content ) return;
   html.classList.add("robear-request-message");
