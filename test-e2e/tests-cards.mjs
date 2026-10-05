@@ -483,8 +483,14 @@ test("sheet: the card window shows every card left, with its art", async ({ play
   for ( const { label, img } of cards ) {
     assert(img.startsWith("modules/sogrom-robear-e/assets/images/"), `${label} shows ${img} rather than its card art.`);
   }
-  const broken = await dialog.locator(".robear-card-choice img").evaluateAll(imgs => imgs
-    .filter(i => !i.complete || !i.naturalWidth).map(i => i.getAttribute("src")));
+  // The art may still be loading as the window opens, so each image is waited for until it loads or fails.
+  const broken = await dialog.locator(".robear-card-choice img").evaluateAll(async imgs => {
+    await Promise.all(imgs.map(i => i.complete || new Promise(resolve => {
+      i.addEventListener("load", resolve, { once: true });
+      i.addEventListener("error", resolve, { once: true });
+    })));
+    return imgs.filter(i => !i.naturalWidth).map(i => i.getAttribute("src"));
+  });
   assertEqual(broken, [], "card art that failed to load");
   await dialog.locator('button[data-action="cancel"]').click();
 });
