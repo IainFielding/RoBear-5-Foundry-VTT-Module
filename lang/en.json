@@ -209,6 +209,12 @@
         "ShownTooltip": "Players can see this. Click to hide it.",
         "HiddenTooltip": "Only you can see this."
       },
+      "RollAgain": {
+        "Label": "Roll again",
+        "Tooltip": "Delete this roll, so {name} can roll again.",
+        "Title": "Roll Again",
+        "Confirm": "Delete {name}'s roll? Their Roll button comes back. Any card played on this roll stays spent."
+      },
       "Flavor": {
         "Die": "{mode}: {die}",
         "Range": "{mode}: {die}, needing {numbers}"
@@ -229,7 +235,8 @@
         "Successes": "A skill challenge needs from 1 to {total} successes, not {successes}.",
         "Range": "Divine Intervention needs from {min} to {max} numbers to pick, not {range}.",
         "DivineRoll": "Divine Intervention's roll is a d100, not {type}.",
-        "Choices": "Only a Standard Roll, Team Challenge or Skill Challenge can offer a choice of rolls, and at most {max} to choose from, given as a list of alternatives."
+        "Choices": "Only a Standard Roll, Team Challenge or Skill Challenge can offer a choice of rolls, and at most {max} to choose from, given as a list of alternatives.",
+        "ChoiceDC": "A Team Challenge's rolls are averaged against one DC, so its alternatives can't have DCs of their own."
       },
       "Config": {
         "KindOfRoll": "Kind of Roll",

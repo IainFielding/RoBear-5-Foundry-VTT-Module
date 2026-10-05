@@ -2,6 +2,27 @@
 
 All notable changes to RoBear-E.
 
+## Unreleased
+
+### New
+
+- **Each choice of roll can have its own DC.** In a Standard Roll or Skill Challenge, a roll offered as a choice now
+  has a DC of its own, such as a DC 10 Dexterity save or a DC 15 Strength save. A new choice starts with the roll's
+  DC. The card lists each choice with its DC, the GM can change each one, and players see them on the buttons they
+  choose from (or "DC ?" while the DC is hidden). A Team Challenge's choices still share one DC, since its rolls are
+  averaged against it. A macro gives an alternative its own `dc`; one that gives none shares the roll's, as before.
+
+- **The GM can let someone roll again from the request card.** Click a result to open its dice, and the GM gets a
+  **Roll again** button, which deletes the roll after asking, so the actor's Roll button comes back. With rolls
+  attached to the request card, as they are by default, the roll's own message is hidden, so before this the GM had
+  to turn that setting off to find it.
+
+### Fixed
+
+- **"Success" stays in one piece on the GM's request card.** Beside the Show to players button, a Team Challenge's
+  result was squeezed until "Success" broke across two lines. The result now breaks only between words, and the
+  average beside it wraps instead.
+
 ## 2.1.0
 
 ### New

@@ -68,11 +68,13 @@ export async function resetFixtures(gm) {
       ?? await User.create({ name: playerName, role: CONST.USER_ROLES.PLAYER });
 
     const owned = { default: CONST.DOCUMENT_OWNERSHIP_LEVELS.NONE, [player.id]: CONST.DOCUMENT_OWNERSHIP_LEVELS.OWNER };
-    const [aria, borin, goblin] = await Actor.createDocuments([
+    const created = await Actor.createDocuments([
       { name: "Aria", type: "character", ownership: owned },
       { name: "Borin", type: "character", ownership: owned },
       { name: "Goblin", type: "npc" }
     ]);
+    // Found by name: the created documents don't always come back in the order they were asked for.
+    const [aria, borin, goblin] = ["Aria", "Borin", "Goblin"].map(name => created.find(a => a.name === name));
 
     const pack = game.packs.get(`${moduleId}.items`);
     const cards = (await pack.getDocuments()).find(i => i.system.identifier === "robear-e" || i.name === "RoBear-E Cards");

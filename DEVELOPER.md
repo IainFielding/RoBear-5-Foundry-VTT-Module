@@ -92,7 +92,7 @@ interface RequestPart {
   type: "skill" | "check" | "save" | "tool" | "d20" | "d6" | "d8" | "d10" | "d12" | "d100";
   key?: string | null;       // the skill, ability or tool ID; omitted or null for a plain die
   dc: number | null;         // null for no DC
-  alternatives?: { type: string, key?: string | null }[]; // other rolls the actor may make instead
+  alternatives?: { type: string, key?: string | null, dc?: number | null }[]; // other rolls the actor may make instead
 }
 ```
 
@@ -122,8 +122,13 @@ The window offers each mode only some dice (Team vs Team offers only `d20`, for 
 any of them in any mode except `divine`.
 
 **Alternatives.** In `standard`, `team` and `challenge`, a part may list up to three `alternatives`, so an actor
-chooses between up to four rolls. They share the part's `dc`. The roll message records which was made in
-`requestRoll.choice`.
+chooses between up to four rolls. The roll message records which was made in `requestRoll.choice`.
+
+In `standard` and `challenge`, an alternative may give a `dc` of its own: a number, or `null` for none. An
+alternative with no `dc` key shares the part's `dc`, as every alternative used to, so older requests and macros
+score as they did. In `team`, whose rolls are averaged against one DC, an alternative can't give a `dc`. Use
+`getChoiceDC(part, choice)` from `scripts/roll-requests.mjs` if you need the DC a roll was made against; it is internal,
+like the module's other exports.
 
 **Defaults.** `withDefaults` fills in a missing or `null` value for `rollMode` (`"public"`), `showDC` (the
 `showDCDefault` setting), `successes` (`2`, for `challenge`) and `range` (`16`, for `divine`). Nothing else is filled
@@ -146,9 +151,10 @@ language), and posts nothing:
 | Someone on a side isn't in `actors` | Everyone on a side of a contest must also be in the request's actors. |
 | Fewer `parts` than the mode uses | A roll request is missing a roll. |
 | `alternatives` in a mode without choices, three or more of them, or not objects | Only a Standard Roll, Team Challenge or Skill Challenge can offer a choice of rolls, and at most 4 to choose from, given as a list of alternatives. |
+| An alternative with a `dc` in a `team` request | A Team Challenge's rolls are averaged against one DC, so its alternatives can't have DCs of their own. |
 | An unknown `type` | Unknown kind of roll: {type}. |
 | A `key` that dnd5e doesn't know | Unknown {type} for a roll: {key}. Use one of: {keys}. |
-| A `dc` that's neither a number nor `null` | A DC must be a number, or null for none: {dc}. |
+| A `dc`, on a part or an alternative, that's neither a number nor `null` | A DC must be a number, or null for none: {dc}. |
 | `successes` not an integer from 1 to 3 | A skill challenge needs from 1 to 3 successes, not {successes}. |
 | `range` not an integer from 1 to 50 | Divine Intervention needs from 1 to 50 numbers to pick, not {range}. |
 | A `divine` part that isn't `d100` | Divine Intervention's roll is a d100, not {type}. |
@@ -176,7 +182,7 @@ await createRequest({
 });
 ```
 
-**Standard Roll with a choice, Persuasion or Deception, as a private GM roll:**
+**Standard Roll with a choice, Persuasion or Deception, sharing DC 14, as a private GM roll:**
 
 ```js
 await createRequest({
@@ -184,6 +190,16 @@ await createRequest({
   parts: [{ type: "skill", key: "per", dc: 14, alternatives: [{ type: "skill", key: "dec" }] }],
   actors: party,
   rollMode: "gm"
+});
+```
+
+**Standard Roll with a choice, each at its own DC: a DC 10 Dexterity save or a DC 15 Strength save:**
+
+```js
+await createRequest({
+  mode: "standard",
+  parts: [{ type: "save", key: "dex", dc: 10, alternatives: [{ type: "save", key: "str", dc: 15 }] }],
+  actors: party
 });
 ```
 
@@ -264,7 +280,7 @@ them out from its roll messages each time it draws.
 
 | Flag | Type | Written by | Meaning |
 |---|---|---|---|
-| `request` | `RollRequest` | `createRequest`, or the window | The request, with defaults filled in. Only honoured on a GM's message. Changing the DC from the card rewrites `request.parts[n].dc`. |
+| `request` | `RollRequest` | `createRequest`, or the window | The request, with defaults filled in. Only honoured on a GM's message. Changing the DC from the card rewrites `request.parts[n].dc`, or an alternative's `dc`. |
 | `revealed` | `boolean` | The GM's **Show to players** button | Whether players see the results and summary. Unset means hidden. |
 
 ### On a roll made for a request

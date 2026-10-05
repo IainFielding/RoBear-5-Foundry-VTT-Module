@@ -4,7 +4,7 @@
 
 import { MODULE_ID, localize } from "./robear-cards.mjs";
 import {
-  CHALLENGE_PARTS, DICE, DIVINE_RANGE, MAX_CHOICES, MODES, createRequest, getPartLabel
+  CHALLENGE_PARTS, DICE, DIVINE_RANGE, MAX_CHOICES, MODES, createRequest, getChoices, getPartLabel
 } from "./roll-requests.mjs";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -14,7 +14,14 @@ const { FormDataExtended } = foundry.applications.ux;
  * @typedef {object} DraftRoll
  * @property {string} roll            The roll, e.g. "skill.ath" or "d20".
  * @property {number|null} dc
- * @property {string[]} alternatives  Other rolls the actor may choose instead.
+ * @property {DraftChoice[]} alternatives  Other rolls the actor may choose instead.
+ */
+
+/**
+ * @typedef {object} DraftChoice
+ * @property {string} roll
+ * @property {number|null} [dc]  Its own DC, in a mode where each choice has one: null for none. Left out, as when the
+ *   choice was added in a mode without, it starts as its roll's DC.
  */
 
 /**
@@ -118,7 +125,10 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
       if ( !row.field ) Object.assign(row, { field: `parts.${index}`, ...draft.parts[index] });
       // Where the mode allows it, a roll can offer others to choose from instead.
       row.canChoose = !!mode.choices && !!row.hasDC;
-      row.alternatives = row.canChoose ? row.alternatives.map((roll, i) => ({ roll, index: i })) : [];
+      row.choiceDCs = row.canChoose && !!mode.choiceDCs;
+      row.alternatives = row.canChoose ? row.alternatives.map(({ roll, dc }, i) => ({
+        roll, dc: dc === undefined ? row.dc : dc, index: i
+      })) : [];
       row.full = row.alternatives.length >= MAX_CHOICES - 1;
     });
 
@@ -194,12 +204,19 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
     const chosen = flags => this.#actors.filter((_, i) => flags?.[i]).map(a => a.uuid);
     const shown = draft.mode;
 
-    const toRoll = ({ roll, dc, alternatives }) => ({
+    const toDC = dc => (Number.isNumeric(dc) ? Number(dc) : null);
+    // A choice's DC is only shown in a mode where each choice has one. Elsewhere it is left out, not cleared, so it
+    // starts as its roll's DC on switching to such a mode.
+    const toRoll = ({ roll, dc, alternatives }, previous) => ({
       roll,
-      dc: Number.isNumeric(dc) ? Number(dc) : null,
-      alternatives: Object.values(alternatives ?? {})
+      dc: toDC(dc),
+      alternatives: Object.values(alternatives ?? {}).map((a, i) => {
+        if ( "dc" in a ) return { roll: a.roll, dc: toDC(a.dc) };
+        const before = previous?.alternatives?.[i];
+        return (before && ("dc" in before)) ? { roll: a.roll, dc: before.dc } : { roll: a.roll };
+      })
     });
-    for ( const [i, part] of Object.entries(data.parts ?? {}) ) draft.parts[i] = toRoll(part);
+    for ( const [i, part] of Object.entries(data.parts ?? {}) ) draft.parts[i] = toRoll(part, draft.parts[i]);
     for ( const [i, side] of Object.entries(data.sideRolls ?? {}) ) draft.sideRolls[shown][i] = side.roll;
     if ( data.standard ) draft.standard = toRoll(data.standard);
     if ( "successes" in data ) draft.successes = Number(data.successes) || 2;
@@ -264,9 +281,9 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
   static #onAddChoice(_event, target) {
     const row = foundry.utils.getProperty(this.#readForm(), target.dataset.field);
     if ( !row || (row.alternatives.length >= MAX_CHOICES - 1) ) return;
-    const offered = [row.roll, ...row.alternatives];
+    const offered = [row.roll, ...row.alternatives.map(a => a.roll)];
     const next = getRollGroups([]).flatMap(g => g.options).find(o => !offered.includes(o.value));
-    if ( next ) row.alternatives.push(next.value);
+    if ( next ) row.alternatives.push({ roll: next.value });
     this.render({ parts: ["form"] });
   }
 
@@ -300,8 +317,12 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
     const toPart = ({ roll, dc, alternatives=[] }) => {
       const part = { ...split(roll), dc: mode.contest ? null : dc };
       // The same roll offered twice is no choice at all.
-      const others = [...new Set(alternatives)].filter(a => a !== roll);
-      if ( mode.choices && others.length ) part.alternatives = others.map(split);
+      const offered = new Set([roll]);
+      const others = alternatives.filter(a => !offered.has(a.roll) && offered.add(a.roll));
+      if ( mode.choices && others.length ) {
+        part.alternatives = others.map(a => (mode.choiceDCs
+          ? { ...split(a.roll), dc: a.dc === undefined ? dc : a.dc } : split(a.roll)));
+      }
       return part;
     };
     const request = {
@@ -324,7 +345,7 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
       if ( !draft.actors.length ) throw new Error(localize("ROBEAR.Request.Config.ChooseActor"));
       const count = draft.mode === "challenge" ? CHALLENGE_PARTS : 1;
       const parts = draft.mode === "standard" ? [toPart(draft.standard)] : draft.parts.slice(0, count).map(toPart);
-      if ( (draft.mode === "challenge") && parts.some(p => p.dc === null) ) {
+      if ( (draft.mode === "challenge") && parts.some(p => getChoices(p).some(c => c.dc === null)) ) {
         throw new Error(localize("ROBEAR.Request.Config.ChallengeDC"));
       }
       Object.assign(request, { parts, actors: draft.actors });

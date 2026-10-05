@@ -326,7 +326,7 @@ shot("choosing which roll to make", async (ctx) => {
   const { player, ids } = ctx;
   const id = await postRequest(ctx, {
     mode: "standard", actors: [ids.aria], showDC: true,
-    parts: [{ ...athletics(14), alternatives: [{ type: "skill", key: "acr" }] }]
+    parts: [{ ...athletics(15), alternatives: [{ type: "skill", key: "acr", dc: 10 }] }]
   });
   await message(player, id).locator(".robear-request-roll").first().click();
   const dialog = player.page.locator(".robear-choice-dialog.application");
@@ -386,6 +386,7 @@ shot("the request window", async ({ gm }) => {
   await app.locator('[data-action="addChoice"]').first().click();
   await gm.page.waitForTimeout(300);
   await app.locator('select[name*=".alternatives."]').first().selectOption("skill.acr");
+  await app.locator('input[name*=".alternatives."][name$=".dc"]').first().fill("10");
   await capture(gm, "gm-request-choices", app.locator(".robear-request-parts"));
   await app.locator('[data-action="close"]').click();
 
@@ -429,6 +430,17 @@ shot("a standard roll, hidden and shown", async (ctx) => {
   await dialog.waitFor({ state: "detached", timeout: 10_000 });
   await gm.page.waitForTimeout(500);
   await capture(gm, "gm-request-dc-changed", message(gm, id));
+});
+
+shot("letting someone roll again", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const id = await postRequest(ctx, { mode: "standard", parts: [athletics(15)], actors: [ids.aria, ids.borin], showDC: true });
+  await forceDice(player, [d20(4)]);
+  await clickRoll(player, id, "Aria", { fastForward: true });
+  await waitForCard(gm, id, c => c.rows[0].results.length, "Aria's result");
+  await message(gm, id).locator(".robear-request-result.expandable").first().click();
+  await message(gm, id).locator(".robear-request-roll-again").waitFor({ timeout: 5000 });
+  await capture(gm, "gm-roll-again", message(gm, id));
 });
 
 shot("a skill challenge", async (ctx) => {

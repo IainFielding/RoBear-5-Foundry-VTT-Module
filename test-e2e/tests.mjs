@@ -439,6 +439,40 @@ test("standard roll: deleting a roll brings the Roll button back", async (ctx) =
   await waitForCard(player, id, c => row(c, "Aria").rollButtons === 1, "the Roll button to come back");
 });
 
+test("standard roll: the GM's Roll again button, under an attached roll's dice, lets the actor roll again", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const id = await postRequest(ctx, { mode: "standard", parts: [athletics(12)], actors: [ids.aria] });
+  await forceDice(player, [d20(3)]);
+  await clickRoll(player, id, "Aria", { fastForward: true });
+  const roll = await waitForRoll(gm, id, ids.aria);
+  await waitForCard(player, id, c => row(c, "Aria").rollButtons === 0, "the Roll button to go");
+
+  // Players open the dice too, but get no button: they can't delete the roll.
+  const card = s => s.page.locator(`#chat .chat-log [data-message-id="${id}"]`);
+  await card(player).locator(".robear-request-result.expandable").click();
+  await card(player).locator(".robear-request-roll-detail").waitFor({ timeout: 5000 });
+  assertEqual(await card(player).locator(".robear-request-roll-again").count(), 0, "Roll again buttons for the player");
+
+  await card(gm).locator(".robear-request-result.expandable").click();
+  const button = card(gm).locator(".robear-request-roll-detail .robear-request-roll-again");
+  await button.waitFor({ timeout: 5000 });
+  assertEqual(await button.getAttribute("data-tooltip-text"), "Delete this roll, so Aria can roll again.", "the tooltip");
+
+  // Cancelling keeps the roll.
+  await button.click();
+  let dialog = gm.page.locator(".application.dialog", { hasText: "Delete Aria's roll?" });
+  await dialog.waitFor({ timeout: 5000 });
+  await dialog.locator('button[data-action="no"]').click();
+  await dialog.waitFor({ state: "detached", timeout: 5000 });
+  assertEqual(await gm.eval(id => game.messages.has(id), roll.id), true, "the roll, after cancelling");
+
+  await button.click();
+  dialog = gm.page.locator(".application.dialog", { hasText: "Delete Aria's roll?" });
+  await dialog.locator('button[data-action="yes"]').click();
+  await waitFor(gm, id => !game.messages.has(id), roll.id, "the roll to be deleted");
+  await waitForCard(player, id, c => row(c, "Aria").rollButtons === 1, "the Roll button to come back");
+});
+
 test("standard roll: a player can't delete their roll to roll again", async (ctx) => {
   const { gm, player, ids } = ctx;
   const id = await postRequest(ctx, { mode: "standard", parts: [athletics(12)], actors: [ids.aria] });
@@ -657,6 +691,35 @@ test("team challenge: a natural 20 takes the lowest roll out of the average", as
   assertEqual(card.summary, "Team average 15 · 1 removed Success", "summary");
   assertEqual(row(card, "Borin").classes, ["removed"], "Borin's row");
   assertEqual(row(card, "Aria").results[0].classes, ["critical"], "Aria's natural 20");
+});
+
+test("team challenge: the GM's summary keeps each word of the result whole beside the Shown button", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const id = await postRequest(ctx, { mode: "team", parts: [athletics(13)], actors: [ids.aria, ids.borin, ids.goblin] });
+  await forceDice(player, [d20(20), d20(4)]);
+  await clickRoll(player, id, "Aria", { fastForward: true });
+  await clickRoll(player, id, "Borin", { fastForward: true });
+  await forceDice(gm, [d20(11)]);
+  await clickRoll(gm, id, "Goblin", { fastForward: true });
+  await revealSummary(gm, id);
+  await waitForCard(gm, id, c => c.reveal === "Shown", "the result to be shown");
+  // A word broken across lines takes more than one line box.
+  const broken = await gm.eval(id => {
+    const summary = document.querySelector(`#chat .chat-log [data-message-id="${id}"] .robear-request-summary`);
+    const words = [];
+    for ( const strong of summary.querySelectorAll("strong") ) {
+      const text = strong.firstChild;
+      for ( const match of text.textContent.matchAll(/\S+/g) ) {
+        const range = document.createRange();
+        range.setStart(text, match.index);
+        range.setEnd(text, match.index + match[0].length);
+        const lines = new Set([...range.getClientRects()].map(r => Math.round(r.top)));
+        if ( lines.size > 1 ) words.push(match[0]);
+      }
+    }
+    return words;
+  }, id);
+  assertEqual(broken, [], "words broken across lines in the summary");
 });
 
 /* -------------------------------------------- */
@@ -1099,7 +1162,9 @@ test("choice of rolls: the request window offers alternatives where the mode all
   const app = await openWindow(gm);
   const addButton = app.locator('[data-action="addChoice"][data-field="standard"]');
   const alternatives = () => app.evaluate(el => [...el.querySelectorAll('select[name*=".alternatives."]')]
-    .map(s => `${s.name}=${s.value}`));
+    .map(s => `${s.name.replace(/\.roll$/, "")}=${s.value}`));
+  const choiceDCs = () => app.evaluate(el => [...el.querySelectorAll('input[name*=".alternatives."][name$=".dc"]')]
+    .map(i => i.value));
   try {
     await chooseMode(app, "standard");
     await app.locator('select[name="standard.roll"]').selectOption("skill.ath");
@@ -1107,7 +1172,10 @@ test("choice of rolls: the request window offers alternatives where the mode all
     await addButton.click();
     // The first roll not already offered.
     assertEqual(await alternatives(), ["standard.alternatives.0=skill.acr"], "the first alternative");
-    await app.locator('select[name="standard.alternatives.0"]').selectOption("save.str");
+    // Each choice has a DC of its own, starting as the roll's.
+    assertEqual(await choiceDCs(), ["15"], "the first alternative's DC");
+    await app.locator('select[name="standard.alternatives.0.roll"]').selectOption("save.str");
+    await app.locator('input[name="standard.alternatives.0.dc"]').fill("10");
     await addButton.click();
     assertEqual(await alternatives(), ["standard.alternatives.0=save.str", "standard.alternatives.1=skill.acr"],
       "a second alternative, keeping the first");
@@ -1122,14 +1190,20 @@ test("choice of rolls: the request window offers alternatives where the mode all
     assertEqual(await app.locator('[data-action="addChoice"]').count(), 0, "add buttons in a roll-off");
     await chooseMode(app, "challenge");
     assertEqual(await app.locator('[data-action="addChoice"]').count(), 3, "add buttons in a skill challenge");
+    // A Team Challenge averages its rolls against one DC, so its choices have none of their own.
+    await chooseMode(app, "team");
+    await app.locator('[data-action="addChoice"]').first().click();
+    assertEqual([(await alternatives()).length, (await choiceDCs()).length], [1, 0], "a team challenge's choices and DCs");
     await chooseMode(app, "standard");
     assertEqual((await alternatives())[0], "standard.alternatives.0=save.str", "alternatives after switching back");
+    assertEqual(await choiceDCs(), ["10", "15"], "the choices' DCs after switching back");
 
     await app.locator('button[type="submit"]').click();
     const request = await waitFor(gm, moduleId => game.messages.contents.at(-1)?.getFlag(moduleId, "request") ?? null,
       MODULE_ID, "the request message");
     assertEqual(request.parts, [{
-      type: "skill", key: "ath", dc: 15, alternatives: [{ type: "save", key: "str" }, { type: "skill", key: "ani" }]
+      type: "skill", key: "ath", dc: 15,
+      alternatives: [{ type: "save", key: "str", dc: 10 }, { type: "skill", key: "ani", dc: 15 }]
     }], "the parts sent");
   } finally {
     await gm.eval(() => foundry.applications.instances.get("robear-roll-request")?.close());
@@ -1147,7 +1221,7 @@ test("choice of rolls: the player picks one, which is rolled and scored against 
   const dialog = player.page.locator(".robear-choice-dialog");
   await dialog.waitFor({ timeout: 10_000 });
   const labels = await dialog.locator(".form-footer button").allTextContents();
-  assertEqual(labels.map(l => l.trim()), ["Athletics Check", "Strength Save"], "the rolls offered");
+  assertEqual(labels.map(l => l.trim()), ["Athletics Check · DC 12", "Strength Save · DC 12"], "the rolls offered");
   await dialog.locator('button[data-action="choice1"]').click({ modifiers: ["Shift"] });
 
   const roll = await waitForRoll(gm, id, ids.aria);
@@ -1157,6 +1231,50 @@ test("choice of rolls: the player picks one, which is rolled and scored against 
   const tooltip = await gm.eval(id => document.querySelector(`#chat .chat-log [data-message-id="${id}"] .robear-request-result`)
     ?.dataset.tooltipText, id);
   assert(tooltip?.startsWith("Strength Save: 14"), `The result doesn't say which roll was chosen: ${tooltip}`);
+});
+
+test("choice of rolls: each choice is scored against its own DC, which the GM can change", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const part = { type: "check", key: "dex", dc: 10, alternatives: [{ type: "check", key: "str", dc: 15 }] };
+  const id = await postRequest(ctx, { mode: "standard", parts: [part], actors: [ids.aria, ids.borin], showDC: false });
+  const steps = session => session.eval(id => document.querySelector(`#chat .chat-log [data-message-id="${id}"] .robear-request-steps`)
+    ?.textContent.replace(/\s+/g, " ").trim(), id);
+  assertEqual(await steps(gm), "Dexterity Check DC 10 or Strength Check DC 15", "the GM's list of choices");
+  assertEqual(await steps(player), "Dexterity Check DC ? or Strength Check DC ?", "the player's list of choices");
+  assertEqual((await readCard(gm, id)).subtitle, "Standard Roll", "the subtitle, without a DC");
+
+  // The player sees each choice's DC as far as the request shows it.
+  await rollButton(player, id, "Aria").click();
+  const dialog = player.page.locator(".robear-choice-dialog");
+  await dialog.waitFor({ timeout: 10_000 });
+  const labels = await dialog.locator(".form-footer button").allTextContents();
+  assertEqual(labels.map(l => l.trim()), ["Dexterity Check · DC ?", "Strength Check · DC ?"], "the rolls offered");
+  await forceDice(player, [d20(12)]);
+  await dialog.locator('button[data-action="choice1"]').click({ modifiers: ["Shift"] });
+  await dialog.waitFor({ state: "detached", timeout: 10_000 });
+  await waitForRoll(gm, id, ids.aria);
+  await rollButton(player, id, "Borin").click();
+  await forceDice(player, [d20(12)]);
+  await player.page.locator('.robear-choice-dialog button[data-action="choice0"]').click({ modifiers: ["Shift"] });
+  await waitForRoll(gm, id, ids.borin);
+
+  // 12 beats Dexterity's DC 10, but not Strength's DC 15.
+  let card = await waitForCard(gm, id, c => c.rows.every(r => r.results.length), "both results");
+  assertEqual(card.rows.map(r => [r.name, r.classes]), [["Aria", ["failure"]], ["Borin", ["success"]]], "the rows");
+  assertEqual(card.summary, "1 of 2 succeeded Show to players", "the summary");
+
+  // Lowering Strength's DC scores Aria's roll again.
+  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-dc-edit`).nth(1).click();
+  const edit = gm.page.locator(".robear-dc-dialog");
+  await edit.waitFor({ timeout: 10_000 });
+  assertEqual(await edit.locator('input[name="dc"]').inputValue(), "15", "the DC shown for Strength");
+  await edit.locator('input[name="dc"]').fill("12");
+  await edit.locator('button[data-action="ok"]').click();
+  card = await waitForCard(gm, id, c => row(c, "Aria").classes.includes("success"), "Aria to succeed");
+  assertEqual(await steps(gm), "Dexterity Check DC 10 or Strength Check DC 12", "the list after the change");
+  const parts = await gm.eval(({ id, moduleId }) => game.messages.get(id).getFlag(moduleId, "request").parts, { id, moduleId: MODULE_ID });
+  assertEqual(parts[0].alternatives, [{ type: "check", key: "str", dc: 12 }], "the alternative's DC");
+  assertEqual(parts[0].dc, 10, "the part's own DC, unchanged");
 });
 
 test("choice of rolls: closing the choice makes no roll", async (ctx) => {

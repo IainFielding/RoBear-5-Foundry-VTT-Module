@@ -374,6 +374,12 @@
   color: var(--cc-text);
 }
 
+/* A standard roll's choices, each with its own DC, are one line, so they need no number or bullet. */
+:is(.chat-message, .robear-request-popup) ul.robear-request-steps {
+  padding-left: 10px;
+  list-style: none;
+}
+
 :is(.chat-message, .robear-request-popup) .robear-request-steps span {
   color: var(--cc-muted);
 }
@@ -546,6 +552,10 @@
   color: var(--cc-bright);
   font-family: var(--cc-font-heading);
   letter-spacing: 0.04em;
+  /* Chat lets text break anywhere, so beside the GM's button the result was squeezed until "Success" broke in two.
+     It breaks only between words, and the text beside it wraps instead. */
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 :is(.chat-message, .robear-request-popup) .robear-request-summary.success > strong {
@@ -847,4 +857,29 @@
 
 :is(.chat-message, .robear-request-popup) .robear-request-roll-detail .dice-tooltip {
   margin-top: 4px;
+}
+
+/* The GM's button to delete a roll so its actor can roll again, under the roll's dice. */
+:is(.chat-message, .robear-request-popup) .robear-request-roll-again {
+  display: block;
+  width: auto;
+  height: 22px;
+  min-height: 0;
+  margin: 6px 0 0 auto;
+  padding: 0 8px;
+  background: var(--cc-panel-2);
+  border: 1px solid var(--cc-line-2);
+  border-radius: 0;
+  color: var(--cc-bright);
+  font-family: var(--cc-font-heading);
+  font-size: 11px;
+  line-height: 20px;
+}
+
+:is(.chat-message, .robear-request-popup) .robear-request-roll-again i {
+  color: var(--cc-fail);
+}
+
+:is(.chat-message, .robear-request-popup) .robear-request-roll-again:hover:not(:disabled) {
+  border-color: var(--cc-fail);
 }
