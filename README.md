@@ -172,37 +172,9 @@ A few things to know:
   everything in it is rolled. A player who joins within 30 minutes of a request they still need to
   roll for gets its window too. The chat card works either way.
 
-### Posting a request from a macro
-
-A GM's macro can post a request without the window, with
-`game.modules.get("sogrom-robear-e").api.createRequest(request)`. Only a GM can post one. For example, a Dexterity save
-against DC 14 for the selected tokens:
-
-```js
-await game.modules.get("sogrom-robear-e").api.createRequest({
-  mode: "standard",
-  parts: [{ type: "save", key: "dex", dc: 14 }],
-  actors: canvas.tokens.controlled.map(t => t.actor.uuid)
-});
-```
-
-| Field | What it holds |
-|---|---|
-| `mode` | `"standard"`, `"challenge"` (Skill Challenge), `"team"` (Team Challenge), `"rolloff"`, `"versus"` (Team vs Team) or `"divine"`. |
-| `parts` | The rolls: one, three for a Skill Challenge, or one for each side of a Roll-Off or Team vs Team. Each is `{ type, key, dc }`. `type` is `"skill"`, `"check"`, `"save"` or `"tool"`, with `key` naming it as D&D 5e does (`"ath"`, `"dex"`, `"thief"`), or a plain die, `"d20"`, `"d6"`, `"d8"`, `"d10"`, `"d12"` or `"d100"`, with no key. `dc` is a number, or `null` for none. In a Standard Roll, Team Challenge or Skill Challenge a part may also have `alternatives`, a list of up to three other `{ type, key }` rolls the actor may make instead, against the same DC. Divine Intervention's part is `{ type: "d100", dc: null }`. |
-| `actors` | The actor UUIDs of everyone rolling. |
-| `sides` | For a Roll-Off or Team vs Team, two lists of actor UUIDs, one per side, each also in `actors`. A Roll-Off has exactly one actor on each side. |
-| `successes` | For a Skill Challenge, how many of the three rolls must pass. Defaults to 2. |
-| `range` | For Divine Intervention, how many numbers in a row each player picks, from 1 to 50. Defaults to 16. |
-| `showDC` | Whether players see the DC. Defaults to **Show the DC to players by default**. |
-| `rollMode` | `"public"`, or `"gm"` for a Private GM Roll. Defaults to `"public"`. |
-
-A request that can't be rolled, such as a skill D&D 5e doesn't know, isn't posted: `createRequest`
-throws an error saying why.
-
 ## Credits
 
-The artwork and the fan-made RoBear-E content in this module are the work of
+The artwork in this module are the work of
 [Captain RoBear](https://www.youtube.com/channel/UCktEYryPmattKzrpo0_kGzA) and remain
 the property of their creator.
 
