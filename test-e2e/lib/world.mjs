@@ -90,3 +90,48 @@ export async function resetFixtures(gm) {
     return { player: player.id, aria: aria.uuid, borin: borin.uuid, goblin: goblin.uuid };
   }, { moduleId: MODULE_ID, playerName: PLAYER_USER });
 }
+
+/* -------------------------------------------- */
+
+/**
+ * Put the world back to the fixtures' starting state: no chat, no combat, every card use restored, no
+ * pending Advantage, no forced dice, no stray windows or notifications.
+ * @param {import("./session.mjs").Session} gm
+ * @param {import("./session.mjs").Session} player
+ */
+export async function resetWorld(gm, player) {
+  await gm.eval(async moduleId => {
+    await ChatMessage.deleteDocuments(game.messages.map(m => m.id));
+    await Combat.deleteDocuments(game.combats.map(c => c.id));
+    if ( !game.settings.get(moduleId, "lockNaturals") ) await game.settings.set(moduleId, "lockNaturals", true);
+    if ( !game.settings.get(moduleId, "attachRolls") ) await game.settings.set(moduleId, "attachRolls", true);
+    if ( !game.settings.get(moduleId, "showPlayedCards") ) await game.settings.set(moduleId, "showPlayedCards", true);
+    for ( const key of ["popupPlayers", "popupGM"] ) {
+      if ( game.settings.get(moduleId, key) ) await game.settings.set(moduleId, key, false);
+    }
+    for ( const actor of game.actors ) {
+      if ( actor.getFlag(moduleId, "advantage") ) await actor.unsetFlag(moduleId, "advantage");
+      for ( const item of actor.items ) {
+        const updates = {};
+        for ( const activity of item.system.activities ?? [] ) {
+          if ( activity.uses?.spent ) updates[`system.activities.${activity.id}.uses.spent`] = 0;
+        }
+        if ( item.system.uses?.spent ) updates["system.uses.spent"] = 0;
+        if ( Object.keys(updates).length ) await item.update(updates);
+      }
+    }
+  }, MODULE_ID);
+  for ( const session of [gm, player] ) {
+    await session.eval(async () => {
+      if ( globalThis.__robearDice ) globalThis.__robearDice.length = 0;
+      document.getElementById("robear-played-card")?.remove();
+      if ( ui.menu?.rendered ) await ui.menu.close();
+      ui.context?.close?.();
+      for ( const app of foundry.applications.instances.values() ) {
+        if ( app.rendered && (app.options.window?.frame !== false) && app.id !== "sidebar" && app.hasFrame ) await app.close();
+      }
+      ui.notifications.clear?.();
+    });
+  }
+  await gm.page.waitForTimeout(300);
+}

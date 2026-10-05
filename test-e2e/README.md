@@ -70,3 +70,9 @@ the end of both consoles.
   and name are never run as HTML.
 
 The rules themselves also have unit tests in `../test`, which `npm test` runs without Foundry.
+
+## Screenshots
+
+`screenshots.mjs` uses the same harness to take the screenshots in `docs/images` for the user guides, with forced
+dice so every run takes the same pictures. `npm run docs:screenshots` takes them all, and
+`npm run docs:screenshots -- divine` only those whose name contains "divine".

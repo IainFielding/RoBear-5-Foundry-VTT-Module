@@ -8,6 +8,7 @@
     "validate:json": "node tools/validate-json.mjs",
     "test": "vitest run",
     "test:e2e": "node test-e2e/run.mjs",
+    "docs:screenshots": "node test-e2e/screenshots.mjs",
     "build:packs": "node tools/packs.mjs build",
     "extract:packs": "node tools/packs.mjs extract",
     "check": "npm run validate:json && npm run lint && npm run test"

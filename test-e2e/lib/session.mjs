@@ -24,14 +24,16 @@ export class Session {
   /**
    * Launch a browser, join the world as `user`, and wait for `game.ready`.
    * @param {string} user  The user's name.
+   * @param {object} [options]
+   * @param {number} [options.scale=1]  Device pixels per CSS pixel, for sharper screenshots.
    * @returns {Promise<Session>}
    */
-  static async open(user) {
+  static async open(user, { scale = 1 } = {}) {
     const browser = await chromium.launch({
       headless: !HEADED,
       args: ["--use-gl=swiftshader", "--enable-unsafe-swiftshader", "--mute-audio", "--disable-dev-shm-usage"]
     });
-    const context = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
+    const context = await browser.newContext({ viewport: { width: 1600, height: 1000 }, deviceScaleFactor: scale });
     const page = await context.newPage();
     const session = new Session(browser, page, user);
 

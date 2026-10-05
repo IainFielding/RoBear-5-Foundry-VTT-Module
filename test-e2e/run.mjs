@@ -13,7 +13,7 @@ import { GM_USER, MODULE_ID, PLAYER_USER, WORLD } from "./config.mjs";
 import { runTests } from "./lib/harness.mjs";
 import { startFoundry } from "./lib/server.mjs";
 import { Session } from "./lib/session.mjs";
-import { enableModules, ensureWorld, resetFixtures } from "./lib/world.mjs";
+import { enableModules, ensureWorld, resetFixtures, resetWorld } from "./lib/world.mjs";
 import "./tests.mjs";
 import "./tests-cards.mjs";
 import "./tests-popup.mjs";
@@ -41,7 +41,7 @@ try {
   }), MODULE_ID);
   console.log(`Foundry ${versions.foundry}, dnd5e ${versions.dnd5e}. Running tests:`);
 
-  result = await runTests({ gm, player, ids }, { filter, beforeEach: () => resetBetweenTests(gm, player) });
+  result = await runTests({ gm, player, ids }, { filter, beforeEach: () => resetWorld(gm, player) });
 } catch ( err ) {
   console.error(err);
   if ( gm ) console.error(`--- GM console ---\n${gm.tail(30)}`);
@@ -57,49 +57,4 @@ if ( result ) {
   console.log(`\n${result.passed} passed, ${result.failed.length} failed.`);
   for ( const { name, error } of result.failed ) console.log(`\n--- ${name} ---\n${error}`);
   if ( result.failed.length ) process.exitCode = 1;
-}
-
-/* -------------------------------------------- */
-
-/**
- * Put the world back to the fixtures' starting state: no chat, no combat, every card use restored, no
- * pending Advantage, no forced dice, no stray windows or notifications.
- * @param {Session} gm
- * @param {Session} player
- */
-async function resetBetweenTests(gm, player) {
-  await gm.eval(async moduleId => {
-    await ChatMessage.deleteDocuments(game.messages.map(m => m.id));
-    await Combat.deleteDocuments(game.combats.map(c => c.id));
-    if ( !game.settings.get(moduleId, "lockNaturals") ) await game.settings.set(moduleId, "lockNaturals", true);
-    if ( !game.settings.get(moduleId, "attachRolls") ) await game.settings.set(moduleId, "attachRolls", true);
-    if ( !game.settings.get(moduleId, "showPlayedCards") ) await game.settings.set(moduleId, "showPlayedCards", true);
-    for ( const key of ["popupPlayers", "popupGM"] ) {
-      if ( game.settings.get(moduleId, key) ) await game.settings.set(moduleId, key, false);
-    }
-    for ( const actor of game.actors ) {
-      if ( actor.getFlag(moduleId, "advantage") ) await actor.unsetFlag(moduleId, "advantage");
-      for ( const item of actor.items ) {
-        const updates = {};
-        for ( const activity of item.system.activities ?? [] ) {
-          if ( activity.uses?.spent ) updates[`system.activities.${activity.id}.uses.spent`] = 0;
-        }
-        if ( item.system.uses?.spent ) updates["system.uses.spent"] = 0;
-        if ( Object.keys(updates).length ) await item.update(updates);
-      }
-    }
-  }, MODULE_ID);
-  for ( const session of [gm, player] ) {
-    await session.eval(async () => {
-      if ( globalThis.__robearDice ) globalThis.__robearDice.length = 0;
-      document.getElementById("robear-played-card")?.remove();
-      if ( ui.menu?.rendered ) await ui.menu.close();
-      ui.context?.close?.();
-      for ( const app of foundry.applications.instances.values() ) {
-        if ( app.rendered && (app.options.window?.frame !== false) && app.id !== "sidebar" && app.hasFrame ) await app.close();
-      }
-      ui.notifications.clear?.();
-    });
-  }
-  await gm.page.waitForTimeout(300);
 }
