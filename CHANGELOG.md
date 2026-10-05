@@ -17,7 +17,14 @@ All notable changes to RoBear-E.
   attached to the request card, as they are by default, the roll's own message is hidden, so before this the GM had
   to turn that setting off to find it.
 
+- **A setting for the natural 1 and 20 rings.** **Ring natural 1s and 20s**, on by default, so nothing changes until
+  the GM turns it off. Off, totals in chat and results on request cards are shown plain.
+
 ### Fixed
+
+- **A save rolled from a spell's card is ringed on a natural 1 or 20.** D&D 5e shows a save rolled from a spell's or
+  feature's Save button inside that card rather than as a message of its own, and the ring skipped it there. It now
+  gets the same gold or red ring as any other roll.
 
 - **"Success" stays in one piece on the GM's request card.** Beside the Show to players button, a Team Challenge's
   result was squeezed until "Success" broke across two lines. The result now breaks only between words, and the

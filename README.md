@@ -88,7 +88,9 @@ A few things to know:
 
 ### Natural 1s and 20s
 
-A natural 20 is ringed in gold in chat, and a natural 1 in red.
+A natural 20 is ringed in gold in chat, and a natural 1 in red, on checks, saving throws and attacks alike. That
+includes a save rolled from a spell's Save button, which D&D 5e shows inside the spell's card. Your GM can turn the
+rings off with the **Ring natural 1s and 20s** setting.
 
 <img src="docs/images/naturals.webp" alt="Two Athletics checks: a natural 20 with a glowing gold ring, and a natural 1 with a red ring" width="320">
 
