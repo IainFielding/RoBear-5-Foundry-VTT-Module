@@ -527,8 +527,12 @@ export function isKnownFailure(message) {
  */
 export function getRollTarget(message, roll) {
   if ( Number.isNumeric(roll.options.target) ) return roll.options.target;
-  const { request, part } = message.getFlag(MODULE_ID, "requestRoll") ?? {};
-  return game.messages.get(request)?.getFlag(MODULE_ID, "request")?.parts[part]?.dc ?? null;
+  const { request, part, choice } = message.getFlag(MODULE_ID, "requestRoll") ?? {};
+  const requested = game.messages.get(request)?.getFlag(MODULE_ID, "request")?.parts[part];
+  // The roll chosen from a choice may have a DC of its own. This is getChoiceDC in roll-requests.mjs, which imports
+  // this file, so importing it here would load the two in a cycle.
+  const alternative = (choice > 0) ? requested?.alternatives?.[choice - 1] : null;
+  return ((alternative && ("dc" in alternative)) ? alternative.dc : requested?.dc) ?? null;
 }
 
 /* -------------------------------------------- */

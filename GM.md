@@ -79,10 +79,17 @@ buttons.
 
 **Offering a choice of rolls.** In a Standard Roll, Team Challenge or Skill Challenge, click **+** beside a roll to
 let each actor make a different roll instead, such as Athletics or Acrobatics, or Persuasion or Deception. You can
-offer up to four rolls, and they share the DC. When a player clicks **Roll**, they're asked which one to make. Hover
-over a result on the card to see which they chose.
+offer up to four rolls. When a player clicks **Roll**, they're asked which one to make. Hover over a result on the card
+to see which they chose.
 
-<img src="docs/images/gm-request-choices.webp" alt="The Rolls section with Athletics, DC 15, or Acrobatics" width="520">
+In a Standard Roll or Skill Challenge, each choice has a DC of its own, so an easier roll can have a harder DC: for
+example, Athletics at DC 15 or Acrobatics at DC 10. A new choice starts with the roll's DC. In a Team Challenge,
+the choices share one DC, because the rolls are averaged against it.
+
+<img src="docs/images/gm-request-choices.webp" alt="The Rolls section with Athletics at DC 15, or Acrobatics at DC 10" width="520">
+
+The card lists each choice with its DC, and you can click any of them to change it. Players see each DC on the card
+and on the buttons they choose from, or "DC ?" if you're keeping the DC hidden.
 
 ### Kinds of request
 
@@ -161,7 +168,8 @@ rolls a second d100 and keeps whichever lands in their numbers, and **Luck** rer
 **Rolling for NPCs.** Every row has a **Roll** button for you, so you can roll for anyone, including NPCs.
 
 **Changing the DC.** On a Standard Roll, Team Challenge or Skill Challenge card, click the DC to change it, or clear
-it for no DC (each Skill Challenge roll must keep one). Rolls already made are scored again against the new DC.
+it for no DC (each Skill Challenge roll must keep one). Where each choice has its own DC, click the one to change.
+Rolls already made are scored again against the new DC.
 
 <img src="docs/images/gm-change-dc.webp" alt="The Change DC window, with the DC set to 12" width="340">
 

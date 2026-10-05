@@ -164,9 +164,10 @@ Things you may see on a request card:
 ### Choosing which roll to make
 
 The GM may let you choose between several rolls, such as Athletics or Acrobatics. The card then lists them all, and
-clicking **Roll** asks which one you want to make.
+clicking **Roll** asks which one you want to make. Each choice can have its own DC, so the easier roll may be the one
+with the harder DC. You see each DC unless the GM is keeping it hidden.
 
-<img src="docs/images/choice-dialog.webp" alt="A request for an Athletics Check or Acrobatics Check, and the window asking Aria which to make" width="600">
+<img src="docs/images/choice-dialog.webp" alt="A request for an Athletics Check at DC 15 or Acrobatics Check at DC 10, and the window asking Aria which to make" width="600">
 
 ### Divine Intervention
 

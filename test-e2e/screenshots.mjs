@@ -326,7 +326,7 @@ shot("choosing which roll to make", async (ctx) => {
   const { player, ids } = ctx;
   const id = await postRequest(ctx, {
     mode: "standard", actors: [ids.aria], showDC: true,
-    parts: [{ ...athletics(14), alternatives: [{ type: "skill", key: "acr" }] }]
+    parts: [{ ...athletics(15), alternatives: [{ type: "skill", key: "acr", dc: 10 }] }]
   });
   await message(player, id).locator(".robear-request-roll").first().click();
   const dialog = player.page.locator(".robear-choice-dialog.application");
@@ -386,6 +386,7 @@ shot("the request window", async ({ gm }) => {
   await app.locator('[data-action="addChoice"]').first().click();
   await gm.page.waitForTimeout(300);
   await app.locator('select[name*=".alternatives."]').first().selectOption("skill.acr");
+  await app.locator('input[name*=".alternatives."][name$=".dc"]').first().fill("10");
   await capture(gm, "gm-request-choices", app.locator(".robear-request-parts"));
   await app.locator('[data-action="close"]').click();
 

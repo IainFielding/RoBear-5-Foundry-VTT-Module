@@ -51,13 +51,19 @@
         <div class="form-group robear-request-choice">
             <label>{{localize "ROBEAR.Request.Config.Or"}}</label>
             <div class="form-fields">
-                {{> robearRollSelect name=(concat row.field ".alternatives." choice.index) selected=choice.roll label=(localize "ROBEAR.Request.Config.Or")}}
+                {{> robearRollSelect name=(concat row.field ".alternatives." choice.index ".roll") selected=choice.roll label=(localize "ROBEAR.Request.Config.Or")}}
                 <button type="button" class="robear-request-choice-button" data-action="removeChoice"
                         data-field="{{row.field}}" data-index="{{choice.index}}"
                         data-tooltip aria-label="{{localize 'ROBEAR.Request.Config.RemoveChoice'}}">
                     <i class="fa-solid fa-xmark" inert></i>
                 </button>
+                {{#if row.choiceDCs}}
+                <label class="robear-request-dc">
+                    {{localize "ROBEAR.Request.Config.DC"}} <input type="number" name="{{row.field}}.alternatives.{{choice.index}}.dc" value="{{choice.dc}}" min="0" step="1" placeholder="—">
+                </label>
+                {{else}}
                 <span class="robear-request-dc" aria-hidden="true"></span>
+                {{/if}}
             </div>
         </div>
         {{/each}}

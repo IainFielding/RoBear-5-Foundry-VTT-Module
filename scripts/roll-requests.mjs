@@ -12,7 +12,9 @@ import RollRequestConfig from "./roll-request-config.mjs";
 /**
  * Kinds of request the GM can make. Contests set two sides against each other, each with its own roll.
  * Labels, hints and side names are keys in the language file. In a mode with `choices`, each roll may offer
- * alternatives, of which each actor makes one, and the GM may change its DC from the request card.
+ * alternatives, of which each actor makes one, and the GM may change its DC from the request card. In a mode with
+ * `choiceDCs` too, each alternative has a DC of its own; otherwise, as in a Team Challenge, whose rolls are averaged
+ * against one DC, they share the roll's.
  */
 export const MODES = {
   standard: {
@@ -20,7 +22,8 @@ export const MODES = {
     icon: "fa-solid fa-dice-d20",
     hint: "ROBEAR.Request.Modes.Standard.Hint",
     dice: ["d20", "d6", "d8", "d10", "d12", "d100"],
-    choices: true
+    choices: true,
+    choiceDCs: true
   },
   team: {
     label: "ROBEAR.Request.Modes.Team.Label",
@@ -32,7 +35,8 @@ export const MODES = {
     label: "ROBEAR.Request.Modes.Challenge.Label",
     icon: "fa-solid fa-layer-group",
     hint: "ROBEAR.Request.Modes.Challenge.Hint",
-    choices: true
+    choices: true,
+    choiceDCs: true
   },
   rolloff: {
     label: "ROBEAR.Request.Modes.RollOff.Label",
@@ -294,8 +298,9 @@ function refreshRequest(message, changes) {
  * @property {"skill"|"check"|"save"|"tool"|"d20"|"d100"} type
  * @property {string} [key]     Skill, ability or tool ID.
  * @property {number|null} dc
- * @property {{ type: string, key?: string }[]} [alternatives]  Other rolls the actor may make instead, against the same
- *   DC. Only in a mode with choices.
+ * @property {{ type: string, key?: string, dc?: number|null }[]} [alternatives]  Other rolls the actor may make
+ *   instead. Only in a mode with choices. In a mode with choiceDCs, an alternative may give its own DC, or null for
+ *   none; one that gives no `dc` shares the roll's.
  */
 
 /**
@@ -401,7 +406,11 @@ export function validateRequest(request) {
       const keys = getPartKeys(type);
       if ( keys ) check(keys.includes(key), "ROBEAR.Request.Invalid.Key", { type, key, keys: keys.join(", ") });
     }
-    check((part.dc ?? null) === null || Number.isNumeric(part.dc), "ROBEAR.Request.Invalid.DC", { dc: part.dc });
+    // A Team Challenge averages its rolls against one DC, so its alternatives can't have their own.
+    check(MODES[request.mode].choiceDCs || alternatives.every(a => !("dc" in a)), "ROBEAR.Request.Invalid.ChoiceDC");
+    for ( const dc of [part.dc, ...alternatives.map(a => a.dc)] ) {
+      check((dc ?? null) === null || Number.isNumeric(dc), "ROBEAR.Request.Invalid.DC", { dc });
+    }
   }
 
   const between = (n, min, max) => Number.isInteger(n) && (n >= min) && (n <= max);
@@ -466,11 +475,36 @@ export function getPartLabel({ type, key }) {
 
 /**
  * @param {RequestPart} part
- * @returns {{ type: string, key: string|null }[]}  The rolls an actor may make for this part: its own, then any
- *   alternatives.
+ * @returns {{ type: string, key: string|null, dc: number|null }[]}  The rolls an actor may make for this part: its
+ *   own, then any alternatives, each with the DC it is made against.
  */
 export function getChoices(part) {
-  return [part, ...(part.alternatives ?? [])].map(({ type, key }) => ({ type, key: key ?? null }));
+  return [part, ...(part.alternatives ?? [])].map(({ type, key }, choice) => ({
+    type, key: key ?? null, dc: getChoiceDC(part, choice)
+  }));
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {RequestPart} part
+ * @param {number} [choice=0]  0 for the part's own roll, 1 on for an alternative.
+ * @returns {number|null}  The DC that roll is made against: an alternative's own, if it gives one, or the part's.
+ */
+export function getChoiceDC(part, choice=0) {
+  const alternative = choice > 0 ? part.alternatives?.[choice - 1] : null;
+  return ((alternative && ("dc" in alternative)) ? alternative.dc : part.dc) ?? null;
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {RollRequest} request
+ * @param {RequestPart} part
+ * @returns {boolean}  Whether the part's choices each have a DC of their own, drawn beside each of them on the card.
+ */
+export function hasChoiceDCs(request, part) {
+  return !!MODES[request.mode]?.choiceDCs && !!part?.alternatives?.length;
 }
 
 /* -------------------------------------------- */
@@ -527,6 +561,8 @@ export function getRequestSubtitle(request, dc=null) {
     return localize("ROBEAR.Request.Subtitle.Divine", { count: request.range });
   }
   const label = localize(MODES[request.mode].label);
+  // Each choice's DC is listed with it, under the header.
+  if ( hasChoiceDCs(request, request.parts[0]) ) return label;
   if ( dc ) return [label, " · ", dc];
   return [label, getDCText(request, request.parts[0].dc)].filterJoin(" · ");
 }
@@ -538,7 +574,7 @@ export function getRequestSubtitle(request, dc=null) {
  * @param {number|null} dc
  * @returns {string}  The DC as this user may see it, e.g. "DC 12" or "DC ?", or nothing without one.
  */
-function getDCText(request, dc) {
+export function getDCText(request, dc) {
   if ( !Number.isNumeric(dc) ) return "";
   return localize("ROBEAR.Request.DC", { dc: request.showDC || game.user.isGM ? dc : "?" });
 }
@@ -630,21 +666,22 @@ export function getResults(message) {
     if ( !isRollByOwner(roll, actor) ) continue;
     const slot = contest ? 0 : part;
     if ( results.get(actor)[slot] ) continue;
-    const dc = request.parts[part].dc;
+    const choices = getChoices(request.parts[part]).length;
+    const chosen = (Number.isInteger(choice) && (choice >= 0) && (choice < choices)) ? choice : 0;
+    const dc = getChoiceDC(request.parts[part], chosen);
     let success = Number.isNumeric(dc) ? first.total >= dc : null;
     // A Divine Intervention roll lands in the numbers picked, which must be as many as the request allows: a wider
     // run, such as 1 to 100, can't succeed.
     if ( request.mode === "divine" ) {
       success = isPickedRange(range, request.range) && (first.total >= range.start) && (first.total <= range.end);
     }
-    const choices = getChoices(request.parts[part]).length;
     results.get(actor)[slot] = {
       message: roll,
       total: first.total,
       natural: first.d20?.results.find(r => r.active)?.result,
       visible: roll.isContentVisible,
       success,
-      choice: (Number.isInteger(choice) && (choice >= 0) && (choice < choices)) ? choice : 0,
+      choice: chosen,
       range
     };
   }
@@ -835,13 +872,13 @@ function renderRequest(message, request) {
     return card;
   }
 
-  if ( request.mode === "challenge" ) {
-    const steps = document.createElement("ol");
+  // A skill challenge lists its rolls, and a standard roll whose choices have DCs of their own lists those.
+  if ( (request.mode === "challenge") || hasChoiceDCs(request, request.parts[0]) ) {
+    const steps = document.createElement(request.mode === "challenge" ? "ol" : "ul");
     steps.className = "robear-request-steps";
-    request.parts.forEach((part, index) => {
+    request.parts.forEach((_part, index) => {
       const step = document.createElement("li");
-      const dc = game.user.isGM ? renderDCButton(message, request, index) : textElement("span", getDCText(request, part.dc));
-      step.append(getChoiceLabel(part), " ", dc);
+      step.append(...renderPartDCs(message, request, index));
       steps.append(step);
     });
     card.append(steps);
@@ -893,7 +930,9 @@ export function renderHeader(icon, title, subtitle) {
  * @returns {HTMLElement}
  */
 export function renderRequestHeader(message, request) {
-  const editDC = game.user.isGM && ["standard", "team"].includes(request.mode);
+  // A standard roll whose choices have DCs of their own lists them under the header instead.
+  const editDC = game.user.isGM && ["standard", "team"].includes(request.mode)
+    && !hasChoiceDCs(request, request.parts[0]);
   const dc = editDC ? renderDCButton(message, request, 0) : null;
   return renderHeader(MODES[request.mode].icon, getRequestTitle(request), getRequestSubtitle(request, dc));
 }
@@ -903,16 +942,36 @@ export function renderRequestHeader(message, request) {
 /**
  * @param {ChatMessage5e} message
  * @param {RollRequest} request
- * @param {number} part
- * @returns {HTMLButtonElement}  A GM button showing a part's DC, which changes it.
+ * @param {number} index  The part.
+ * @returns {(string|HTMLElement)[]}  The part's roll and DC, or, where its choices have DCs of their own, each choice
+ *   with its DC, e.g. "Dexterity Save DC 10 or Strength Save DC 15". The GM can click a DC to change it.
  */
-function renderDCButton(message, request, part) {
+function renderPartDCs(message, request, index) {
+  const part = request.parts[index];
+  const dc = choice => (game.user.isGM ? renderDCButton(message, request, index, choice)
+    : textElement("span", getDCText(request, getChoiceDC(part, choice))));
+  if ( !hasChoiceDCs(request, part) ) return [getChoiceLabel(part), " ", dc(0)];
+  const or = ` ${localize("ROBEAR.Request.Config.Or")} `;
+  return getChoices(part).flatMap((roll, choice) => [...(choice ? [or] : []), getPartLabel(roll), " ", dc(choice)]);
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {ChatMessage5e} message
+ * @param {RollRequest} request
+ * @param {number} part
+ * @param {number} [choice=0]  Which of the part's rolls, where its choices have DCs of their own.
+ * @returns {HTMLButtonElement}  A GM button showing a roll's DC, which changes it.
+ */
+function renderDCButton(message, request, part, choice=0) {
   const button = document.createElement("button");
   button.type = "button";
   button.className = "robear-request-dc-edit";
-  button.textContent = getDCText(request, request.parts[part].dc) || localize("ROBEAR.Request.EditDC.None");
+  button.textContent = getDCText(request, getChoiceDC(request.parts[part], choice))
+    || localize("ROBEAR.Request.EditDC.None");
   button.dataset.tooltipText = localize("ROBEAR.Request.EditDC.Tooltip");
-  onAsyncClick(button, () => changeDC(message, part));
+  onAsyncClick(button, () => changeDC(message, part, choice));
   return button;
 }
 
@@ -923,10 +982,11 @@ function renderDCButton(message, request, part) {
  * card is redrawn, since results are always worked out against the request as it is now.
  * @param {ChatMessage5e} message  The request message.
  * @param {number} part
+ * @param {number} [choice=0]  Which of the part's rolls, where its choices have DCs of their own.
  */
-export async function changeDC(message, part) {
+export async function changeDC(message, part, choice=0) {
   const request = message.getFlag(MODULE_ID, "request");
-  const current = request.parts[part].dc;
+  const current = getChoiceDC(request.parts[part], choice);
   const required = request.mode === "challenge";
   const { escapeHTML } = foundry.utils;
   const data = await foundry.applications.api.DialogV2.input({
@@ -955,8 +1015,10 @@ export async function changeDC(message, part) {
   }
   // Read the request again, in case it changed while the dialog was open.
   const parts = foundry.utils.deepClone(message.getFlag(MODULE_ID, "request").parts);
-  if ( parts[part].dc === dc ) return;
-  parts[part].dc = dc;
+  if ( getChoiceDC(parts[part], choice) === dc ) return;
+  const roll = choice > 0 ? parts[part].alternatives?.[choice - 1] : parts[part];
+  if ( !roll ) return;
+  roll.dc = dc;
   await message.update({ [`flags.${MODULE_ID}.request.parts`]: parts });
 }
 
@@ -1324,7 +1386,7 @@ function renderRollButton(message, request, actor, part) {
     button.disabled = true;
     try {
       // With a choice of rolls, the modifier keys are taken from the click that picks one.
-      const picked = choices.length > 1 ? await chooseRoll(actor, choices) : { choice: 0, event };
+      const picked = choices.length > 1 ? await chooseRoll(actor, request, request.parts[part]) : { choice: 0, event };
       if ( picked ) await rollForRequest(message, actor, part, picked.event, picked.choice);
     } catch(err) {
       reportError(err);
@@ -1399,7 +1461,7 @@ function renderSummary(message, request, results, team) {
     );
     return summary;
   }
-  if ( !Number.isNumeric(request.parts[0].dc) ) return;
+  if ( !getChoices(request.parts[0]).some(c => Number.isNumeric(c.dc)) ) return;
 
   // The GM decides when players see how many succeeded.
   const revealed = !!message.getFlag(MODULE_ID, "revealed");
@@ -1618,14 +1680,18 @@ async function rollDie(actor, request, die, config, messageConfig) {
 /* -------------------------------------------- */
 
 /**
- * Ask which of a part's rolls an actor makes.
+ * Ask which of a part's rolls an actor makes. Where each has a DC of its own, it is shown with the roll, as far as this
+ * user may see it.
  * @param {Actor5e} actor
- * @param {{ type: string, key: string|null }[]} choices
+ * @param {RollRequest} request
+ * @param {RequestPart} part
  * @returns {Promise<{ choice: number, event: PointerEvent }|null>}  The roll chosen, and the click that chose it, or
  *   null if the window was closed.
  */
-async function chooseRoll(actor, choices) {
+async function chooseRoll(actor, request, part) {
   const { escapeHTML } = foundry.utils;
+  const choices = getChoices(part);
+  const ownDCs = hasChoiceDCs(request, part);
   return foundry.applications.api.DialogV2.wait({
     classes: ["robear-card-dialog", "robear-choice-dialog"],
     window: {
@@ -1636,7 +1702,7 @@ async function chooseRoll(actor, choices) {
     content: `<p class="robear-card-hint">${escapeHTML(localize("ROBEAR.Request.Choose.Hint", { name: actor.name }))}</p>`,
     buttons: choices.map((roll, choice) => ({
       action: `choice${choice}`,
-      label: getPartLabel(roll),
+      label: [getPartLabel(roll), ownDCs ? getDCText(request, roll.dc) : ""].filterJoin(" · "),
       icon: "fa-solid fa-dice-d20",
       default: choice === 0,
       callback: event => ({ choice, event })

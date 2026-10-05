@@ -2,8 +2,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { actorNames, actorOwners, settingValues } from "./helpers/foundry-shims.mjs";
 import { requestMessage, rollMessage } from "./helpers/messages.mjs";
 import {
-  DIVINE_RANGE, MAX_CHOICES, MODES, createRequest, formatRun, getChallengeState, getChoiceLabel, getChoices, getGroupOutcome, getPartLabel,
-  getRequest, getRequestSubtitle, getRequestTitle, getResults, getRowGroup, isContest, poolTeamRolls, validateRequest, withDefaults
+  DIVINE_RANGE, MAX_CHOICES, MODES, createRequest, formatRun, getChallengeState, getChoiceDC, getChoiceLabel, getChoices,
+  getGroupOutcome, getPartLabel, getRequest, getRequestSubtitle, getRequestTitle, getResults, getRowGroup, hasChoiceDCs,
+  isContest, poolTeamRolls, validateRequest, withDefaults
 } from "../scripts/roll-requests.mjs";
 
 const entries = rows => rows.map(([uuid, total, natural]) => ({ uuid, total, natural }));
@@ -121,6 +122,20 @@ describe("Results from tagged roll messages", () => {
     const results = getResults(message);
     expect(results.get("A")[0]).toMatchObject({ choice: 1, success: true });
     expect(results.get("B")[0]).toMatchObject({ choice: 0, success: false });
+  });
+
+  it("scores a roll chosen from a choice against that choice's own DC", () => {
+    const part = { type: "check", key: "dex", dc: 10, alternatives: [{ type: "check", key: "str", dc: 15 }] };
+    const message = requestMessage({ mode: "standard", actors: ["A", "B", "C"], parts: [part] });
+    game.messages = [
+      rollMessage({ actor: "A", total: 11, choice: 0 }),
+      rollMessage({ actor: "B", total: 11, choice: 1 }),
+      rollMessage({ actor: "C", total: 15, choice: 1 })
+    ];
+    const results = getResults(message);
+    expect(results.get("A")[0]).toMatchObject({ choice: 0, success: true });
+    expect(results.get("B")[0]).toMatchObject({ choice: 1, success: false });
+    expect(results.get("C")[0]).toMatchObject({ choice: 1, success: true });
   });
 
   it("scores rolls already made against a DC changed since, as results are read from the request each time", () => {
@@ -373,6 +388,16 @@ describe("Checking a request before it is posted", () => {
     expect(errorFor({ ...valid.challenge, parts: [part, choice, part] })).toBeNull();
   });
 
+  it("accepts a DC of each choice's own in a standard roll or skill challenge, but not a team challenge", () => {
+    const own = { type: "check", key: "dex", dc: 10, alternatives: [{ type: "check", key: "str", dc: 15 }, { type: "d20", dc: null }] };
+    expect(errorFor({ ...valid.standard, parts: [own] })).toBeNull();
+    expect(errorFor({ ...valid.challenge, parts: [part, own, part] })).toBeNull();
+    // Its rolls are averaged against one DC.
+    expect(errorFor({ ...valid.standard, mode: "team", parts: [own] })).toBe(refusal("ChoiceDC"));
+    const bad = { ...own, alternatives: [{ type: "check", key: "str", dc: "hard" }] };
+    expect(errorFor({ ...valid.standard, parts: [bad] })).toBe(refusal("DC", { dc: "hard" }));
+  });
+
   it("refuses a choice of rolls in a contest, too many choices, or a choice dnd5e can't roll", () => {
     const alternatives = [{ type: "save", key: "str" }];
     const choices = refusal("Choices", { max: MAX_CHOICES });
@@ -595,9 +620,28 @@ describe("A choice of rolls", () => {
 
   it("lists the part's own roll first, then its alternatives", () => {
     expect(getChoices(part)).toEqual([
-      { type: "skill", key: "ath" }, { type: "save", key: "str" }, { type: "tool", key: "thief" }
+      { type: "skill", key: "ath", dc: 15 }, { type: "save", key: "str", dc: 15 }, { type: "tool", key: "thief", dc: 15 }
     ]);
-    expect(getChoices({ type: "d20", dc: null })).toEqual([{ type: "d20", key: null }]);
+    expect(getChoices({ type: "d20", dc: null })).toEqual([{ type: "d20", key: null, dc: null }]);
+  });
+
+  it("gives an alternative its own DC, or none if it gives null, and otherwise the part's", () => {
+    const own = { type: "check", key: "dex", dc: 10, alternatives: [{ type: "check", key: "str", dc: 15 }, { type: "d20", dc: null }] };
+    expect(getChoices(own).map(c => c.dc)).toEqual([10, 15, null]);
+    expect([0, 1, 2].map(choice => getChoiceDC(own, choice))).toEqual([10, 15, null]);
+    expect(getChoiceDC(part, 1)).toBe(15);
+    expect(getChoiceDC(part, 7)).toBe(15);
+  });
+
+  it("lists each choice's DC under the header, rather than one DC in the subtitle, where each has its own", () => {
+    const choices = { type: "check", key: "dex", dc: 10, alternatives: [{ type: "check", key: "str", dc: 15 }] };
+    expect(getRequestSubtitle({ mode: "standard", parts: [choices] })).toBe("Standard Roll");
+    expect(hasChoiceDCs({ mode: "standard" }, choices)).toBe(true);
+    expect(hasChoiceDCs({ mode: "challenge" }, choices)).toBe(true);
+    // A Team Challenge's choices share its DC, so it stays in the subtitle.
+    expect(hasChoiceDCs({ mode: "team" }, part)).toBe(false);
+    expect(getRequestSubtitle({ mode: "team", parts: [part] })).toBe("Team Challenge · DC 15");
+    expect(hasChoiceDCs({ mode: "standard" }, { type: "d20", dc: 15 })).toBe(false);
   });
 
   it("names every roll there is to choose from", () => {

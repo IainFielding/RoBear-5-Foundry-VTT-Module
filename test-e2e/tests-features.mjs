@@ -5,7 +5,7 @@
 
 import { MODULE_ID } from "./config.mjs";
 import {
-  assert, assertEqual, clickRoll, forceDice, postRequest, test, waitFor, waitForCard, waitForRoll
+  assert, assertEqual, clickRoll, forceDice, postRequest, rollButton, test, waitFor, waitForCard, waitForRoll
 } from "./lib/harness.mjs";
 
 const d20 = n => [n, 20];
@@ -112,6 +112,24 @@ test("indomitable (2024): offered once the GM shows a failed requested save, and
   assertEqual(await usesLeft(player, "Borin"), 1, "Indomitable uses left");
   await waitFor(player, id => !document.querySelector(`#chat .chat-log [data-message-id="${id}"] .robear-feature-button`),
     id, "the button to go once the save passes");
+});
+
+test("indomitable: a save chosen from a choice fails against its own DC, not the first roll's", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  await giveIndomitable(gm);
+  const part = { type: "save", key: "con", dc: 10, alternatives: [{ type: "save", key: "str", dc: 18 }] };
+  const id = await postRequest(ctx, { mode: "standard", parts: [part], actors: [ids.borin] });
+  await rollButton(player, id, "Borin").click();
+  const dialog = player.page.locator(".robear-choice-dialog");
+  await dialog.waitFor({ timeout: 10_000 });
+  // 12 would pass the Constitution save's DC 10, but this is the Strength save, against DC 18.
+  await forceDice(player, [d20(12)]);
+  await dialog.locator('button[data-action="choice1"]').click({ modifiers: ["Shift"] });
+  await waitForRoll(gm, id, ids.borin);
+  await waitForCard(gm, id, c => row(c, "Borin").results[0]?.classes.includes("failure"), "Borin's failed save");
+  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-reveal`).click();
+  await player.page.locator(`#chat .chat-log [data-message-id="${id}"] `
+    + `li:has(.robear-request-name:text-is("Borin")) .robear-feature-button`).waitFor({ timeout: 5000 });
 });
 
 test("indomitable (2014): rerolls a failed save from the right-click menu, with no bonus", async ({ gm, player }) => {
