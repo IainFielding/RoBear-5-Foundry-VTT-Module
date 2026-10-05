@@ -546,6 +546,10 @@
   color: var(--cc-bright);
   font-family: var(--cc-font-heading);
   letter-spacing: 0.04em;
+  /* Chat lets text break anywhere, so beside the GM's button the result was squeezed until "Success" broke in two.
+     It breaks only between words, and the text beside it wraps instead. */
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 :is(.chat-message, .robear-request-popup) .robear-request-summary.success > strong {

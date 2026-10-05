@@ -2,6 +2,14 @@
 
 All notable changes to RoBear-E.
 
+## Unreleased
+
+### Fixed
+
+- **"Success" stays in one piece on the GM's request card.** Beside the Show to players button, a Team Challenge's
+  result was squeezed until "Success" broke across two lines. The result now breaks only between words, and the
+  average beside it wraps instead.
+
 ## 2.1.0
 
 ### New

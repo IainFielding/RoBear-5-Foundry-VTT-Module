@@ -659,6 +659,35 @@ test("team challenge: a natural 20 takes the lowest roll out of the average", as
   assertEqual(row(card, "Aria").results[0].classes, ["critical"], "Aria's natural 20");
 });
 
+test("team challenge: the GM's summary keeps each word of the result whole beside the Shown button", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const id = await postRequest(ctx, { mode: "team", parts: [athletics(13)], actors: [ids.aria, ids.borin, ids.goblin] });
+  await forceDice(player, [d20(20), d20(4)]);
+  await clickRoll(player, id, "Aria", { fastForward: true });
+  await clickRoll(player, id, "Borin", { fastForward: true });
+  await forceDice(gm, [d20(11)]);
+  await clickRoll(gm, id, "Goblin", { fastForward: true });
+  await revealSummary(gm, id);
+  await waitForCard(gm, id, c => c.reveal === "Shown", "the result to be shown");
+  // A word broken across lines takes more than one line box.
+  const broken = await gm.eval(id => {
+    const summary = document.querySelector(`#chat .chat-log [data-message-id="${id}"] .robear-request-summary`);
+    const words = [];
+    for ( const strong of summary.querySelectorAll("strong") ) {
+      const text = strong.firstChild;
+      for ( const match of text.textContent.matchAll(/\S+/g) ) {
+        const range = document.createRange();
+        range.setStart(text, match.index);
+        range.setEnd(text, match.index + match[0].length);
+        const lines = new Set([...range.getClientRects()].map(r => Math.round(r.top)));
+        if ( lines.size > 1 ) words.push(match[0]);
+      }
+    }
+    return words;
+  }, id);
+  assertEqual(broken, [], "words broken across lines in the summary");
+});
+
 /* -------------------------------------------- */
 /*  Roll-Off                                    */
 /* -------------------------------------------- */
