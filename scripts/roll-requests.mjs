@@ -1324,8 +1324,10 @@ function renderResult(result, part, row, chosen=null) {
     return pill;
   }
   pill.textContent = result.total;
-  if ( result.natural === 20 ) pill.classList.add("critical");
-  if ( result.natural === 1 ) pill.classList.add("fumble");
+  if ( game.settings.get(MODULE_ID, "markNaturals") ) {
+    if ( result.natural === 20 ) pill.classList.add("critical");
+    if ( result.natural === 1 ) pill.classList.add("fumble");
+  }
   if ( result.success !== null ) pill.classList.add(result.success ? "success" : "failure");
   let tooltip = result.natural
     ? localize("ROBEAR.Request.Result.TotalWithD20", { total: result.total, natural: result.natural })

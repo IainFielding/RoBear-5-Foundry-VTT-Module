@@ -246,9 +246,20 @@ test("luck: rerolls the d20 of a check, and the new result stands", async ({ pla
  * @param {boolean} value
  */
 async function setLockNaturals(gm, player, value) {
-  await gm.eval(({ moduleId, value }) => game.settings.set(moduleId, "lockNaturals", value), { moduleId: MODULE_ID, value });
-  await waitFor(player, ({ moduleId, value }) => game.settings.get(moduleId, "lockNaturals") === value,
-    { moduleId: MODULE_ID, value }, "the setting to reach the player");
+  await setSetting(gm, player, "lockNaturals", value);
+}
+
+/**
+ * Change one of the module's world settings as the GM, and wait for it to reach the player.
+ * @param {import("./lib/session.mjs").Session} gm
+ * @param {import("./lib/session.mjs").Session} player
+ * @param {string} key
+ * @param {*} value
+ */
+async function setSetting(gm, player, key, value) {
+  await gm.eval(({ moduleId, key, value }) => game.settings.set(moduleId, key, value), { moduleId: MODULE_ID, key, value });
+  await waitFor(player, ({ moduleId, key, value }) => game.settings.get(moduleId, key) === value,
+    { moduleId: MODULE_ID, key, value }, "the setting to reach the player");
 }
 
 test("natural 1s and 20s: by default no card can be played on them", async ({ gm, player }) => {
@@ -280,7 +291,7 @@ test("natural 1s and 20s: the lock applies on a request card too", async (ctx) =
 });
 
 test("natural 1s and 20s: the total is ringed, in red or gold, and no other roll's is", async ({ player }) => {
-  for ( const [natural, kind] of [[20, "save"], [20, "skill"], [1, "save"], [1, "skill"], [19, "save"], [2, "save"]] ) {
+  for ( const [natural, kind] of [[20, "save"], [20, "skill"], [20, "attack"], [1, "save"], [1, "skill"], [1, "attack"], [19, "save"], [2, "attack"]] ) {
     await forceDice(player, [d20(natural)]);
     const id = await roll(player, "Aria", kind);
     const dice = player.page.locator(`#chat .chat-log [data-message-id="${id}"] .message-content .dice-roll`);
@@ -757,4 +768,89 @@ test("played cards: a card played on a roll the player can't see isn't shown to 
   await waitFor(gm, () => !!document.getElementById("robear-played-card"), null, "the played card on the GM's screen");
   await player.page.waitForTimeout(500);
   assertEqual(await player.eval(() => !!document.getElementById("robear-played-card")), false, "the card on the player's screen");
+});
+
+/**
+ * Cast Sacred Flame as Aria and roll her saving throw against it, as its card's Save button does, so dnd5e summarises
+ * the save inside the spell's card.
+ * @param {import("./lib/session.mjs").Session} gm
+ * @param {import("./lib/session.mjs").Session} player
+ * @returns {Promise<{ usage: string, save: string }>}  The spell card's and the save's message IDs.
+ */
+async function saveAgainstSpell(gm, player) {
+  await gm.eval(async () => {
+    const aria = game.actors.getName("Aria");
+    if ( aria.items.getName("Sacred Flame") ) return;
+    const spell = (await game.packs.get("dnd5e.spells").getDocuments({ name: "Sacred Flame" }))[0];
+    await aria.createEmbeddedDocuments("Item", [game.items.fromCompendium(spell)]);
+  });
+  await waitFor(player, () => !!game.actors.getName("Aria").items.getName("Sacred Flame"), null, "the spell to reach the player");
+  return player.eval(async () => {
+    const aria = game.actors.getName("Aria");
+    const activity = aria.items.getName("Sacred Flame").system.activities.find(a => a.type === "save");
+    const { message } = await activity.use({}, { configure: false });
+    const [roll] = await aria.rollSavingThrow({ ability: "dex", target: activity.save.dc.value }, { configure: false }, {
+      data: { system: { ...activity.messageSources, origin: message.id } }
+    });
+    return { usage: message.id, save: roll.parent?.id ?? game.messages.contents.at(-1).id };
+  });
+}
+
+/**
+ * The ring on a save summarised inside a spell's card, as a user sees it.
+ * @param {import("./lib/session.mjs").Session} session
+ * @param {{ usage: string, save: string }} ids
+ * @returns {Promise<number[]>}  The naturals ringed: [1], [20] or [].
+ */
+async function summaryMarks(session, { usage, save }) {
+  const dice = session.page.locator(
+    `#chat .chat-log [data-message-id="${usage}"] .card-summary[data-message-id="${save}"] .dice-roll`);
+  await dice.waitFor({ timeout: 5000 });
+  return dice.evaluate(el => [1, 20].filter(n => el.matches(`.robear-natural-${n}, :has(.robear-natural-${n})`)));
+}
+
+test("natural 1s and 20s: a save summarised inside a spell's card is ringed too", async ({ gm, player }) => {
+  for ( const natural of [20, 1, 12] ) {
+    await forceDice(player, [d20(natural)]);
+    const ids = await saveAgainstSpell(gm, player);
+    for ( const session of [player, gm] ) {
+      assertEqual(await summaryMarks(session, ids), [1, 20].includes(natural) ? [natural] : [],
+        `ring on a summarised save showing a natural ${natural} (${session.user})`);
+    }
+  }
+});
+
+test("natural 1s and 20s: the ring setting exists, is on by default, and turning it off removes every ring", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const setting = await gm.eval(moduleId => {
+    const s = game.settings.settings.get(`${moduleId}.markNaturals`);
+    return { config: s?.config, scope: s?.scope, default: s?.default, value: game.settings.get(moduleId, "markNaturals") };
+  }, MODULE_ID);
+  assertEqual(setting, { config: true, scope: "world", default: true, value: true }, "the setting");
+
+  await forceDice(player, [d20(20)]);
+  const attack = await roll(player, "Aria", "attack");
+  await waitFor(player, id => !!document.querySelector(`#chat .chat-log [data-message-id="${id}"] .robear-natural-20`),
+    attack, "the attack's ring");
+
+  await setSetting(gm, player, "markNaturals", false);
+  await waitFor(player, id => !document.querySelector(`#chat .chat-log [data-message-id="${id}"] .robear-natural-20`),
+    attack, "the attack's ring to go once the setting is off");
+
+  for ( const kind of ["save", "attack"] ) {
+    await forceDice(player, [d20(20)]);
+    const id = await roll(player, "Aria", kind);
+    const marked = player.page.locator(`#chat .chat-log [data-message-id="${id}"] :is(.robear-natural-1, .robear-natural-20)`);
+    await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .dice-roll`).first().waitFor({ timeout: 5000 });
+    assertEqual(await marked.count(), 0, `rings on a ${kind} with the setting off`);
+  }
+
+  await forceDice(player, [d20(1)]);
+  assertEqual(await summaryMarks(player, await saveAgainstSpell(gm, player)), [], "ring on a summarised save, setting off");
+
+  const request = await postRequest(ctx, { mode: "standard", parts: [athletics(12)], actors: [ids.aria] });
+  await forceDice(player, [d20(20)]);
+  await clickRoll(player, request, "Aria", { fastForward: true });
+  const card = await waitForCard(player, request, c => c.rows[0].results.length, "Aria's natural 20");
+  assert(!card.rows[0].results[0].classes.includes("critical"), "The request card's result is ringed with the setting off.");
 });

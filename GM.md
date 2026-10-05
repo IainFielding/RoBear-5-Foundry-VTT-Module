@@ -40,11 +40,12 @@ The compendiums sit in a **RoBear-E** folder in the Compendium sidebar. Players 
 
 Find these in **Game Settings → Configure Settings → RoBear-E**. Each one applies to the whole world.
 
-<img src="docs/images/gm-settings.webp" alt="The RoBear-E tab of Foundry's settings, listing the six settings below" width="640">
+<img src="docs/images/gm-settings.webp" alt="The RoBear-E tab of Foundry's settings, listing the settings below" width="640">
 
 | Setting | Default | What it does |
 |---|---|---|
 | **Natural 1s and 20s lock RoBear-E Cards** | On | No card can be played on a roll whose d20 shows a natural 1 or 20. Turn it off to allow Advantage and Inspiration on them. Either way, Luck can't be played on a natural 20, and nothing rerolls a natural 1. |
+| **Ring natural 1s and 20s** | On | A roll whose d20 shows a natural 20 is ringed in gold in chat, and a natural 1 in red: checks, saving throws and attacks, a save summarised inside the card of the spell that called for it, and a result on a request card. Turn it off for plain totals. |
 | **Show played cards on screen** | On | A played card's art appears in the middle of the screen for everyone who can see the roll. Chat keeps a record either way. |
 | **Show the DC to players by default** | Off | Whether **Show DC to Players** starts ticked in the request window. You can still change it for each request. |
 | **Attach rolls to the request card** | On | The rolls made for a request show on its card rather than as messages of their own, as D&D 5e does for an item's saves. Click a result to see its dice. |

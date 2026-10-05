@@ -10,6 +10,10 @@
         "Name": "Natural 1s and 20s lock RoBear-E Cards",
         "Hint": "No RoBear-E Card can be played on a roll whose d20 shows a natural 1 or 20. Turn this off to allow Advantage and Inspiration on them. A natural 1 is fixed either way: Luck, Indomitable and Relentless never reroll one, and Luck can't be played on a natural 20."
       },
+      "MarkNaturals": {
+        "Name": "Ring natural 1s and 20s",
+        "Hint": "A roll in chat whose d20 shows a natural 20 is ringed in gold, and one showing a natural 1 in red: checks, saving throws and attacks, including a save or check summarised inside the card of the spell or feature that called for it, and a result on a roll request's card."
+      },
       "ShowPlayedCards": {
         "Name": "Show played cards on screen",
         "Hint": "When a RoBear-E Card is played, its art appears in the middle of the screen for a moment, for everyone who can see the roll. Either way, chat keeps a record of it, with a thumbnail of the card."

@@ -89,7 +89,7 @@ function localize(key) {
  * The module's world settings, as a test has set them.
  * @type {Map<string, unknown>}
  */
-export const settingValues = new Map([["showDCDefault", false]]);
+export const settingValues = new Map([["showDCDefault", false], ["markNaturals", true]]);
 
 let messages = new MessageLog();
 globalThis.game = {

@@ -139,6 +139,15 @@ function registerSettings() {
     type: Boolean,
     default: true
   });
+  game.settings.register(MODULE_ID, "markNaturals", {
+    name: "ROBEAR.Settings.MarkNaturals.Name",
+    hint: "ROBEAR.Settings.MarkNaturals.Hint",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: true,
+    onChange: () => game.messages.forEach(m => ui.chat.updateMessage(m))
+  });
   game.settings.register(MODULE_ID, "showPlayedCards", {
     name: "ROBEAR.Settings.ShowPlayedCards.Name",
     hint: "ROBEAR.Settings.ShowPlayedCards.Hint",
@@ -204,14 +213,27 @@ function onRenderChatMessage(message, html) {
 
 /**
  * Mark the total of each of the message's d20 rolls that shows a natural 1 or 20: a natural 20 is ringed in gold, like
- * the Character Creator's Level Up button once the XP is there, and a natural 1 in a dull red.
+ * the Character Creator's Level Up button once the XP is there, and a natural 1 in a dull red. A save or check rolled
+ * from an activity's card is summarised inside that card, where it is marked too.
  * @param {ChatMessage5e} message
  * @param {HTMLElement} html
  */
 function markNaturals(message, html) {
+  if ( !game.settings.get(MODULE_ID, "markNaturals") ) return;
   // Rolls of other messages, summarised inside this one, aren't this message's rolls.
-  const rolls = [...html.querySelectorAll(".message-content .dice-roll")]
-    .filter(el => !el.closest(".card-summary, .robear-request"));
+  markRolls(message, [...html.querySelectorAll(".message-content .dice-roll")]
+    .filter(el => !el.closest(".card-summary, .robear-request")));
+  for ( const summary of html.querySelectorAll(".card-summary[data-message-id]") ) {
+    const child = game.messages.get(summary.dataset.messageId);
+    if ( child?.isContentVisible ) markRolls(child, [...summary.querySelectorAll(".dice-roll")]);
+  }
+}
+
+/**
+ * @param {ChatMessage5e} message
+ * @param {HTMLElement[]} rolls  The elements showing the message's rolls, in order.
+ */
+function markRolls(message, rolls) {
   if ( rolls.length !== message.rolls.length ) return;
   message.rolls.forEach((roll, i) => {
     // The classic layout's total, or the whole roll in dnd5e's compact layout, which has no separate total.
