@@ -439,6 +439,40 @@ test("standard roll: deleting a roll brings the Roll button back", async (ctx) =
   await waitForCard(player, id, c => row(c, "Aria").rollButtons === 1, "the Roll button to come back");
 });
 
+test("standard roll: the GM's Roll again button, under an attached roll's dice, lets the actor roll again", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const id = await postRequest(ctx, { mode: "standard", parts: [athletics(12)], actors: [ids.aria] });
+  await forceDice(player, [d20(3)]);
+  await clickRoll(player, id, "Aria", { fastForward: true });
+  const roll = await waitForRoll(gm, id, ids.aria);
+  await waitForCard(player, id, c => row(c, "Aria").rollButtons === 0, "the Roll button to go");
+
+  // Players open the dice too, but get no button: they can't delete the roll.
+  const card = s => s.page.locator(`#chat .chat-log [data-message-id="${id}"]`);
+  await card(player).locator(".robear-request-result.expandable").click();
+  await card(player).locator(".robear-request-roll-detail").waitFor({ timeout: 5000 });
+  assertEqual(await card(player).locator(".robear-request-roll-again").count(), 0, "Roll again buttons for the player");
+
+  await card(gm).locator(".robear-request-result.expandable").click();
+  const button = card(gm).locator(".robear-request-roll-detail .robear-request-roll-again");
+  await button.waitFor({ timeout: 5000 });
+  assertEqual(await button.getAttribute("data-tooltip-text"), "Delete this roll, so Aria can roll again.", "the tooltip");
+
+  // Cancelling keeps the roll.
+  await button.click();
+  let dialog = gm.page.locator(".application.dialog", { hasText: "Delete Aria's roll?" });
+  await dialog.waitFor({ timeout: 5000 });
+  await dialog.locator('button[data-action="no"]').click();
+  await dialog.waitFor({ state: "detached", timeout: 5000 });
+  assertEqual(await gm.eval(id => game.messages.has(id), roll.id), true, "the roll, after cancelling");
+
+  await button.click();
+  dialog = gm.page.locator(".application.dialog", { hasText: "Delete Aria's roll?" });
+  await dialog.locator('button[data-action="yes"]').click();
+  await waitFor(gm, id => !game.messages.has(id), roll.id, "the roll to be deleted");
+  await waitForCard(player, id, c => row(c, "Aria").rollButtons === 1, "the Roll button to come back");
+});
+
 test("standard roll: a player can't delete their roll to roll again", async (ctx) => {
   const { gm, player, ids } = ctx;
   const id = await postRequest(ctx, { mode: "standard", parts: [athletics(12)], actors: [ids.aria] });

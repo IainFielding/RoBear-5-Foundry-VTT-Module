@@ -4,6 +4,13 @@ All notable changes to RoBear-E.
 
 ## Unreleased
 
+### New
+
+- **The GM can let someone roll again from the request card.** Click a result to open its dice, and the GM gets a
+  **Roll again** button, which deletes the roll after asking, so the actor's Roll button comes back. With rolls
+  attached to the request card, as they are by default, the roll's own message is hidden, so before this the GM had
+  to turn that setting off to find it.
+
 ### Fixed
 
 - **"Success" stays in one piece on the GM's request card.** Beside the Show to players button, a Team Challenge's

@@ -1189,7 +1189,35 @@ function renderRollDetail(message) {
         console.error(`${MODULE_ID} | Could not draw the dice of roll message ${message.id}`, err);
       });
   }
+  if ( game.user.isGM ) detail.append(renderRollAgainButton(message));
   return detail;
+}
+
+/* -------------------------------------------- */
+
+/**
+ * A GM button to delete a roll made for a request, so its actor can roll again. With rolls attached to the request
+ * card, the roll's own message is hidden, so this is the only way to reach it.
+ * @param {ChatMessage5e} message  A roll message.
+ * @returns {HTMLButtonElement}
+ */
+function renderRollAgainButton(message) {
+  const name = fromUuidSync(message.getFlag(MODULE_ID, "requestRoll")?.actor)?.name ?? message.speaker.alias ?? "";
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "robear-request-roll-again";
+  button.dataset.tooltipText = localize("ROBEAR.Request.RollAgain.Tooltip", { name });
+  button.innerHTML = '<i class="fa-solid fa-rotate-left" inert></i>';
+  button.append(` ${localize("ROBEAR.Request.RollAgain.Label")}`);
+  onAsyncClick(button, async () => {
+    const confirmed = await foundry.applications.api.DialogV2.confirm({
+      window: { title: "ROBEAR.Request.RollAgain.Title", icon: "fa-solid fa-rotate-left" },
+      content: `<p>${foundry.utils.escapeHTML(localize("ROBEAR.Request.RollAgain.Confirm", { name }))}</p>`,
+      rejectClose: false
+    });
+    if ( confirmed ) await message.delete();
+  });
+  return button;
 }
 
 /* -------------------------------------------- */

@@ -178,9 +178,12 @@ their own. Click a result to see its dice. Notes on any cards played show under 
 - A roll only counts if it was made by you or by one of the actor's owners.
 - If the same roll is made twice, such as by you and a player clicking **Roll** at the same moment, the first one
   counts.
-- **To let someone roll again,** delete their roll's chat message, and their **Roll** button comes back. With
-  **Attach rolls to the request card** on, that message is hidden, so turn the setting off for a moment to see it.
-  Players can't delete a roll made for a request, so they can't throw away a bad roll.
+- **To let someone roll again,** click their result on the card to open its dice, then click **Roll again** and
+  confirm. Their roll is deleted and their **Roll** button comes back. A card played on that roll stays spent. With
+  **Attach rolls to the request card** off, you can also delete the roll's own chat message. Players can't delete a
+  roll made for a request, so they can't throw away a bad roll.
+
+<img src="docs/images/gm-roll-again.webp" alt="Aria's failed roll of 4 opened on the request card, showing its dice and a Roll Again button" width="300">
 
 ### Private rolls and what "hidden" means
 

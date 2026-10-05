@@ -190,8 +190,8 @@ request you still need to roll for, its window opens for you then.
 
 ### Rolling again
 
-You can't delete a roll you made for a request, so a bad roll can't be thrown away. If the GM wants you to roll again,
-they delete the roll, and your **Roll** button comes back.
+You can't delete a roll you made for a request, so a bad roll can't be thrown away. If the GM lets you roll again,
+they remove your roll from the card, and your **Roll** button comes back.
 
 ## Credits
 

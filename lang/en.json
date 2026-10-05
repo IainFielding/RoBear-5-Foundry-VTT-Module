@@ -209,6 +209,12 @@
         "ShownTooltip": "Players can see this. Click to hide it.",
         "HiddenTooltip": "Only you can see this."
       },
+      "RollAgain": {
+        "Label": "Roll again",
+        "Tooltip": "Delete this roll, so {name} can roll again.",
+        "Title": "Roll Again",
+        "Confirm": "Delete {name}'s roll? Their Roll button comes back. Any card played on this roll stays spent."
+      },
       "Flavor": {
         "Die": "{mode}: {die}",
         "Range": "{mode}: {die}, needing {numbers}"

@@ -852,3 +852,28 @@
 :is(.chat-message, .robear-request-popup) .robear-request-roll-detail .dice-tooltip {
   margin-top: 4px;
 }
+
+/* The GM's button to delete a roll so its actor can roll again, under the roll's dice. */
+:is(.chat-message, .robear-request-popup) .robear-request-roll-again {
+  display: block;
+  width: auto;
+  height: 22px;
+  min-height: 0;
+  margin: 6px 0 0 auto;
+  padding: 0 8px;
+  background: var(--cc-panel-2);
+  border: 1px solid var(--cc-line-2);
+  border-radius: 0;
+  color: var(--cc-bright);
+  font-family: var(--cc-font-heading);
+  font-size: 11px;
+  line-height: 20px;
+}
+
+:is(.chat-message, .robear-request-popup) .robear-request-roll-again i {
+  color: var(--cc-fail);
+}
+
+:is(.chat-message, .robear-request-popup) .robear-request-roll-again:hover:not(:disabled) {
+  border-color: var(--cc-fail);
+}
