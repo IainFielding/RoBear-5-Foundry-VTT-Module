@@ -1,0 +1,477 @@
+# RoBear-E: Developer Guide
+
+This guide is for macro authors, module developers and contributors. It documents RoBear-E's public API, the data it
+stores on documents, its settings and socket messages, and how the code and tests are laid out.
+
+What the module does from the table's side is in the [player guide](README.md) and the [GM Guide](GM.md). How to
+contribute (sign-off, commit messages, pull requests) is in [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Contents
+
+- [At a glance](#at-a-glance)
+- [The API](#the-api)
+  - [`requestRolls()`](#requestrolls)
+  - [`createRequest(request)`](#createrequestrequest)
+  - [The request object](#the-request-object)
+  - [Validation](#validation)
+  - [Examples](#examples)
+- [Data stored on documents](#data-stored-on-documents)
+- [Settings](#settings)
+- [Socket messages](#socket-messages)
+- [How the RoBear-E Cards are found](#how-the-robear-e-cards-are-found)
+- [Hooks and integration points](#hooks-and-integration-points)
+- [Code layout](#code-layout)
+- [Development](#development)
+
+## At a glance
+
+| | |
+|---|---|
+| Module ID | `sogrom-robear-e` |
+| Requires | Foundry VTT v14, D&D 5e 6.x (verified on 6.0.5) |
+| API | `game.modules.get("sogrom-robear-e").api`, set during `init` |
+| Flag scope | `sogrom-robear-e` |
+| Socket | `module.sogrom-robear-e` |
+| Language file | `lang/en.json`, every key under `ROBEAR` |
+
+## The API
+
+```js
+const api = game.modules.get("sogrom-robear-e").api;
+// { requestRolls, createRequest }
+```
+
+The API object is assigned in the `init` hook, so it is available from `setup` onwards, and in any macro.
+
+Only these two functions are public. The modules in `scripts/` export other helpers, which the tests import directly,
+but those are internal and may change in any release.
+
+### `requestRolls()`
+
+Opens the **Request RoBear-E Rolls** window, as the anchor button in the chat controls does. If the window is already
+open, it is brought to the front, keeping what the GM has filled in.
+
+| | |
+|---|---|
+| Returns | The `RollRequestConfig` application (an `ApplicationV2`), or `undefined` for a non-GM user. |
+| Who | GM only. For anyone else it does nothing. |
+
+```js
+game.modules.get("sogrom-robear-e").api.requestRolls();
+```
+
+### `createRequest(request)`
+
+Posts a roll request to chat without the window.
+
+| | |
+|---|---|
+| Parameters | `request`: a [request object](#the-request-object). Anything the window always fills in may be left out. |
+| Returns | `Promise<ChatMessage5e>`: the request's chat message. |
+| Throws | `Error`, with a translated message, if the user isn't a GM or the request can't be rolled. Nothing is posted. |
+
+It fills in the defaults, [validates](#validation) the request, drops any rolls (`parts`) beyond the number its mode
+uses, and creates a chat message spoken by "RoBear-E" with the request in `flags["sogrom-robear-e"].request`. Only a
+message authored by a GM is drawn as a request card, so a player can't forge one by writing the flag themselves.
+
+### The request object
+
+```ts
+interface RollRequest {
+  mode: "standard" | "team" | "challenge" | "rolloff" | "versus" | "divine";
+  parts: RequestPart[];      // the rolls: see the table below for how many
+  actors: string[];          // actor UUIDs of everyone in the request, each once
+  sides?: [string[], string[]]; // contests only: actor UUIDs on each side
+  successes?: number;        // "challenge" only: successes needed, 1–3 (default 2)
+  range?: number;            // "divine" only: how many numbers each actor picks, 1–50 (default 16)
+  showDC?: boolean;          // show the DC to players (default: the "showDCDefault" setting)
+  rollMode?: "public" | "gm"; // "gm" is a private GM roll (default "public")
+}
+
+interface RequestPart {
+  type: "skill" | "check" | "save" | "tool" | "d20" | "d6" | "d8" | "d10" | "d12" | "d100";
+  key?: string | null;       // the skill, ability or tool ID; omitted or null for a plain die
+  dc: number | null;         // null for no DC
+  alternatives?: { type: string, key?: string | null }[]; // other rolls the actor may make instead
+}
+```
+
+**Modes**
+
+| `mode` | Window label | `parts` used | `sides` | Notes |
+|---|---|---|---|---|
+| `standard` | Standard Roll | 1 | | Each actor rolls once against the DC. Allows `alternatives`. |
+| `team` | Team Challenge | 1 | | The average of everyone's totals, rounded down, against the DC. Each natural 1 removes the highest roll, each natural 20 the lowest. Allows `alternatives`. |
+| `challenge` | Skill Challenge | 3 | | Three rolls in turn, each with its own DC; `successes` of them needed. Allows `alternatives`. |
+| `rolloff` | Roll-Off | 2 (one per side) | Required, exactly one actor each | Higher total wins. An actor no player owns rolls as a private GM roll until the GM shows it. |
+| `versus` | Team vs Team | 2 (one per side) | Required, at least one actor each | Each side pooled like a Team Challenge; higher average wins. |
+| `divine` | Divine Intervention | 1, which must be `d100` | | Each actor picks `range` numbers in a row from 1 to 100, then must roll one of them. `dc` is ignored. |
+
+**Part types and keys**
+
+| `type` | `key` | Rolled with |
+|---|---|---|
+| `skill` | A key of `CONFIG.DND5E.skills`, e.g. `"ath"`, `"ste"`, `"prc"` | `actor.rollSkill` |
+| `check` | A key of `CONFIG.DND5E.abilities`, e.g. `"str"` | `actor.rollAbilityCheck` |
+| `save` | A key of `CONFIG.DND5E.abilities`, e.g. `"dex"` | `actor.rollSavingThrow` |
+| `tool` | A key of `CONFIG.DND5E.tools`, e.g. `"thief"` | `actor.rollToolCheck` |
+| `d20` | none | dnd5e's d20 test, so advantage, the roll window and the cards apply |
+| `d6` `d8` `d10` `d12` `d100` | none | A plain roll |
+
+The window offers each mode only some dice (Team vs Team offers only `d20`, for example), but `createRequest` accepts
+any of them in any mode except `divine`.
+
+**Alternatives.** In `standard`, `team` and `challenge`, a part may list up to three `alternatives`, so an actor
+chooses between up to four rolls. They share the part's `dc`. The roll message records which was made in
+`requestRoll.choice`.
+
+**Defaults.** `withDefaults` fills in a missing or `null` value for `rollMode` (`"public"`), `showDC` (the
+`showDCDefault` setting), `successes` (`2`, for `challenge`) and `range` (`16`, for `divine`). Nothing else is filled
+in.
+
+### Validation
+
+`createRequest` throws an `Error` with one of these messages (from `lang/en.json`, so they follow the user's
+language), and posts nothing:
+
+| Problem | Message |
+|---|---|
+| The user isn't a GM | Only a GM can post a roll request. |
+| `mode` isn't one of the six | Unknown kind of roll request: {mode}. |
+| `actors` isn't an array of unique, non-empty strings | A roll request's actors must be a list of actor UUIDs, each named once. |
+| `actors` is empty | A roll request needs at least one actor to roll. |
+| `rollMode` isn't `"public"` or `"gm"` | Unknown roll visibility: {rollMode}. Use "public" or "gm". |
+| A contest's `sides` aren't two non-empty arrays | Each side of a contest needs at least one actor. |
+| A `rolloff` side has more than one actor | Each side of a Roll-Off needs exactly one actor. |
+| Someone on a side isn't in `actors` | Everyone on a side of a contest must also be in the request's actors. |
+| Fewer `parts` than the mode uses | A roll request is missing a roll. |
+| `alternatives` in a mode without choices, three or more of them, or not objects | Only a Standard Roll, Team Challenge or Skill Challenge can offer a choice of rolls, and at most 4 to choose from, given as a list of alternatives. |
+| An unknown `type` | Unknown kind of roll: {type}. |
+| A `key` that dnd5e doesn't know | Unknown {type} for a roll: {key}. Use one of: {keys}. |
+| A `dc` that's neither a number nor `null` | A DC must be a number, or null for none: {dc}. |
+| `successes` not an integer from 1 to 3 | A skill challenge needs from 1 to 3 successes, not {successes}. |
+| `range` not an integer from 1 to 50 | Divine Intervention needs from 1 to 50 numbers to pick, not {range}. |
+| A `divine` part that isn't `d100` | Divine Intervention's roll is a d100, not {type}. |
+
+Actor UUIDs are checked for shape only: `createRequest` doesn't check that each actor exists.
+
+### Examples
+
+Each example assumes:
+
+```js
+const { createRequest } = game.modules.get("sogrom-robear-e").api;
+const uuid = name => game.actors.getName(name).uuid;
+const party = game.actors.filter(a => a.hasPlayerOwner && (a.type === "character")).map(a => a.uuid);
+```
+
+**Standard Roll, a DC 15 Athletics check, with the DC shown:**
+
+```js
+await createRequest({
+  mode: "standard",
+  parts: [{ type: "skill", key: "ath", dc: 15 }],
+  actors: party,
+  showDC: true
+});
+```
+
+**Standard Roll with a choice, Persuasion or Deception, as a private GM roll:**
+
+```js
+await createRequest({
+  mode: "standard",
+  parts: [{ type: "skill", key: "per", dc: 14, alternatives: [{ type: "skill", key: "dec" }] }],
+  actors: party,
+  rollMode: "gm"
+});
+```
+
+**A plain d20 with no DC:**
+
+```js
+await createRequest({ mode: "standard", parts: [{ type: "d20", dc: null }], actors: party });
+```
+
+**Team Challenge, a DC 13 Stealth check:**
+
+```js
+await createRequest({ mode: "team", parts: [{ type: "skill", key: "ste", dc: 13 }], actors: party });
+```
+
+**Skill Challenge, all three needed:**
+
+```js
+await createRequest({
+  mode: "challenge",
+  successes: 3,
+  parts: [
+    { type: "skill", key: "ath", dc: 12 },
+    { type: "skill", key: "sur", dc: 14 },
+    { type: "save", key: "con", dc: 13 }
+  ],
+  actors: party
+});
+```
+
+**Roll-Off, a player character's d100 against a monster's Athletics check:**
+
+```js
+const aria = uuid("Aria");
+const ogre = uuid("Ogre");
+await createRequest({
+  mode: "rolloff",
+  parts: [{ type: "d100", dc: null }, { type: "skill", key: "ath", dc: null }],
+  sides: [[aria], [ogre]],
+  actors: [aria, ogre]
+});
+```
+
+**Team vs Team, the party's Strength checks against the goblins':**
+
+```js
+const goblins = canvas.tokens.placeables.filter(t => t.actor?.name === "Goblin").map(t => t.actor.uuid);
+await createRequest({
+  mode: "versus",
+  parts: [{ type: "check", key: "str", dc: null }, { type: "check", key: "str", dc: null }],
+  sides: [party, goblins],
+  actors: [...party, ...goblins]
+});
+```
+
+**Divine Intervention, ten numbers each:**
+
+```js
+await createRequest({ mode: "divine", range: 10, parts: [{ type: "d100", dc: null }], actors: [uuid("Aria")] });
+```
+
+**Handling a refusal:**
+
+```js
+try {
+  await createRequest({ mode: "standard", parts: [{ type: "skill", key: "athletics", dc: 12 }], actors: party });
+} catch ( err ) {
+  ui.notifications.error(err.message); // "Unknown skill for a roll: athletics. Use one of: acr, ani, arc, …"
+}
+```
+
+## Data stored on documents
+
+Everything RoBear-E stores is in flags under `sogrom-robear-e`. Results are never stored on a request: the card works
+them out from its roll messages each time it draws.
+
+### On a request message
+
+| Flag | Type | Written by | Meaning |
+|---|---|---|---|
+| `request` | `RollRequest` | `createRequest`, or the window | The request, with defaults filled in. Only honoured on a GM's message. Changing the DC from the card rewrites `request.parts[n].dc`. |
+| `revealed` | `boolean` | The GM's **Show to players** button | Whether players see the results and summary. Unset means hidden. |
+
+### On a roll made for a request
+
+| Flag | Type | Meaning |
+|---|---|---|
+| `requestRoll.request` | `string` | The request message's ID. |
+| `requestRoll.actor` | `string` | The UUID of the actor rolled for. |
+| `requestRoll.part` | `number` | Index into `request.parts`. In a contest this is the side. |
+| `requestRoll.choice` | `number` | Which of the part's rolls was made: `0` for its own, `1` onwards for an alternative. |
+| `requestRoll.range` | `{ start: number, end: number }` | Divine Intervention only: the numbers picked. |
+
+The flag is written by whoever rolls, so the card trusts none of it. A roll only counts if its author is a GM or an
+owner of `actor`, its `part` exists, its actor is on that side in a contest, and, for Divine Intervention, its range is
+exactly `request.range` numbers within 1 to 100. If an actor has more than one roll for the same part, the earliest
+counts. The DC is never put on the roll itself, so dnd5e doesn't show players success or failure; the card scores each
+roll against the request's DC.
+
+### On any roll a card, die or feature changed
+
+| Flag | Type | Meaning |
+|---|---|---|
+| `log` | `LogEntry[]` | One entry per change, oldest first, drawn as notes under the roll. |
+
+```ts
+interface LogEntry {
+  text: string;   // e.g. "Luck: rerolled the d20 (4 → 13): 4 → 13"
+  card: string;   // the card's or feature's name
+  by: string;     // the name of the actor who played it
+  img?: string;   // a RoBear-E Card's art. A new entry with `img` is shown on screen to everyone who can see the roll.
+  icon?: string;  // Font Awesome classes, for entries without art: bonus dice and the Fighter's Indomitable
+}
+```
+
+Entries written before 2.0.0 are plain strings, and are still drawn.
+
+The roll's `rolls` are rewritten in place in the same update, so the message keeps its place in chat and dnd5e works
+out hit, miss and save results again.
+
+### On a bonus die that has been spent
+
+| Flag | Type | Meaning |
+|---|---|---|
+| `bonusUsed` | `{ target: string, sign: 1 \| -1 }` | The roll it was added to (`1`) or subtracted from (`-1`), described for its note. A message with this flag can't be spent again. |
+
+### On an actor
+
+| Flag | Type | Meaning |
+|---|---|---|
+| `advantage` | `true` | The Advantage card was played from the sheet. The next d20 test gets advantage, and the flag is cleared once that roll is confirmed. |
+
+## Settings
+
+All are world settings shown in **Configure Settings**, read with `game.settings.get("sogrom-robear-e", key)`.
+
+| Key | Type | Default | Purpose |
+|---|---|---|---|
+| `lockNaturals` | Boolean | `true` | No card can be played on a natural 1 or 20. |
+| `showPlayedCards` | Boolean | `true` | Show played cards' art on screen. |
+| `showDCDefault` | Boolean | `false` | Whether **Show DC to Players** starts ticked, and the default for `createRequest`'s `showDC`. |
+| `attachRolls` | Boolean | `true` | Draw requested rolls on the request card and hide their own messages. Changing it redraws every request and roll. |
+| `popupPlayers` | Boolean | `false` | Open a pop-up for each player in a request. |
+| `popupGM` | Boolean | `false` | Open a pop-up for the GM, for actors no player owns. |
+
+## Socket messages
+
+The manifest sets `"socket": true`, and the module listens on `module.sogrom-robear-e` from `ready`. Bonus dice use
+it: a player can add a die to a roll they can see but can't update, such as a monster's, and the active GM's client
+makes the change.
+
+| `action` | Sent by | To | Payload | Effect |
+|---|---|---|---|---|
+| `applyBonus` | The player spending the die | The active GM only | `{ source, target, sign }`: the bonus and target message IDs, and `1` or `-1` | The GM's client checks the request again as the sender, whose ID Foundry's server supplies, then applies it. With no GM online, nothing is sent and the player is warned. |
+| `bonusNotApplied` | The active GM | The sender only | `{ reason: "invalid" \| "error" }` | Warns the player that the GM refused it or couldn't apply it. The die isn't spent. |
+
+## How the RoBear-E Cards are found
+
+An item is a RoBear-E Cards feature if any of these is true:
+
+- its `system.identifier` is `robear-e`;
+- its `_stats.compendiumSource` ends with the compendium item's ID, `xFVsPIjSASjXaqUO`;
+- its name is exactly `RoBear-E Cards`.
+
+Each card is an activity on that item, with one use recovered on a long rest. The cards that change a roll are
+recognised by activity ID, falling back to the activity's name, case-insensitively:
+
+| Card | Activity IDs | Name | Rolls it can be played on |
+|---|---|---|---|
+| Inspiration | `iE0w9Rp70zne6zuJ`, `na7uWxkaPiGn00ZK`, `l1s90u72J3Q34HFN` | `inspiration - 1d6` / `1d8` / `1d10` | attack, damage, check, save, initiative |
+| Luck | `uPqHABvpmYZr0ASg` | `luck` | attack, damage, check, save, initiative, divine |
+| Advantage | `OkUWoFMxuyT5TxX7` | `advantage` | attack, check, save, initiative, divine |
+| Indomitable | `aE8dyIQUgvXfcu3M` | `indomitable` | save (a known failure) |
+| Relentless | `28kjjOyF9Suf3hkq` | `relentless` | initiative (in combat round 1) |
+
+The art for every card, including those played only from the sheet, is in `assets/images`, mapped by activity name in
+`CARD_ART` in `scripts/robear-cards.mjs`. An activity with no mapped art uses its own icon.
+
+A roll's kind comes from its chat message: dnd5e's `attack`, `damage`, `check` (or `initiative`) and `save` (not
+death saves) message types; a Divine Intervention d100 from a request; and a plain d20 made for a request, which is
+treated as a check.
+
+## Hooks and integration points
+
+RoBear-E fires no hooks of its own. It listens to these:
+
+| Hook | Script | Why |
+|---|---|---|
+| `init` | `robear-cards.mjs`, `roll-requests.mjs`, `roll-request-popup.mjs` | Register settings, and set the API. |
+| `setup` | `robear-cards.mjs` | Wrap `Item#use` (see below). |
+| `ready` | `bonus-rolls.mjs`, `roll-request-popup.mjs` | Start listening on the socket, and open pop-ups for recent requests. |
+| `dnd5e.renderChatMessage` | `robear-cards.mjs`, `roll-requests.mjs`, `bonus-rolls.mjs`, `class-features.mjs` | Add card buttons, natural 1/20 rings, notes, request cards, and the Indomitable button. |
+| `createChatMessage`, `updateChatMessage`, `deleteChatMessage` | `robear-cards.mjs`, `roll-requests.mjs`, `roll-request-popup.mjs` | Show played cards, redraw request cards, and open or close pop-ups. |
+| `preDeleteChatMessage` | `roll-requests.mjs` | Stop players deleting a roll made for a request. |
+| `getChatMessageContextOptions` | `bonus-rolls.mjs`, `class-features.mjs` | Add **Add to a roll…**, **Subtract from a roll…** and **Use Indomitable** to the right-click menu. |
+| `renderChatInput` | `roll-requests.mjs` | Add the GM's anchor button to the chat controls. |
+| `getSceneControlButtons` | `roll-requests.mjs` | Add **Request RoBear-E Rolls** to the token controls. |
+| `dnd5e.postUseActivity` | `robear-cards.mjs` | Note an Advantage card played from the sheet. |
+| `dnd5e.preRollD20TestV2`, `dnd5e.postD20TestRollConfiguration` | `robear-cards.mjs` | Apply, then clear, that pending advantage. |
+
+**`Item#use` is wrapped.** dnd5e has no hook before its list of an item's activities, so RoBear-E replaces
+`CONFIG.Item.documentClass.prototype.use` at `setup`. For a RoBear-E Cards item it opens the card window instead.
+Shift-click, or any other item, goes to the original. A module that wraps `Item#use` itself sees RoBear-E's wrapper
+as the original.
+
+**Rolls are changed in place.** A card, a bonus die or Indomitable rebuilds the message's `rolls` and updates the
+message, rather than posting a new one. A module that caches a roll message's totals should listen to
+`updateChatMessage`.
+
+**Dice So Nice.** Dice rolled by a card or by Indomitable are shown with the speaker's dice appearance, so they look
+like the roll they change.
+
+## Code layout
+
+```
+module.json           Manifest. The module ID, packs, and the dnd5e spell lists it registers.
+scripts/
+  robear-cards.mjs          The cards: finding them, the card window, playing them on rolls, played-card art,
+                            natural 1/20 rings, and helpers shared by the others (MODULE_ID, localize, reportError).
+  roll-requests.mjs         Roll requests: the API, validation, results, and drawing the request card.
+  roll-request-config.mjs   The Request RoBear-E Rolls window (ApplicationV2).
+  roll-request-popup.mjs    The roll request pop-ups.
+  bonus-rolls.mjs           Adding another feature's die to a roll, and the socket messages for it.
+  class-features.mjs        Fighter's Indomitable.
+templates/roll-request.hbs  The request window's form.
+styles/                     fonts.css (Cinzel and Spectral, shipped in assets/fonts), robear-cards.css, roll-requests.css.
+lang/en.json                Every string the module shows.
+assets/                     Card art, campaign art and fonts.
+src/packs/                  Compendium sources, as YAML. Built into packs/ (not committed).
+test/                       Unit tests (Vitest), with Foundry shims in test/helpers.
+test-e2e/                   End-to-end tests and the screenshot script, driving a real Foundry with Playwright.
+tools/                      Pack build/extract and manifest validation.
+docs/images/                Screenshots for the guides.
+```
+
+## Development
+
+### Setting up
+
+```sh
+npm install        # dev tooling only; nothing here ships in the module archive
+npm run check      # manifest validation, lint and unit tests, as CI runs them
+```
+
+Link the repository into Foundry's `Data/modules` folder as `sogrom-robear-e`, then build the compendiums. See
+[CONTRIBUTING.md](CONTRIBUTING.md#getting-set-up) for the commands.
+
+### Compendium packs
+
+The packs are committed as YAML in `src/packs/`, one file per document, and built into the LevelDB folders in
+`packs/` that Foundry reads. Close Foundry before either command.
+
+```sh
+npm run build:packs     # YAML → packs/, after cloning or pulling
+npm run extract:packs   # packs/ → YAML, after editing the packs in Foundry; then commit src/packs/
+```
+
+### Tests
+
+| Command | What it runs |
+|---|---|
+| `npm test` | Unit tests of the rules (`test/`), with Foundry shimmed. No Foundry needed. |
+| `npm run test:e2e` | End-to-end tests (`test-e2e/`) in a real Foundry, with a GM and a player in two browsers and the dice forced. |
+| `npm run test:e2e -- divine` | Only the end-to-end tests whose name contains "divine". |
+| `npm run lint` | ESLint, with no warnings allowed. |
+
+The end-to-end harness needs a local Foundry install: copy `test-e2e/config.example.mjs` to `test-e2e/config.mjs`
+and set the paths. [test-e2e/README.md](test-e2e/README.md) explains the setup, the test world and its fixtures, and
+what each file tests. Add tests for new features, and run both suites before opening a pull request.
+
+### Screenshots
+
+The images in `docs/images/` are taken from a real Foundry by `test-e2e/screenshots.mjs`, with the same harness and
+fixtures as the end-to-end tests, and forced dice, so every run takes the same pictures. Take them again after
+changing anything they show:
+
+```sh
+npm run docs:screenshots            # every screenshot
+npm run docs:screenshots -- divine  # only those whose name contains "divine"
+```
+
+They are saved as WebP at twice the screen's resolution. Add a `shot()` to the script for any new screenshot the
+guides use.
+
+### Releasing
+
+Publishing a GitHub release, tagged `v1.2.3` or `1.2.3`, runs `.github/workflows/main.yml`. It fills in the version
+and URLs in `module.json`,
+runs `npm run check`, builds the packs, and attaches `module.json` and `module.zip` to the release. The archive holds
+only what the module needs at runtime, as listed in the workflow's `zip` step; the guides other than the README, the
+screenshots and the dev tooling aren't in it. Record user-facing changes in [CHANGELOG.md](CHANGELOG.md).

@@ -1,182 +1,202 @@
 # RoBear-E
 
-A [Foundry VTT](https://foundryvtt.com/) module for the **dnd5e** system, providing custom content for the RoBear-E campaign.
+A [Foundry VTT](https://foundryvtt.com/) module for the **D&D 5e** system, made for the RoBear-E campaign. It adds
+the **RoBear-E Cards**, a deck of one-use boons you can play on your rolls. It also adds a way for the GM to ask
+the table for rolls, and some extra rules for rolls in chat.
 
-## Compatibility
+This guide is for players. If you run the game, read the **[GM Guide](GM.md)** too. If you write macros or work on the
+module, see the **[Developer Guide](DEVELOPER.md)**.
 
-- **Foundry VTT**: v14
-- **Game System**: dnd5e 6.x (verified on 6.0.5)
+<img src="docs/images/card-window.webp" alt="The RoBear-E Cards window, showing the art of every card a character still has" width="640">
 
 ## Contents
 
-This module includes the following compendium packs, organized under the "RoBear-E" folder in the compendium sidebar:
+- [Getting started](#getting-started)
+- [The RoBear-E Cards](#the-robear-e-cards)
+  - [Playing a card from your character sheet](#playing-a-card-from-your-character-sheet)
+  - [Playing a card on a roll you've already made](#playing-a-card-on-a-roll-youve-already-made)
+  - [What each card does](#what-each-card-does)
+  - [Natural 1s and 20s](#natural-1s-and-20s)
+- [Adding another feature's die to a roll](#adding-another-features-die-to-a-roll)
+- [Fighter's Indomitable](#fighters-indomitable)
+- [Answering the GM's roll requests](#answering-the-gms-roll-requests)
 
-- **Journal (RoBear-E)** — Campaign journals and spell list reference pages
-- **Spells (RoBear-E)** — Custom spells
-- **Items (RoBear-E)** — Custom items, including the RoBear-E Cards
+## Getting started
 
-## Installation
+RoBear-E needs **Foundry VTT v14** and the **D&D 5e system 6.x** (tested on 6.0.5). Your GM installs and enables it, so
+you don't have to do anything.
 
-1. In Foundry VTT, go to **Add-on Modules** and click **Install Module**.
-2. Search for "RoBear-E" or paste the manifest URL:
-   `https://github.com/IainFielding/RoBear-5-Foundry-VTT-Module/releases/latest/download/module.json`
-3. Enable the module in your world's **Manage Modules** settings.
+To have cards, your character needs the **RoBear-E Cards** feature. Your GM adds it from the **Items (RoBear-E)**
+compendium. If you can't find it on your sheet, ask them.
 
-## Using the RoBear-E Cards
+## The RoBear-E Cards
 
-Give a character the **RoBear-E Cards** feature from the Items compendium. Each card can be
-played once, and comes back after a long rest.
+Each card can be played once, and comes back after a long rest.
 
-However a card is played, its art appears in the middle of the screen for a moment, with who
-played it, for everyone who can see the roll it was played on. Click it to dismiss it early.
-Chat keeps a short record of it. The GM can turn the on-screen card off with **Show played
-cards on screen** in **Configure Settings → RoBear-E**.
+When anyone plays a card, its art appears in the middle of the screen for a moment, with the name of the character who
+played it. Everyone who can see the roll it was played on sees the card. Click the card to dismiss it early.
 
-### Playing a card from the character sheet
+<img src="docs/images/played-card.webp" alt="A played card shown large in the middle of the screen, captioned 'Aria plays Charger'" width="260">
 
-Click the RoBear-E Cards feature on the sheet. A window opens showing every card you still
-have, and clicking one plays it: its use is spent, and a short record goes to chat with the
-card's description folded away. Click the record's header to open it, or hover the small card art
-to see it full size.
-Shift-click the feature to get the standard D&D 5e list instead.
+### Playing a card from your character sheet
 
-Playing **Advantage** this way gives advantage on your next attack roll, ability check or
-saving throw.
+Click the **RoBear-E Cards** feature on your sheet. A window opens with every card you still have (spent cards aren't
+shown). Click a card to play it.
+
+The card is spent, and a short record of it goes to chat with the card's description folded away. Click the record's
+header to read the description, or hover over the small card art to see it full size.
+
+<img src="docs/images/card-chat-record.webp" alt="The chat record of a played card: the RoBear-E Cards feature, with Charger's art beside it" width="320">
+
+Playing **Advantage** this way gives you advantage on your next attack roll, ability check or saving throw.
+
+> **Tip:** Shift-click the feature to get D&D 5e's standard list of uses instead.
 
 ### Playing a card on a roll you've already made
 
-Your attack, damage, ability check, saving throw and initiative rolls get a
-**RoBear-E Card** button in chat. Click it to see only the cards that can be played on that
-roll. The chat card then updates to show the new total, and hit or miss against the target,
-or the save's success or failure, is worked out again. A note on the roll records which
-card was played and what it changed, with a thumbnail of the card; no separate message is posted,
-so the roll stays where it is in chat.
+Your attack, damage, ability check, saving throw and initiative rolls get a **RoBear-E Card** button in chat.
 
-| Card | What it does to the roll |
-|---|---|
-| **Inspiration + 1d6 / 1d8 / 1d10** | Adds the die to the roll. |
-| **Luck** | Rerolls the dice and you must use the new result: the d20 (both d20s with advantage or disadvantage), or all the damage dice. Can't be played on a natural 1 or 20. |
-| **Advantage** | Rolls a second d20 and keeps the higher. On a roll with disadvantage, the two cancel out and the roll becomes a straight roll. |
-| **Indomitable** | Rerolls a failed saving throw, and you must use the new result. Can't be played on a natural 1. |
-| **Relentless** | Rerolls initiative at the start of combat and keeps the higher total, and updates the combat tracker. Can't be played on a natural 1. |
+<img src="docs/images/roll-card-button.webp" alt="An Athletics check of 9 in chat, with a RoBear-E Card button under it" width="320">
 
-Charger, Reaction Surge, Extra Strike, Mind's Eye and Divine Intervention are played from the
-sheet. Divine Intervention's chat card has a button to roll its 1d100.
+Click it to see the cards you can play on that roll. Cards that can't be played on it aren't offered.
+
+<img src="docs/images/card-chooser.webp" alt="The card chooser for a roll, offering Advantage, Luck and the three Inspiration cards" width="560">
+
+Choose a card and the roll updates in place, so it keeps its spot in chat. It shows the new total, and works out hit or
+miss against the target, or a save's success or failure, again. A note on the roll records which card was played and
+what it changed.
+
+<img src="docs/images/card-played-on-roll.webp" alt="The Athletics check, now 16 and a success, with a note: Inspiration + 1d8: added 1d8 (7): 9 + 7 = 16" width="320">
 
 A few things to know:
 
-- **A natural 1 is fixed.** Nothing rerolls it: not Luck, Indomitable or Relentless, and not the
-  Fighter's Indomitable feature either.
-- **Natural 1s and 20s lock the cards.** By default no card can be played on a roll whose d20 shows a
-  natural 1 or 20. A natural 20 is ringed in gold in chat, and a natural 1 in red. The GM can turn
-  the lock off in **Configure Settings → RoBear-E** to allow Advantage and Inspiration on them; Luck
-  still can't be played on a natural 20, and nothing rerolls a natural 1 either way. Rolls without a
-  d20, such as damage, aren't affected.
-- Cards can only be played on your own rolls.
+- You can only play cards on your own rolls.
 - Death saving throws can't be changed, because D&D 5e has already applied the result.
-- Play a card on a damage roll **before** applying the damage — damage that's already been
-  applied isn't changed.
+- Play a card on a damage roll **before** the damage is applied. Damage that has already been applied isn't changed.
 
-## Adding Another Feature's Die to a Roll
+### What each card does
 
-Some features roll a die to change someone else's roll, like **Bardic Inspiration** or **Cutting
-Words**. Roll the die as usual, then right-click its message in chat and choose **Add to a roll…**
-or **Subtract from a roll…**. Pick the roll from the list, newest first, and the die's total is
-added or taken off. The roll updates its total and, where it can, whether it hits or saves. A
-roll request's card updates too.
+| Card | What it does |
+|---|---|
+| **Inspiration + 1d6 / 1d8 / 1d10** | Adds the die to the roll. |
+| **Luck** | Rerolls the dice, and you must use the new result. On a d20 roll it rerolls the d20 (or both d20s, with advantage or disadvantage); on a damage roll, all the damage dice. Can't be played on a natural 1 or 20. |
+| **Advantage** | Rolls a second d20 and keeps the higher. On a roll with disadvantage, the two cancel out and it becomes a straight roll. Played from the sheet, it gives advantage on your next roll. |
+| **Indomitable** | Rerolls a failed saving throw, and you must use the new result. Can't be played on a natural 1. |
+| **Relentless** | Rerolls your initiative at the start of combat (in the first round), keeps the higher total, and updates the combat tracker. Can't be played on a natural 1. |
+| **Charger**, **Reaction Surge**, **Extra Strike**, **Mind's Eye** | Played from the sheet. The card's text says what it lets you do; the module records that you played it, and you play out the effect at the table. |
+| **Divine Intervention** | Played from the sheet. Its chat card has a button to roll its 1d100. Your GM may also call for it as a roll request: see [Divine Intervention](#divine-intervention). |
 
-- The roll changed gets a note, such as "Bardic Inspiration: added 1d6 (4): 9 → 13", and the die's
-  own message says which roll it went to. A die can only be used once.
+### Natural 1s and 20s
+
+A natural 20 is ringed in gold in chat, and a natural 1 in red.
+
+<img src="docs/images/naturals.webp" alt="Two Athletics checks: a natural 20 with a glowing gold ring, and a natural 1 with a red ring" width="320">
+
+- **A natural 1 is fixed.** Nothing rerolls it: not Luck, Indomitable or Relentless, and not the Fighter's Indomitable
+  feature either.
+- **By default, natural 1s and 20s lock the cards.** No card can be played on a roll whose d20 shows a natural 1 or
+  20. Your GM can turn the lock off, which allows Advantage and Inspiration on them. Even then, Luck can't be played on
+  a natural 20, and nothing rerolls a natural 1.
+- Rolls without a d20, such as damage, aren't affected.
+
+## Adding another feature's die to a roll
+
+Some features roll a die to change someone else's roll, such as **Bardic Inspiration** or **Cutting Words**. Roll the
+die as usual. Then right-click its message in chat and choose **Add to a roll…** or **Subtract from a roll…**.
+
+<img src="docs/images/bonus-menu.webp" alt="The right-click menu on a Bardic Inspiration roll, with Add to a roll and Subtract from a roll at the bottom" width="320">
+
+Pick the roll from the list, newest first.
+
+<img src="docs/images/bonus-chooser.webp" alt="A window titled Add Bardic Inspiration asking which roll to add 1d6 (5) to" width="420">
+
+The die's total is added to that roll, or taken off it. The roll updates its total and, where it can, whether it hits
+or saves. If the roll was made for a roll request, the request's card updates too. Both messages get a note, so
+everyone can see where the die went.
+
+<img src="docs/images/bonus-applied.webp" alt="Aria's Athletics check, now 16, noting Bardic Inspiration added 1d6 (5); below it Borin's die, noting it was added to Aria's check" width="320">
+
+- A die can only be used once.
 - Only the player who rolled the die can spend it, or the GM.
-- Any roll you can see can be chosen. If it isn't yours to change, such as a monster's roll for
-  Cutting Words, the GM's Foundry applies it, so a GM needs to be logged in. If the GM's Foundry
-  can't apply it, you're told, and the die isn't spent.
-- Checks, saves, attacks and damage can't be used as the die.
+- You can choose any roll you can see. If it isn't yours to change, such as a monster's roll for Cutting Words, the
+  GM's Foundry makes the change, so a GM needs to be logged in. If it can't be done, you're told, and the die isn't
+  spent.
+- Checks, saves, attacks and damage rolls can't be used as the die.
 
 ## Fighter's Indomitable
 
-A Fighter with the **Indomitable** feature from D&D 5e's compendiums can use it on a saving throw
-they failed. A **Use Indomitable** button appears on the failed save, and on its row of a roll
-request's card. It's also in the save's right-click menu. Using it spends one use of the feature
-and rerolls the d20, and the new roll stands. A natural 1 is fixed, so it isn't offered on one. A save
-rolled with no DC can't be known to have failed, so the button is offered on it either way, and asks
-you to confirm before spending a use.
-If the reroll can't be saved, the use is given back. Under the 2024 rules the reroll also adds the
-Fighter's level; under the 2014 rules it doesn't. The save notes what happened, e.g.
-"Indomitable: rerolled the d20 (6 → 8) + 9 (Fighter level): 6 → 17".
+A Fighter with the **Indomitable** feature from D&D 5e's compendiums can use it on a saving throw they failed. A
+**Use Indomitable** button appears on the failed save. It's also in the save's right-click menu.
 
-Indomitable, the feature or the RoBear-E card, is only offered once the player can see the save
-failed. On a roll request whose result the GM hasn't shown yet, it appears when the GM clicks
-**Show to players**, since offering it any sooner would tell the player they failed.
+<img src="docs/images/indomitable-button.webp" alt="A failed Constitution save of 6, with a Use Indomitable button" width="320">
 
-This is the class feature. The RoBear-E **Indomitable** card is separate and works as before. Neither
-can reroll a natural 1.
+Using it spends one use of the feature and rerolls the d20, and the new roll stands. Under the 2024 rules the reroll
+also adds your Fighter level; under the 2014 rules it doesn't. The save notes what happened:
 
-## Asking for Rolls (GM)
+<img src="docs/images/indomitable-used.webp" alt="The save is now 17 and a success, with a note: Indomitable: rerolled the d20 (6 → 8) + 9 (Fighter level): 6 → 17" width="320">
 
-As GM, click the **anchor** button in the chat controls, or **Request RoBear-E Rolls** in the
-token controls. Pick the kind of roll, the roll and DC, and who rolls. Actors of any selected
-tokens are ticked for you; otherwise the player characters are. A macro can open the same
-window with `game.modules.get("sogrom-robear-e").api.requestRolls()`.
+- A natural 1 is fixed, so Indomitable isn't offered on one.
+- On a save with no DC, it's offered whether or not you failed, and asks you to confirm before spending a use.
+- If the reroll can't be saved, the use is given back.
+- On a roll request whose result the GM hasn't shown yet, the button appears only once the GM shows it. Offering it
+  sooner would tell you that you failed.
 
-The request is posted to chat. Each player gets a **Roll** button for their own characters, and
-the GM can roll for anyone. The rolls are ordinary D&D 5e rolls, so they get the
-**RoBear-E Card** button too, and the request updates as soon as a card changes a roll. You can
-also play a card from the anchor button next to a result on the request.
+This is the class feature. The RoBear-E **Indomitable** card is separate, and you can use either.
 
-| Kind | How it works |
-|---|---|
-| **Standard Roll** | Each actor rolls once against the DC: a d20 by default, or a d6, d8, d10, d12 or d100, or any check, save or tool. Only the GM sees who passed and how many succeeded until they click **Show to players** (and they can hide it again). The DC isn't sent with the rolls, so dnd5e doesn't show it on them either. |
-| **Skill Challenge** | Three rolls in turn, each with its own roll and DC. Choose how many successes are needed (2 of 3 by default). An actor stops as soon as they have passed or failed. Only the GM sees who passed until they click **Show to players**; players see "Done" once they have finished. |
-| **Team Challenge** | Everyone rolls, and the average (rounded down) is compared to the DC. Only the GM sees the result, and which rolls were removed, until they click **Show to players**. Each natural 1 removes the highest roll from the pool, and each natural 20 removes the lowest. If that would leave no rolls, 1s and 20s cancel out in pairs, and at least one roll always stays in the pool. |
-| **Roll-Off** | Pick a Challenger and an Opponent, player characters or NPCs, and a roll for each: a d20 (the default for both), a d6, d8, d10, d12 or d100, or any check, save or tool. The higher total wins, and an equal total is a tie. An NPC's roll is a private GM roll: players see "?" until the GM clicks **Show NPC roll** on the request (and they can hide it again). |
-| **Team vs Team** | Pick a Players team and an NPCs team, and a roll for each (a d20 by default, or any check, save or tool). Each team's rolls are pooled like a Team Challenge, 1s and 20s included, and the higher average wins. |
-| **Divine Intervention** | Set how many numbers each player picks, from 1 to 50 (16 by default). When a player clicks **Roll**, they pick that many numbers in a row from 1 to 100, then roll a d100, and must roll one of their numbers. **Advantage** rolls a second d100 and keeps whichever lands in their numbers, and **Luck** rerolls the d100. |
+## Answering the GM's roll requests
 
-The actor lists offer the selected tokens, the player characters and the tokens on the current
-scene.
+Sometimes the GM asks the table for rolls. A request card appears in chat, with a **Roll** button beside each of your
+characters. Click it to make the roll. dnd5e's usual roll window opens, so advantage and your other options work as
+normal.
 
-**A choice of rolls.** In a Standard Roll, Team Challenge or Skill Challenge, click **+** beside a
-roll to let each actor make another roll instead, such as Athletics or Acrobatics, or Persuasion or
-Deception. Up to four rolls can be offered, and they share the DC. Clicking **Roll** then asks which
-one to make, and hovering a result shows which was chosen.
+<img src="docs/images/request-player.webp" alt="A request card for an Athletics check, DC 15: Aria has rolled 17, and Borin has a Roll button" width="320">
 
-**Changing the DC.** On a Standard Roll, Team Challenge or Skill Challenge card, the GM can click the
-DC to change it, or clear it for no DC (each Skill Challenge roll must keep one). Rolls already made
-are scored again against the new DC.
+Once you've rolled, your result shows on the card. The anchor button beside it plays a RoBear-E Card on that roll.
+Click the result itself to see its dice.
 
-A few things to know:
+Things you may see on a request card:
 
-- A roll only counts on the request if it was made by the GM or by one of the actor's owners.
-- To let someone roll again, the GM deletes their roll message and the **Roll** button comes back.
-  Players can't delete a roll made for a request, so a bad roll can't be thrown away.
-- If the same roll is made twice, such as by the GM and a player clicking **Roll** at the same moment,
-  the first one counts.
-- With **Show DC to Players** off, players see "DC ?", and the DC is kept off their roll so
-  D&D 5e doesn't show success or failure on it. It starts off for each new request; the GM can
-  make it start on with **Show the DC to players by default** in **Configure Settings → RoBear-E**.
-- With **Private GM Roll**, each player sees only their own results. In a private Roll-Off,
-  **Show NPC roll** shows the NPC's roll only to the players in the request, not to everyone.
-- **What "hidden" means.** The DC, and results the GM hasn't shown yet, are hidden on the chat card,
-  but they still reach every player's Foundry as part of the request. A player who opens the browser
-  console can read them. That's how Foundry shares chat messages, so treat the hiding as keeping the
-  table honest rather than keeping a secret.
-- **Attached rolls.** By default the rolls made for a request don't get messages of their own: they show on
-  the request card, as dnd5e does for an item's saves. Click a result to see its dice; notes on any cards
-  played show under the row. Turn off **Attach rolls to the request card** in **Configure Settings →
-  RoBear-E** to give each roll its own message again.
-- **Pop-ups.** Two settings in **Configure Settings → RoBear-E**, both off by default, open a window
-  when a request is posted. **Pop up roll requests for players** gives each player a window with a
-  **Roll** button for each of their characters in the request. **Pop up roll requests for the GM**
-  does the same for the GM, for NPCs and any other actor no player owns. The window closes once
-  everything in it is rolled. A player who joins within 30 minutes of a request they still need to
-  roll for gets its window too. The chat card works either way.
+- **DC ?** The GM is keeping the DC to themselves.
+- **No success or failure yet.** The GM sees who passed straight away, and shows the table when they're ready.
+- **Done**, in a Skill Challenge. You've finished your rolls, and the GM will show how you did.
+- **?** in a Roll-Off against an NPC. The NPC's roll stays secret until the GM shows it.
+
+### Choosing which roll to make
+
+The GM may let you choose between several rolls, such as Athletics or Acrobatics. The card then lists them all, and
+clicking **Roll** asks which one you want to make.
+
+<img src="docs/images/choice-dialog.webp" alt="A request for an Athletics Check or Acrobatics Check, and the window asking Aria which to make" width="600">
+
+### Divine Intervention
+
+In a Divine Intervention request, clicking **Roll** first asks you to pick a run of numbers from 1 to 100. Hover over a
+number to preview the run that starts there, and click to pick it. Then roll the d100: you need to roll one of your
+numbers.
+
+<img src="docs/images/divine-picker.webp" alt="A grid of the numbers 1 to 100 with 40 to 55 picked, and the text You need 40–55" width="400">
+
+The **Advantage** card rolls a second d100 and keeps whichever lands in your numbers, and **Luck** rerolls the d100.
+
+<img src="docs/images/divine-result.webp" alt="The Divine Intervention card: Aria picked 40–55 and rolled 47. The gods answer" width="320">
+
+### Pop-up windows
+
+Your GM may have requests pop up in a window, with a **Roll** button for each of your characters in it. The window
+closes once everything in it is rolled, and the chat card works as well. If you join the game within 30 minutes of a
+request you still need to roll for, its window opens for you then.
+
+<img src="docs/images/popup-player.webp" alt="A Roll Request window for a Dexterity save, DC 13, with Roll buttons for Aria and Borin" width="380">
+
+### Rolling again
+
+You can't delete a roll you made for a request, so a bad roll can't be thrown away. If the GM wants you to roll again,
+they delete the roll, and your **Roll** button comes back.
 
 ## Credits
 
-The artwork in this module are the work of
-[Captain RoBear](https://www.youtube.com/channel/UCktEYryPmattKzrpo0_kGzA) and remain
-the property of their creator.
+The card art is the work of [Captain RoBear](https://www.youtube.com/channel/UCktEYryPmattKzrpo0_kGzA) and remains
+the property of its creator. The Cinzel and Spectral fonts are under the SIL Open Font License (see `assets/fonts`).
 
 ## Author
 
@@ -184,4 +204,4 @@ the property of their creator.
 
 ## License
 
-Free for personal use — see [LICENSE](LICENSE).
+Free for personal use. See [LICENSE](LICENSE).
