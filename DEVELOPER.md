@@ -326,12 +326,6 @@ out hit, miss and save results again.
 |---|---|---|
 | `bonusUsed` | `{ target: string, sign: 1 \| -1 }` | The roll it was added to (`1`) or subtracted from (`-1`), described for its note. A message with this flag can't be spent again. |
 
-### On a critical damage roll for a natural 1
-
-| Flag | Type | Meaning |
-|---|---|---|
-| `naturalOne` | `true` | The damage roll was rolled again as critical, for the targets in its `system.targets`, whose saves against its card (`system.origin`) show a natural 1. Its trays start those targets at full damage, ignoring resistances, and the card's other damage trays start them at none. A critical damage roll without this flag, such as one the caster chose, counts for every target. |
-
 ### On an actor
 
 | Flag | Type | Meaning |
@@ -346,7 +340,7 @@ All are world settings shown in **Configure Settings**, read with `game.settings
 |---|---|---|---|
 | `lockNaturals` | Boolean | `true` | No card can be played on a natural 1 or 20. |
 | `markNaturals` | Boolean | `true` | Ring natural 1s and 20s in chat and on request cards. |
-| `naturalSaves` | Boolean | `true` | A natural 20 on a save against an activity's damage takes none, and a natural 1 takes it as a critical hit, ignoring resistances. |
+| `naturalSaves` | Boolean | `true` | A natural 20 on a save against an activity's damage takes none, and a natural 1 takes its maximum, ignoring resistances and immunities. |
 | `showPlayedCards` | Boolean | `true` | Show played cards' art on screen. |
 | `showDCDefault` | Boolean | `false` | Whether **Show DC to Players** starts ticked, and the default for `createRequest`'s `showDC`. |
 | `attachRolls` | Boolean | `true` | Draw requested rolls on the request card and hide their own messages. Changing it redraws every request and roll. |
@@ -400,7 +394,8 @@ RoBear-E fires no hooks of its own. It listens to these:
 | `setup` | `robear-cards.mjs`, `natural-saves.mjs` | Wrap `Item#use` and the damage tray's target options (see below). |
 | `ready` | `bonus-rolls.mjs`, `roll-request-popup.mjs` | Start listening on the socket, and open pop-ups for recent requests. |
 | `dnd5e.renderChatMessage` | `robear-cards.mjs`, `roll-requests.mjs`, `bonus-rolls.mjs`, `class-features.mjs` | Add card buttons, natural 1/20 rings, notes, request cards, and the Indomitable button. |
-| `createChatMessage`, `updateChatMessage`, `deleteChatMessage` | `robear-cards.mjs`, `roll-requests.mjs`, `roll-request-popup.mjs`, `natural-saves.mjs` | Show played cards, redraw request cards, open or close pop-ups, and roll critical damage for a natural 1 on a save. |
+| `createChatMessage`, `updateChatMessage`, `deleteChatMessage` | `robear-cards.mjs`, `roll-requests.mjs`, `roll-request-popup.mjs` | Show played cards, redraw request cards, and open or close pop-ups. |
+| `dnd5e.preCalculateDamage` | `natural-saves.mjs` | Raise each damage to its maximum for a target the damage tray marked for it. |
 | `preDeleteChatMessage` | `roll-requests.mjs` | Stop players deleting a roll made for a request. |
 | `getChatMessageContextOptions` | `bonus-rolls.mjs`, `class-features.mjs` | Add **Add to a roll…**, **Subtract from a roll…** and **Use Indomitable** to the right-click menu. |
 | `renderChatInput` | `roll-requests.mjs` | Add the GM's anchor button to the chat controls. |
@@ -415,9 +410,10 @@ as the original.
 
 **The damage tray's target options are wrapped.** dnd5e's `damage-application` element keeps each target's options
 private, so RoBear-E replaces its `getTargetOptions` at `setup`, giving each target its starting options the first time
-the tray asks for them: a multiplier of `0` for a natural 20 (or, on the ordinary roll, for a natural 1 with a critical
-roll of its own), and on the critical roll a multiplier of `1` with the target's resistances in `ignore.resistance`.
-Changes the GM makes in the tray afterwards are left alone.
+the tray asks for them. A natural 20 gets a multiplier of `0`. A natural 1 gets a multiplier of `1`, its resistances and
+immunities in `ignore.resistance` and `ignore.immunity`, and `{ "sogrom-robear-e": { maximize: true } }`, which the
+`dnd5e.preCalculateDamage` hook reads to put each damage at its maximum, from the message's rolls evaluated with
+`maximize`. Changes the GM makes in the tray afterwards are left alone.
 
 **Rolls are changed in place.** A card, a bonus die or Indomitable rebuilds the message's `rolls` and updates the
 message, rather than posting a new one. A module that caches a roll message's totals should listen to

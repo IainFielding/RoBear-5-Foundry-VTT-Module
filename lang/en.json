@@ -16,7 +16,7 @@
       },
       "NaturalSaves": {
         "Name": "Natural 1s and 20s on saves against damage",
-        "Hint": "A creature whose saving throw against a spell's or feature's damage shows a natural 20 takes no damage. One whose save shows a natural 1 takes the damage as a critical hit, rolled with the game system's critical damage settings, and ignoring its resistances. Both start that way in the damage's Apply tray, where the GM can still change them."
+        "Hint": "A creature whose saving throw against a spell's or feature's damage shows a natural 20 takes no damage. One whose save shows a natural 1 takes the most the damage could do, every die at its highest (36 from 6d6), ignoring its resistances and immunities. Both start that way in the damage's Apply tray, where the GM can still change them."
       },
       "ShowPlayedCards": {
         "Name": "Show played cards on screen",
@@ -46,9 +46,6 @@
       "Save": "Save",
       "Initiative": "Initiative",
       "Divine": "Divine Intervention"
-    },
-    "NaturalSaves": {
-      "Flavor": "{flavor}: critical, natural 1 on the save ({names})"
     },
     "Cards": {
       "NoneLeft": "You have no RoBear-E Cards left until your next long rest.",

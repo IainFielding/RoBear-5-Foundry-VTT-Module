@@ -1,34 +1,35 @@
 /**
  * End-to-end tests for natural 1s and 20s on saves against a spell's damage: a natural 20 takes no damage, and a
- * natural 1 takes the damage as a critical hit, rolled with dnd5e's critical settings, ignoring resistances.
+ * natural 1 takes the damage's maximum, every die at its highest, ignoring resistances and immunities.
  *
- * The Goblin casts Sacred Flame at Aria and Borin, who have tokens on the scene for these tests. Aria resists radiant
- * damage. The player rolls their saves against the spell's card, as its Save button does, and the GM rolls its damage
- * as the Damage button does. What each target takes is read from dnd5e's damage tray, then applied through it.
+ * The Goblin casts Sacred Flame at Aria and Borin, who have tokens on the scene for these tests. The player rolls their
+ * saves against the spell's card, as its Save button does, and the GM rolls its damage as the Damage button does. What
+ * each target takes is read from dnd5e's damage tray, then applied through it.
  */
 
 import { MODULE_ID } from "./config.mjs";
-import { assert, assertEqual, forceDice, test, waitFor } from "./lib/harness.mjs";
+import { assertEqual, forceDice, test, waitFor } from "./lib/harness.mjs";
 
 const d20 = n => [n, 20];
 const d8 = n => [n, 8];
 
 /**
- * Put Aria and Borin on the scene with 50 hit points, Aria resisting radiant damage, and have the Goblin cast Sacred
- * Flame at them.
+ * Put Aria and Borin on the scene with 50 hit points, give Aria a defence against radiant damage, and have the Goblin
+ * cast Sacred Flame at them.
  * @param {import("./lib/session.mjs").Session} gm
  * @param {import("./lib/session.mjs").Session} player
+ * @param {"dr"|"di"} defence  Whether Aria resists radiant damage or is immune to it.
  * @returns {Promise<{ usage: string, aria: string, borin: string }>}  The spell card's ID, and the targets' token UUIDs.
  */
-async function castAtAriaAndBorin(gm, player) {
-  const cast = await gm.eval(async () => {
+async function castAtAriaAndBorin(gm, player, defence = "dr") {
+  const cast = await gm.eval(async defence => {
     const scene = game.scenes.active;
     const tokens = {};
     for ( const [name, x] of [["Aria", 300], ["Borin", 500]] ) {
       const actor = game.actors.getName(name);
       await actor.update({
         "system.attributes.hp": { value: 50, max: 50 },
-        "system.traits.dr.value": name === "Aria" ? ["radiant"] : []
+        [`system.traits.${defence}.value`]: name === "Aria" ? ["radiant"] : []
       });
       const [token] = await scene.createEmbeddedDocuments("Token", [{ name, actorId: actor.id, actorLink: true, x, y: 100 }]);
       tokens[name] = token;
@@ -42,7 +43,7 @@ async function castAtAriaAndBorin(gm, player) {
     const targets = Object.values(tokens).map(t => ({ actor: t.actor.uuid, ac: 10, img: t.texture.src, name: t.name, token: t.uuid }));
     const { message } = await activity.use({}, { configure: false }, { data: { system: { targets } } });
     return { usage: message.id, aria: tokens.Aria.uuid, borin: tokens.Borin.uuid };
-  });
+  }, defence);
   await waitFor(player, ({ usage, aria, borin }) => !!game.messages.get(usage) && !!fromUuidSync(aria) && !!fromUuidSync(borin),
     cast, "the spell card and tokens to reach the player");
   return cast;
@@ -57,9 +58,10 @@ async function cleanUp(gm) {
     const scene = game.scenes.active;
     // With the canvas off, Foundry throws once the tokens are deleted, but they are gone from the server by then.
     await scene.deleteEmbeddedDocuments("Token", scene.tokens.filter(t => t.name !== "Goblin").map(t => t.id)).catch(() => {});
-    for ( const name of ["Aria", "Borin"] ) await game.actors.getName(name).update({ "system.traits.dr.value": [] });
+    for ( const name of ["Aria", "Borin"] ) {
+      await game.actors.getName(name).update({ "system.traits.dr.value": [], "system.traits.di.value": [] });
+    }
     if ( !game.settings.get(moduleId, "naturalSaves") ) await game.settings.set(moduleId, "naturalSaves", true);
-    if ( game.settings.get("dnd5e", "criticalDamageMaxDice") ) await game.settings.set("dnd5e", "criticalDamageMaxDice", false);
   }, MODULE_ID);
 }
 
@@ -89,39 +91,24 @@ async function rollSave(gm, player, usage, token, natural, dc = 15) {
 }
 
 /**
- * Roll the spell's damage as the GM, as the card's Damage button does.
+ * Roll the spell's damage as the GM, as the card's Damage button does, every d8 showing 2.
  * @param {import("./lib/session.mjs").Session} gm
  * @param {string} usage
- * @param {number} face  What each d8 shows.
- * @returns {Promise<string>}  The damage message's ID.
+ * @returns {Promise<{ id: string, total: number, maximum: number }>}  The damage message's ID, its total, and its
+ *                                                                     total with every die at its highest.
  */
-async function rollDamage(gm, usage, face) {
-  await forceDice(gm, Array.from({ length: 12 }, () => d8(face)));
+async function rollDamage(gm, usage) {
+  await forceDice(gm, Array.from({ length: 12 }, () => d8(2)));
   return gm.eval(async usage => {
     const card = game.messages.get(usage);
-    const [roll] = await card.getAssociatedActivity().rollDamage({}, { configure: false }, {
+    const rolls = await card.getAssociatedActivity().rollDamage({}, { configure: false }, {
       data: { system: { origin: usage, targets: card.system.targets } }
     });
-    return roll.parent.id;
+    const dice = rolls.flatMap(r => r.dice);
+    const total = rolls.reduce((t, r) => t + r.total, 0);
+    const maximum = total + dice.reduce((t, d) => t + (d.number * d.faces) - d.total, 0);
+    return { id: rolls[0].parent.id, total, maximum };
   }, usage);
-}
-
-/**
- * The damage messages on the spell's card.
- * @param {import("./lib/session.mjs").Session} session
- * @param {string} usage
- * @returns {Promise<{ id: string, critical: boolean, flagged: boolean, dice: number, faces: number, total: number, targets: string[] }[]>}
- */
-function damages(session, usage) {
-  return session.eval(({ usage, moduleId }) => game.messages.get(usage).getAssociatedRolls("damage").map(m => ({
-    id: m.id,
-    critical: m.rolls[0].isCritical,
-    flagged: !!m.getFlag(moduleId, "naturalOne"),
-    dice: m.rolls[0].dice.reduce((n, d) => n + d.number, 0),
-    faces: m.rolls[0].dice[0]?.faces,
-    total: m.rolls.reduce((t, r) => t + r.total, 0),
-    targets: m.system.targets.map(t => t.name)
-  })), { usage, moduleId: MODULE_ID });
 }
 
 /**
@@ -131,7 +118,8 @@ function damages(session, usage) {
  * @param {import("./lib/session.mjs").Session} session
  * @param {string} id  The damage message's ID.
  * @param {string[]} tokens  The targets' token UUIDs.
- * @returns {Promise<Record<string, { damage: number, ignoring: string[] }>>}  Keyed by target name.
+ * @returns {Promise<Record<string, { damage: number, ignoring: string[] }>>}  Keyed by target name. `ignoring` lists
+ *                                                                             each ignored defence as "change:type".
  */
 async function tray(session, id, tokens) {
   const selector = `#chat .chat-log [data-message-id="${id}"] damage-application`;
@@ -139,7 +127,8 @@ async function tray(session, id, tokens) {
   return session.page.locator(selector).first().evaluate((el, tokens) => Object.fromEntries(tokens.map(uuid => {
     const token = fromUuidSync(uuid);
     const options = el.getMergedOptions(uuid);
-    return [token.name, { damage: el.calculateDamage(token.actor, options).total, ignoring: [...(options.ignore?.resistance ?? [])] }];
+    const ignoring = ["resistance", "immunity"].flatMap(c => [...(options.ignore?.[c] ?? [])].map(t => `${c}:${t}`));
+    return [token.name, { damage: el.calculateDamage(token.actor, options).total, ignoring }];
   })), tokens);
 }
 
@@ -165,80 +154,61 @@ function hitPoints(session) {
   return session.eval(() => Object.fromEntries(["Aria", "Borin"].map(n => [n, game.actors.getName(n).system.attributes.hp.value])));
 }
 
-test("natural saves: a natural 1 takes critical damage past resistance, and a natural 20 takes none", async ({ gm, player }) => {
+/**
+ * @param {import("./lib/session.mjs").Session} session
+ * @param {string} usage
+ * @returns {Promise<number>}  How many damage rolls the spell's card has.
+ */
+function damageRolls(session, usage) {
+  return session.eval(usage => game.messages.get(usage).getAssociatedRolls("damage").length, usage);
+}
+
+test("natural saves: a natural 1 takes maximum damage past resistance, and a natural 20 takes none", async ({ gm, player }) => {
   try {
     const { usage, aria, borin } = await castAtAriaAndBorin(gm, player);
     // Aria's 1 beats DC 1 and Borin's 20 misses DC 25, so only the naturals decide their damage.
     await rollSave(gm, player, usage, aria, 1, 1);
     await rollSave(gm, player, usage, borin, 20, 25);
-    const id = await rollDamage(gm, usage, 4);
-
-    await waitFor(gm, ({ usage, moduleId }) => game.messages.get(usage).getAssociatedRolls("damage")
-      .some(m => m.getFlag(moduleId, "naturalOne")), { usage, moduleId: MODULE_ID }, "the critical damage roll");
-    const all = await damages(gm, usage);
-    assertEqual(all.length, 2, "damage rolls on the card");
-    const [normal, critical] = [all.find(d => d.id === id), all.find(d => d.flagged)];
-    assert(!normal.critical, "The GM's own damage roll was made critical.");
-    assertEqual({ critical: critical.critical, dice: critical.dice, faces: critical.faces, targets: critical.targets },
-      { critical: true, dice: normal.dice * 2, faces: 8, targets: ["Aria"] }, "the critical roll");
-    assertEqual(critical.total, normal.dice * 2 * 4, "the critical roll's total, every d8 showing 4");
+    const { id, total, maximum } = await rollDamage(gm, usage);
+    assertEqual(total < maximum, true, `the roll (${total}) below its maximum (${maximum})`);
 
     assertEqual(await tray(gm, id, [aria, borin]), {
-      Aria: { damage: 0, ignoring: [] }, Borin: { damage: 0, ignoring: [] }
-    }, "the ordinary roll's tray");
-    assertEqual(await tray(gm, critical.id, [aria]), { Aria: { damage: critical.total, ignoring: ["radiant"] } },
-      "the critical roll's tray");
-
+      Aria: { damage: maximum, ignoring: ["resistance:radiant"] }, Borin: { damage: 0, ignoring: [] }
+    }, "the tray");
     await apply(gm, id, [aria, borin]);
-    await apply(gm, critical.id, [aria]);
-    assertEqual(await hitPoints(gm), { Aria: 50 - critical.total, Borin: 50 }, "hit points once both trays are applied");
+    assertEqual(await hitPoints(gm), { Aria: 50 - maximum, Borin: 50 }, "hit points once the tray is applied");
+    await gm.page.waitForTimeout(300);
+    assertEqual(await damageRolls(gm, usage), 1, "damage rolls on the card: no second roll");
   } finally {
     await cleanUp(gm);
   }
 });
 
-test("natural saves: a natural 1 rolled after the damage gets its critical roll then", async ({ gm, player }) => {
+test("natural saves: a natural 1 takes maximum damage past immunity", async ({ gm, player }) => {
   try {
-    const { usage, aria, borin } = await castAtAriaAndBorin(gm, player);
+    const { usage, aria, borin } = await castAtAriaAndBorin(gm, player, "di");
+    await rollSave(gm, player, usage, aria, 1);
     await rollSave(gm, player, usage, borin, 9);
-    const id = await rollDamage(gm, usage, 4);
-    await gm.page.waitForTimeout(500);
-    assertEqual((await damages(gm, usage)).length, 1, "damage rolls before any natural 1");
-
-    await forceDice(gm, Array.from({ length: 12 }, () => d8(3)));
-    await rollSave(gm, player, usage, aria, 1);
-    await waitFor(gm, ({ usage, moduleId }) => game.messages.get(usage).getAssociatedRolls("damage")
-      .some(m => m.getFlag(moduleId, "naturalOne")), { usage, moduleId: MODULE_ID }, "the critical damage roll");
-    const all = await damages(gm, usage);
-    const normal = all.find(d => d.id === id);
-    const critical = all.find(d => d.flagged);
-    assertEqual(critical.targets, ["Aria"], "the critical roll's targets");
+    const { id, total, maximum } = await rollDamage(gm, usage);
     assertEqual(await tray(gm, id, [aria, borin]), {
-      Aria: { damage: 0, ignoring: [] }, Borin: { damage: normal.total, ignoring: [] }
-    }, "the ordinary roll's tray, Borin failing with a 9");
-
-    // Another save shown to the GM doesn't roll the critical damage again.
-    await rollSave(gm, player, usage, borin, 5);
-    await gm.page.waitForTimeout(800);
-    assertEqual((await damages(gm, usage)).filter(d => d.flagged).length, 1, "critical rolls after another save");
+      Aria: { damage: maximum, ignoring: ["immunity:radiant"] }, Borin: { damage: total, ignoring: [] }
+    }, "the tray, Borin failing with a 9");
   } finally {
     await cleanUp(gm);
   }
 });
 
-test("natural saves: the critical roll follows dnd5e's maximise critical dice setting", async ({ gm, player }) => {
+test("natural saves: a natural 1 rolled after the damage takes its maximum too", async ({ gm, player }) => {
   try {
-    await gm.eval(() => game.settings.set("dnd5e", "criticalDamageMaxDice", true));
     const { usage, aria } = await castAtAriaAndBorin(gm, player);
+    const { id, total, maximum } = await rollDamage(gm, usage);
+    assertEqual(await tray(gm, id, [aria]), { Aria: { damage: Math.trunc(total / 2), ignoring: [] } },
+      "the tray before Aria's save, her resistance halving it");
     await rollSave(gm, player, usage, aria, 1);
-    const id = await rollDamage(gm, usage, 2);
-    await waitFor(gm, ({ usage, moduleId }) => game.messages.get(usage).getAssociatedRolls("damage")
-      .some(m => m.getFlag(moduleId, "naturalOne")), { usage, moduleId: MODULE_ID }, "the critical damage roll");
-    const all = await damages(gm, usage);
-    const normal = all.find(d => d.id === id);
-    const critical = all.find(d => d.flagged);
-    assertEqual({ dice: critical.dice, total: critical.total }, { dice: normal.dice, total: normal.dice * (2 + 8) },
-      "the critical roll: the dice rolled once more, plus their maximum");
+    await waitFor(gm, ({ id, aria, maximum }) => {
+      const el = document.querySelector(`#chat .chat-log [data-message-id="${id}"] damage-application`);
+      return el?.calculateDamage(fromUuidSync(aria).actor, el.getMergedOptions(aria)).total === maximum;
+    }, { id, aria, maximum }, "the tray to give Aria the maximum");
   } finally {
     await cleanUp(gm);
   }
@@ -258,11 +228,7 @@ test("natural saves: with the setting off, a natural 1 or 20 changes no damage",
     const { usage, aria, borin } = await castAtAriaAndBorin(gm, player);
     await rollSave(gm, player, usage, aria, 1);
     await rollSave(gm, player, usage, borin, 20, 25);
-    const id = await rollDamage(gm, usage, 4);
-    await gm.page.waitForTimeout(800);
-    const all = await damages(gm, usage);
-    assertEqual(all.length, 1, "damage rolls with the setting off");
-    const total = all[0].total;
+    const { id, total } = await rollDamage(gm, usage);
     assertEqual(await tray(gm, id, [aria, borin]), {
       Aria: { damage: Math.trunc(total / 2), ignoring: [] }, Borin: { damage: total, ignoring: [] }
     }, "the tray with the setting off");
