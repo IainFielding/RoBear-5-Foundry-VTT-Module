@@ -470,38 +470,6 @@ pages:
       modifiedTime: 1751576451140
       lastModifiedBy: aIghMfAvO7zq37fB
     _key: '!journal.pages!BVdkdIYdnb44D6Un.cwUj2iZGd4TDUwQ0'
-  - sort: 1275000
-    name: Vecna - Eve of Ruin
-    type: image
-    _id: 899fbozg59zsI0i6
-    system: {}
-    title:
-      show: true
-      level: 2
-    image:
-      caption: ''
-    text:
-      format: 1
-    video:
-      controls: true
-      volume: 0.5
-    src: modules/sogrom-robear-e/assets/artwork/vecna_party_upscale.webp
-    category: null
-    ownership:
-      default: -1
-      aIghMfAvO7zq37fB: 3
-    flags: {}
-    _stats:
-      compendiumSource: null
-      duplicateSource: null
-      exportSource: null
-      coreVersion: '13.346'
-      systemId: dnd5e
-      systemVersion: 5.0.4
-      createdTime: 1751576471435
-      modifiedTime: 1751576535773
-      lastModifiedBy: aIghMfAvO7zq37fB
-    _key: '!journal.pages!BVdkdIYdnb44D6Un.899fbozg59zsI0i6'
 folder: null
 categories: []
 sort: 0
