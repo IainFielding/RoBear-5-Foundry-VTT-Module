@@ -326,6 +326,12 @@ out hit, miss and save results again.
 |---|---|---|
 | `bonusUsed` | `{ target: string, sign: 1 \| -1 }` | The roll it was added to (`1`) or subtracted from (`-1`), described for its note. A message with this flag can't be spent again. |
 
+### On a critical damage roll for a natural 1
+
+| Flag | Type | Meaning |
+|---|---|---|
+| `naturalOne` | `true` | The damage roll was rolled again as critical, for the targets in its `system.targets`, whose saves against its card (`system.origin`) show a natural 1. Its trays start those targets at full damage, ignoring resistances, and the card's other damage trays start them at none. A critical damage roll without this flag, such as one the caster chose, counts for every target. |
+
 ### On an actor
 
 | Flag | Type | Meaning |
@@ -339,6 +345,8 @@ All are world settings shown in **Configure Settings**, read with `game.settings
 | Key | Type | Default | Purpose |
 |---|---|---|---|
 | `lockNaturals` | Boolean | `true` | No card can be played on a natural 1 or 20. |
+| `markNaturals` | Boolean | `true` | Ring natural 1s and 20s in chat and on request cards. |
+| `naturalSaves` | Boolean | `true` | A natural 20 on a save against an activity's damage takes none, and a natural 1 takes it as a critical hit, ignoring resistances. |
 | `showPlayedCards` | Boolean | `true` | Show played cards' art on screen. |
 | `showDCDefault` | Boolean | `false` | Whether **Show DC to Players** starts ticked, and the default for `createRequest`'s `showDC`. |
 | `attachRolls` | Boolean | `true` | Draw requested rolls on the request card and hide their own messages. Changing it redraws every request and roll. |
@@ -389,10 +397,10 @@ RoBear-E fires no hooks of its own. It listens to these:
 | Hook | Script | Why |
 |---|---|---|
 | `init` | `robear-cards.mjs`, `roll-requests.mjs`, `roll-request-popup.mjs` | Register settings, and set the API. |
-| `setup` | `robear-cards.mjs` | Wrap `Item#use` (see below). |
+| `setup` | `robear-cards.mjs`, `natural-saves.mjs` | Wrap `Item#use` and the damage tray's target options (see below). |
 | `ready` | `bonus-rolls.mjs`, `roll-request-popup.mjs` | Start listening on the socket, and open pop-ups for recent requests. |
 | `dnd5e.renderChatMessage` | `robear-cards.mjs`, `roll-requests.mjs`, `bonus-rolls.mjs`, `class-features.mjs` | Add card buttons, natural 1/20 rings, notes, request cards, and the Indomitable button. |
-| `createChatMessage`, `updateChatMessage`, `deleteChatMessage` | `robear-cards.mjs`, `roll-requests.mjs`, `roll-request-popup.mjs` | Show played cards, redraw request cards, and open or close pop-ups. |
+| `createChatMessage`, `updateChatMessage`, `deleteChatMessage` | `robear-cards.mjs`, `roll-requests.mjs`, `roll-request-popup.mjs`, `natural-saves.mjs` | Show played cards, redraw request cards, open or close pop-ups, and roll critical damage for a natural 1 on a save. |
 | `preDeleteChatMessage` | `roll-requests.mjs` | Stop players deleting a roll made for a request. |
 | `getChatMessageContextOptions` | `bonus-rolls.mjs`, `class-features.mjs` | Add **Add to a roll…**, **Subtract from a roll…** and **Use Indomitable** to the right-click menu. |
 | `renderChatInput` | `roll-requests.mjs` | Add the GM's anchor button to the chat controls. |
@@ -404,6 +412,12 @@ RoBear-E fires no hooks of its own. It listens to these:
 `CONFIG.Item.documentClass.prototype.use` at `setup`. For a RoBear-E Cards item it opens the card window instead.
 Shift-click, or any other item, goes to the original. A module that wraps `Item#use` itself sees RoBear-E's wrapper
 as the original.
+
+**The damage tray's target options are wrapped.** dnd5e's `damage-application` element keeps each target's options
+private, so RoBear-E replaces its `getTargetOptions` at `setup`, giving each target its starting options the first time
+the tray asks for them: a multiplier of `0` for a natural 20 (or, on the ordinary roll, for a natural 1 with a critical
+roll of its own), and on the critical roll a multiplier of `1` with the target's resistances in `ignore.resistance`.
+Changes the GM makes in the tray afterwards are left alone.
 
 **Rolls are changed in place.** A card, a bonus die or Indomitable rebuilds the message's `rolls` and updates the
 message, rather than posting a new one. A module that caches a roll message's totals should listen to
@@ -424,6 +438,7 @@ scripts/
   roll-request-popup.mjs    The roll request pop-ups.
   bonus-rolls.mjs           Adding another feature's die to a roll, and the socket messages for it.
   class-features.mjs        Fighter's Indomitable.
+  natural-saves.mjs         Natural 1s and 20s on saves against an activity's damage.
 templates/roll-request.hbs  The request window's form.
 styles/                     fonts.css (Cinzel and Spectral, shipped in assets/fonts), robear-cards.css, roll-requests.css.
 lang/en.json                Every string the module shows.

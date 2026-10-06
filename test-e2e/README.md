@@ -69,6 +69,11 @@ the end of both consoles.
   left" warning and shift-click. Played cards are shown only to those who can see the roll, and a note's art
   and name are never run as HTML.
 
+- `tests-natural-saves.mjs`: natural 1s and 20s on saves against a spell's damage. A natural 20 takes none, and a
+  natural 1 gets its own critical damage roll, whether it comes before the damage or after it, rolled once, under
+  dnd5e's critical settings, and applied past resistance. With the setting off, damage is left to dnd5e. The canvas is
+  off in the harness, so the damage tray is asked about each token rather than listing them itself.
+
 The rules themselves also have unit tests in `../test`, which `npm test` runs without Foundry.
 
 ## Screenshots
