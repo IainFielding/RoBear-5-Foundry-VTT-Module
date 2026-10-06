@@ -148,6 +148,15 @@ function registerSettings() {
     default: true,
     onChange: () => game.messages.forEach(m => ui.chat.updateMessage(m))
   });
+  game.settings.register(MODULE_ID, "naturalSaves", {
+    name: "ROBEAR.Settings.NaturalSaves.Name",
+    hint: "ROBEAR.Settings.NaturalSaves.Hint",
+    scope: "world",
+    config: true,
+    type: Boolean,
+    default: true,
+    onChange: () => game.messages.filter(m => m.type === "damage").forEach(m => ui.chat.updateMessage(m))
+  });
   game.settings.register(MODULE_ID, "showPlayedCards", {
     name: "ROBEAR.Settings.ShowPlayedCards.Name",
     hint: "ROBEAR.Settings.ShowPlayedCards.Hint",

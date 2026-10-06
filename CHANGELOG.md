@@ -6,6 +6,15 @@ All notable changes to RoBear-E.
 
 ### New
 
+- **Natural 1s and 20s on a save against damage.** When a spell or feature calls for a save and deals damage, a
+  creature whose save shows a natural 20 takes no damage, and one whose save shows a natural 1 takes the damage as a
+  critical hit, ignoring its resistances. The critical damage is rolled for that creature alone, from the damage
+  already rolled, so the spell's level and anything added in the damage window carry over, and D&D 5e's critical
+  settings (maximise the extra dice, double the modifiers) decide the dice. It is rolled as soon as both the damage
+  and the natural 1 are in, whichever comes first, by whoever rolled the damage (or a GM, if they have left). Both
+  rules start that way in the damage's **Apply** tray, where the GM can still change them before applying it. The
+  **Natural 1s and 20s on saves against damage** setting, on by default, turns this off.
+
 - **Each choice of roll can have its own DC.** In a Standard Roll or Skill Challenge, a roll offered as a choice now
   has a DC of its own, such as a DC 10 Dexterity save or a DC 15 Strength save. A new choice starts with the roll's
   DC. The card lists each choice with its DC, the GM can change each one, and players see them on the buttons they

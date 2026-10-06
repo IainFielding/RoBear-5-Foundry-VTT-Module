@@ -14,6 +14,10 @@
         "Name": "Ring natural 1s and 20s",
         "Hint": "A roll in chat whose d20 shows a natural 20 is ringed in gold, and one showing a natural 1 in red: checks, saving throws and attacks, including a save or check summarised inside the card of the spell or feature that called for it, and a result on a roll request's card."
       },
+      "NaturalSaves": {
+        "Name": "Natural 1s and 20s on saves against damage",
+        "Hint": "A creature whose saving throw against a spell's or feature's damage shows a natural 20 takes no damage. One whose save shows a natural 1 takes the damage as a critical hit, rolled with the game system's critical damage settings, and ignoring its resistances. Both start that way in the damage's Apply tray, where the GM can still change them."
+      },
       "ShowPlayedCards": {
         "Name": "Show played cards on screen",
         "Hint": "When a RoBear-E Card is played, its art appears in the middle of the screen for a moment, for everyone who can see the roll. Either way, chat keeps a record of it, with a thumbnail of the card."
@@ -42,6 +46,9 @@
       "Save": "Save",
       "Initiative": "Initiative",
       "Divine": "Divine Intervention"
+    },
+    "NaturalSaves": {
+      "Flavor": "{flavor}: critical, natural 1 on the save ({names})"
     },
     "Cards": {
       "NoneLeft": "You have no RoBear-E Cards left until your next long rest.",

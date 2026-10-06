@@ -100,6 +100,10 @@ rings off with the **Ring natural 1s and 20s** setting.
   20. Your GM can turn the lock off, which allows Advantage and Inspiration on them. Even then, Luck can't be played on
   a natural 20, and nothing rerolls a natural 1.
 - Rolls without a d20, such as damage, aren't affected.
+- **On a save against a spell's or feature's damage, a natural 20 takes no damage, and a natural 1 takes critical
+  damage.** The critical damage is rolled for you alone, as a critical hit under your table's D&D 5e settings, and
+  your resistances don't halve it. Your GM can turn this off with the **Natural 1s and 20s on saves against damage**
+  setting, and can still change what you take before applying the damage.
 
 ## Adding another feature's die to a roll
 

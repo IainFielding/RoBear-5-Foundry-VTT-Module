@@ -19,6 +19,7 @@ import "./tests-cards.mjs";
 import "./tests-popup.mjs";
 import "./tests-bonus.mjs";
 import "./tests-features.mjs";
+import "./tests-natural-saves.mjs";
 
 const filter = process.argv.slice(2).find(a => !a.startsWith("--"));
 
