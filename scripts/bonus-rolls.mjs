@@ -2,11 +2,11 @@
  * Bonus rolls: a die rolled by another feature, such as Bardic Inspiration or Cutting Words, can be added to or
  * subtracted from a roll already in chat. Right-click the bonus roll's message and choose the roll to change.
  *
- * The roll changed is rewritten in place, as a RoBear-E Card's Inspiration does, so its total, hit or miss, and any
+ * The roll changed is rewritten in place, as a Hero Card's Inspiration does, so its total, hit or miss, and any
  * roll request's result are worked out again. The bonus roll is marked as used, so it can only be spent once.
  */
 
-import { MODULE_ID, findCombatant, finalize, getRollKind, localize, reportError, sumTotals } from "./robear-cards.mjs";
+import { MODULE_ID, findCombatant, finalize, getRollKind, localize, reportError, sumTotals } from "./hero-cards.mjs";
 
 /**
  * How many of the latest chat messages are offered as rolls to change.
@@ -23,12 +23,12 @@ const spending = new Set();
  * How each kind of roll is named when a roll message has no flavor of its own.
  */
 const ROLL_KINDS = {
-  attack: "ROBEAR.RollKind.Attack",
-  damage: "ROBEAR.RollKind.Damage",
-  check: "ROBEAR.RollKind.Check",
-  save: "ROBEAR.RollKind.Save",
-  initiative: "ROBEAR.RollKind.Initiative",
-  divine: "ROBEAR.RollKind.Divine"
+  attack: "STT.RollKind.Attack",
+  damage: "STT.RollKind.Damage",
+  check: "STT.RollKind.Check",
+  save: "STT.RollKind.Save",
+  initiative: "STT.RollKind.Initiative",
+  divine: "STT.RollKind.Divine"
 };
 
 /* -------------------------------------------- */
@@ -47,7 +47,7 @@ Hooks.once("ready", () => game.socket.on(`module.${MODULE_ID}`, onSocketMessage)
 function onGetContextOptions(_app, options) {
   for ( const sign of [1, -1] ) {
     options.push({
-      label: localize(sign > 0 ? "ROBEAR.Bonus.MenuAdd" : "ROBEAR.Bonus.MenuSubtract"),
+      label: localize(sign > 0 ? "STT.Bonus.MenuAdd" : "STT.Bonus.MenuSubtract"),
       icon: sign > 0 ? "fa-solid fa-plus" : "fa-solid fa-minus",
       visible: li => canSpend(game.messages.get(li.dataset.messageId), game.user),
       onClick: (_event, li) => chooseTarget(game.messages.get(li.dataset.messageId), sign).catch(reportError)
@@ -66,9 +66,9 @@ function onRenderChatMessage(message, html) {
   const used = message.getFlag(MODULE_ID, "bonusUsed");
   if ( !used ) return;
   const note = document.createElement("p");
-  note.className = "supplement robear-card-log robear-bonus-used";
+  note.className = "supplement stt-card-log stt-bonus-used";
   note.innerHTML = `<i class="fa-solid ${used.sign > 0 ? "fa-plus" : "fa-minus"}" inert></i>`;
-  note.append(localize(used.sign > 0 ? "ROBEAR.Bonus.AddedTo" : "ROBEAR.Bonus.SubtractedFrom", { target: used.target }));
+  note.append(localize(used.sign > 0 ? "STT.Bonus.AddedTo" : "STT.Bonus.SubtractedFrom", { target: used.target }));
   html.querySelector(".message-content")?.append(note);
 }
 
@@ -84,7 +84,7 @@ function onSocketMessage(data, userId) {
   switch ( data?.action ) {
     case "applyBonus": return onApplyBonusRequest(data, userId);
     case "bonusNotApplied": return ui.notifications.warn(localize(data.reason === "invalid"
-      ? "ROBEAR.Bonus.GMRefused" : "ROBEAR.Bonus.GMFailed"));
+      ? "STT.Bonus.GMRefused" : "STT.Bonus.GMFailed"));
   }
 }
 
@@ -201,7 +201,7 @@ function describeTarget(message, { total=true }={}) {
  * @returns {string}  The bonus's name: its feature's, or the message's flavor.
  */
 function getBonusLabel(source) {
-  return source.getAssociatedActivity?.()?.item?.name || source.flavor || localize("ROBEAR.Bonus.DefaultLabel");
+  return source.getAssociatedActivity?.()?.item?.name || source.flavor || localize("STT.Bonus.DefaultLabel");
 }
 
 /* -------------------------------------------- */
@@ -214,35 +214,35 @@ function getBonusLabel(source) {
 async function chooseTarget(source, sign) {
   const targets = getTargets(source);
   if ( !targets.length ) {
-    ui.notifications.warn(localize("ROBEAR.Bonus.NoTargets"));
+    ui.notifications.warn(localize("STT.Bonus.NoTargets"));
     return;
   }
   const { escapeHTML } = foundry.utils;
-  const keys = sign > 0 ? { title: "ROBEAR.Bonus.AddTitle", hint: "ROBEAR.Bonus.AddHint" }
-    : { title: "ROBEAR.Bonus.SubtractTitle", hint: "ROBEAR.Bonus.SubtractHint" };
+  const keys = sign > 0 ? { title: "STT.Bonus.AddTitle", hint: "STT.Bonus.AddHint" }
+    : { title: "STT.Bonus.SubtractTitle", hint: "STT.Bonus.SubtractHint" };
   const buttons = targets.map((m, i) => `
-    <button type="button" class="robear-bonus-choice" data-index="${i}">
+    <button type="button" class="stt-bonus-choice" data-index="${i}">
       <span>${escapeHTML(describeTarget(m))}</span>
     </button>
   `).join("");
 
   let chosen;
   await foundry.applications.api.DialogV2.wait({
-    classes: ["robear-card-dialog", "robear-bonus-dialog"],
+    classes: ["stt-card-dialog", "stt-bonus-dialog"],
     window: {
       title: localize(keys.title, { label: getBonusLabel(source) }),
       icon: `fa-solid ${sign > 0 ? "fa-plus" : "fa-minus"}`
     },
     position: { width: 420 },
     content: `
-      <p class="robear-card-hint">${escapeHTML(localize(keys.hint, {
+      <p class="stt-card-hint">${escapeHTML(localize(keys.hint, {
         formula: source.rolls[0].formula, total: source.rolls[0].total
       }))}</p>
-      <div class="robear-bonus-list">${buttons}</div>
+      <div class="stt-bonus-list">${buttons}</div>
     `,
-    buttons: [{ action: "cancel", label: "ROBEAR.Common.Cancel", icon: "fa-solid fa-xmark" }],
+    buttons: [{ action: "cancel", label: "STT.Common.Cancel", icon: "fa-solid fa-xmark" }],
     render: (_event, dialog) => {
-      for ( const el of dialog.element.querySelectorAll(".robear-bonus-choice") ) {
+      for ( const el of dialog.element.querySelectorAll(".stt-bonus-choice") ) {
         el.addEventListener("click", () => {
           chosen = Number(el.dataset.index);
           dialog.close();
@@ -262,12 +262,12 @@ async function chooseTarget(source, sign) {
   }
   const gm = game.users.activeGM;
   if ( !gm ) {
-    ui.notifications.warn(localize("ROBEAR.Bonus.NoGM"));
+    ui.notifications.warn(localize("STT.Bonus.NoGM"));
     return;
   }
   game.socket.emit(`module.${MODULE_ID}`, { action: "applyBonus", source: source.id, target: target.id, sign },
     { recipients: [gm.id] });
-  ui.notifications.info(localize("ROBEAR.Bonus.SentToGM"));
+  ui.notifications.info(localize("STT.Bonus.SentToGM"));
 }
 
 /* -------------------------------------------- */
@@ -334,11 +334,11 @@ async function addBonus(source, target, sign) {
   finalize(rolls[0]);
 
   const label = getBonusLabel(source);
-  const detail = localize(sign > 0 ? "ROBEAR.Bonus.Log.Added" : "ROBEAR.Bonus.Log.Subtracted", {
+  const detail = localize(sign > 0 ? "STT.Bonus.Log.Added" : "STT.Bonus.Log.Subtracted", {
     formula: bonus.formula, bonus: bonus.total, before, after: sumTotals(rolls)
   });
   const entry = {
-    text: localize("ROBEAR.Cards.Log.Entry", { card: label, detail }),
+    text: localize("STT.Cards.Log.Entry", { card: label, detail }),
     card: label,
     icon: sign > 0 ? "fa-solid fa-plus" : "fa-solid fa-minus",
     by: source.getAssociatedActor()?.name ?? source.speaker.alias ?? ""

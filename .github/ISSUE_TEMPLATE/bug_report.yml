@@ -1,5 +1,5 @@
 name: Bug report
-description: A RoBear-E card, item or compendium entry doesn't work as expected.
+description: A Hero Card, item or compendium entry doesn't work as expected.
 title: "[Bug]: "
 labels: ["bug"]
 body:
@@ -29,9 +29,9 @@ body:
       label: Steps to reproduce
       description: The exact clicks needed to see the problem. Say which card you played and what kind of roll it was on (attack, damage, check, save or initiative), and whether it had advantage or disadvantage.
       placeholder: |
-        1. Give a character the RoBear-E Cards feature
+        1. Give a character the Hero Cards feature
         2. Target a goblin and make an attack roll with advantage
-        3. Click RoBear-E Card on the roll and choose Luck
+        3. Click Hero Card on the roll and choose Luck
         4. Only one d20 is rerolled
     validations:
       required: true
@@ -42,7 +42,7 @@ body:
       label: Where does it happen?
       description: Which part of the module is involved? Pick the closest match.
       options:
-        - RoBear-E Card button on a chat roll
+        - Hero Card button on a chat roll
         - Card picker window
         - Inspiration (adding a die)
         - Luck, Indomitable or Relentless (rerolls)
@@ -75,7 +75,7 @@ body:
   - type: input
     id: module-version
     attributes:
-      label: RoBear-E version
+      label: Sogrom's Table Tools version
       description: Shown in the Manage Modules list next to the module name.
       placeholder: "1.0.0"
     validations:

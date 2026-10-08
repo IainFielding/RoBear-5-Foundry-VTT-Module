@@ -116,7 +116,7 @@ async function validateStyleUrls(manifest) {
 
 /**
  * Every language file must parse, and every string key the scripts and templates use must be in each of them: a
- * missing key shows in the game as the key itself, such as "ROBEAR.Request.Roll".
+ * missing key shows in the game as the key itself, such as "STT.Request.Roll".
  *
  * Every script is read, not just those the manifest loads, since the rest are imported by them. Keys are found as
  * whole string literals, so a key must be written out in full rather than built from pieces.
@@ -131,7 +131,7 @@ async function validateLanguages(manifest) {
   const used = new Set();
   for ( const rel of files ) {
     const source = await readFile(resolve(root, rel), "utf8");
-    for ( const [, key] of source.matchAll(/["'`](ROBEAR\.[A-Za-z0-9.]+)["'`]/g) ) used.add(key);
+    for ( const [, key] of source.matchAll(/["'`](STT\.[A-Za-z0-9.]+)["'`]/g) ) used.add(key);
   }
 
   for ( const { lang, path } of manifest.languages ?? [] ) {

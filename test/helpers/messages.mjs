@@ -2,7 +2,7 @@
  * Stand-ins for chat messages: a request, and the tagged roll messages its results come from.
  */
 
-import { MODULE_ID } from "../../scripts/robear-cards.mjs";
+import { MODULE_ID } from "../../scripts/hero-cards.mjs";
 
 let clock = 0;
 

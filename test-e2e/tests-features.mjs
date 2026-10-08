@@ -92,13 +92,13 @@ test("indomitable (2024): offered once the GM shows a failed requested save, and
   const roll = await waitForRoll(gm, id, ids.borin);
 
   const button = player.page.locator(`#chat .chat-log [data-message-id="${id}"] `
-    + `li:has(.robear-request-name:text-is("Borin")) .robear-feature-button`);
+    + `li:has(.stt-request-name:text-is("Borin")) .stt-feature-button`);
   // Not until the GM shows the result: before then, offering it would tell the player they failed.
   await waitForCard(player, id, c => row(c, "Borin").results.length, "Borin's save");
   assertEqual(await button.count(), 0, "Use Indomitable buttons before the result is shown");
-  assert(await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-feature-button`).count(),
+  assert(await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-feature-button`).count(),
     "The GM is not offered Indomitable on Borin's failed save.");
-  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-reveal`).click();
+  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-reveal`).click();
   await button.waitFor({ timeout: 5000 });
   assertEqual(await button.getAttribute("data-tooltip-text"), "Use Indomitable (2 left)", "the button's tooltip");
   await forceDice(player, [d20(8)]);
@@ -110,7 +110,7 @@ test("indomitable (2024): offered once the GM shows a failed requested save, and
     { id: roll.id, moduleId: MODULE_ID });
   assertEqual(log, ["Indomitable: rerolled the d20 (6 → 8) + 9 (Fighter level): 6 → 17"], "the note on the save");
   assertEqual(await usesLeft(player, "Borin"), 1, "Indomitable uses left");
-  await waitFor(player, id => !document.querySelector(`#chat .chat-log [data-message-id="${id}"] .robear-feature-button`),
+  await waitFor(player, id => !document.querySelector(`#chat .chat-log [data-message-id="${id}"] .stt-feature-button`),
     id, "the button to go once the save passes");
 });
 
@@ -120,16 +120,16 @@ test("indomitable: a save chosen from a choice fails against its own DC, not the
   const part = { type: "save", key: "con", dc: 10, alternatives: [{ type: "save", key: "str", dc: 18 }] };
   const id = await postRequest(ctx, { mode: "standard", parts: [part], actors: [ids.borin] });
   await rollButton(player, id, "Borin").click();
-  const dialog = player.page.locator(".robear-choice-dialog");
+  const dialog = player.page.locator(".stt-choice-dialog");
   await dialog.waitFor({ timeout: 10_000 });
   // 12 would pass the Constitution save's DC 10, but this is the Strength save, against DC 18.
   await forceDice(player, [d20(12)]);
   await dialog.locator('button[data-action="choice1"]').click({ modifiers: ["Shift"] });
   await waitForRoll(gm, id, ids.borin);
   await waitForCard(gm, id, c => row(c, "Borin").results[0]?.classes.includes("failure"), "Borin's failed save");
-  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-reveal`).click();
+  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-reveal`).click();
   await player.page.locator(`#chat .chat-log [data-message-id="${id}"] `
-    + `li:has(.robear-request-name:text-is("Borin")) .robear-feature-button`).waitFor({ timeout: 5000 });
+    + `li:has(.stt-request-name:text-is("Borin")) .stt-feature-button`).waitFor({ timeout: 5000 });
 });
 
 test("indomitable (2014): rerolls a failed save from the right-click menu, with no bonus", async ({ gm, player }) => {
@@ -145,18 +145,18 @@ test("indomitable (2014): rerolls a failed save from the right-click menu, with 
   assertEqual(log, ["Indomitable: rerolled the d20 (5 → 12): 5 → 12"], "the note on the save");
   assertEqual(await usesLeft(player, "Aria"), 1, "Indomitable uses left");
   // The save still failed, so Indomitable can be used again, from a button on the save itself.
-  await player.page.locator(`#chat .chat-log li[data-message-id="${id}"] .robear-feature-button`)
+  await player.page.locator(`#chat .chat-log li[data-message-id="${id}"] .stt-feature-button`)
     .waitFor({ timeout: 5000 });
 });
 
-// A natural 1 is fixed in RoBear-E, so the feature can't reroll one, though the save failed.
+// A natural 1 is fixed in Sogrom's Table Tools, so the feature can't reroll one, though the save failed.
 test("indomitable: not offered on a natural 1", async ({ gm, player }) => {
   await giveIndomitable(gm);
   await forceDice(player, [d20(1)]);
   const id = await save(player, "Aria", 15);
   assert(!(await contextEntries(player, id)).includes("Use Indomitable"), "Offered on a natural 1.");
   await closeContextMenu(player);
-  assertEqual(await player.page.locator(`#chat .chat-log li[data-message-id="${id}"] .robear-feature-button`).count(), 0,
+  assertEqual(await player.page.locator(`#chat .chat-log li[data-message-id="${id}"] .stt-feature-button`).count(), 0,
     "Use Indomitable buttons on a natural 1");
 });
 
@@ -185,6 +185,6 @@ test("indomitable: offered only on a failed save, with uses left", async ({ gm, 
   const spent = await save(player, "Borin", 15);
   assert(!(await contextEntries(player, spent)).includes("Use Indomitable"), "Offered with no uses left.");
   await closeContextMenu(player);
-  assertEqual(await player.page.locator(`#chat .chat-log li[data-message-id="${spent}"] .robear-feature-button`).count(), 0,
+  assertEqual(await player.page.locator(`#chat .chat-log li[data-message-id="${spent}"] .stt-feature-button`).count(), 0,
     "Use Indomitable buttons with no uses left");
 });

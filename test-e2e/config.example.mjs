@@ -20,13 +20,13 @@ export const PORT = 30099;
 export const BASE_URL = `http://127.0.0.1:${PORT}`;
 
 /** The module under test. It must be linked into `Data/modules`: see `README.md`. */
-export const MODULE_ID = "sogrom-robear-e";
+export const MODULE_ID = "sogrom-table-tools";
 
 /** The disposable test world. Its id is also its directory name under `Data/worlds`. */
 export const WORLD = {
-  id: "robear-e2e",
-  title: "RoBear-E E2E",
-  description: "<p>Automated tests for RoBear-E. Its contents are created and deleted on every run.</p>",
+  id: "stt-e2e",
+  title: "Sogrom's Table Tools E2E",
+  description: "<p>Automated tests for Sogrom's Table Tools. Its contents are created and deleted on every run.</p>",
   modules: [MODULE_ID]
 };
 

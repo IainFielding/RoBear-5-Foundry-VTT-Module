@@ -1,6 +1,6 @@
-# RoBear-E: Developer Guide
+# Sogrom's Table Tools: Developer Guide
 
-This guide is for macro authors, module developers and contributors. It documents RoBear-E's public API, the data it
+This guide is for macro authors, module developers and contributors. It documents the module's public API, the data it
 stores on documents, its settings and socket messages, and how the code and tests are laid out.
 
 What the module does from the table's side is in the [player guide](README.md) and the [GM Guide](GM.md). How to
@@ -18,7 +18,7 @@ contribute (sign-off, commit messages, pull requests) is in [CONTRIBUTING.md](CO
 - [Data stored on documents](#data-stored-on-documents)
 - [Settings](#settings)
 - [Socket messages](#socket-messages)
-- [How the RoBear-E Cards are found](#how-the-robear-e-cards-are-found)
+- [How the Hero Cards are found](#how-the-hero-cards-are-found)
 - [Hooks and integration points](#hooks-and-integration-points)
 - [Code layout](#code-layout)
 - [Development](#development)
@@ -27,17 +27,17 @@ contribute (sign-off, commit messages, pull requests) is in [CONTRIBUTING.md](CO
 
 | | |
 |---|---|
-| Module ID | `sogrom-robear-e` |
+| Module ID | `sogrom-table-tools` |
 | Requires | Foundry VTT v14, D&D 5e 6.x (verified on 6.0.5) |
-| API | `game.modules.get("sogrom-robear-e").api`, set during `init` |
-| Flag scope | `sogrom-robear-e` |
-| Socket | `module.sogrom-robear-e` |
-| Language file | `lang/en.json`, every key under `ROBEAR` |
+| API | `game.modules.get("sogrom-table-tools").api`, set during `init` |
+| Flag scope | `sogrom-table-tools` |
+| Socket | `module.sogrom-table-tools` |
+| Language file | `lang/en.json`, every key under `STT` |
 
 ## The API
 
 ```js
-const api = game.modules.get("sogrom-robear-e").api;
+const api = game.modules.get("sogrom-table-tools").api;
 // { requestRolls, createRequest }
 ```
 
@@ -48,7 +48,7 @@ but those are internal and may change in any release.
 
 ### `requestRolls()`
 
-Opens the **Request RoBear-E Rolls** window, as the anchor button in the chat controls does. If the window is already
+Opens the **Request Rolls** window, as the anchor button in the chat controls does. If the window is already
 open, it is brought to the front, keeping what the GM has filled in.
 
 | | |
@@ -57,7 +57,7 @@ open, it is brought to the front, keeping what the GM has filled in.
 | Who | GM only. For anyone else it does nothing. |
 
 ```js
-game.modules.get("sogrom-robear-e").api.requestRolls();
+game.modules.get("sogrom-table-tools").api.requestRolls();
 ```
 
 ### `createRequest(request)`
@@ -71,7 +71,7 @@ Posts a roll request to chat without the window.
 | Throws | `Error`, with a translated message, if the user isn't a GM or the request can't be rolled. Nothing is posted. |
 
 It fills in the defaults, [validates](#validation) the request, drops any rolls (`parts`) beyond the number its mode
-uses, and creates a chat message spoken by "RoBear-E" with the request in `flags["sogrom-robear-e"].request`. Only a
+uses, and creates a chat message spoken by "Sogrom's Table Tools" with the request in `flags["sogrom-table-tools"].request`. Only a
 message authored by a GM is drawn as a request card, so a player can't forge one by writing the flag themselves.
 
 ### The request object
@@ -166,7 +166,7 @@ Actor UUIDs are checked for shape only: `createRequest` doesn't check that each 
 Each example assumes:
 
 ```js
-const { createRequest } = game.modules.get("sogrom-robear-e").api;
+const { createRequest } = game.modules.get("sogrom-table-tools").api;
 const uuid = name => game.actors.getName(name).uuid;
 const party = game.actors.filter(a => a.hasPlayerOwner && (a.type === "character")).map(a => a.uuid);
 ```
@@ -273,7 +273,7 @@ try {
 
 ## Data stored on documents
 
-Everything RoBear-E stores is in flags under `sogrom-robear-e`. Results are never stored on a request: the card works
+Everything Sogrom's Table Tools stores is in flags under `sogrom-table-tools`. Results are never stored on a request: the card works
 them out from its roll messages each time it draws.
 
 ### On a request message
@@ -310,7 +310,7 @@ interface LogEntry {
   text: string;   // e.g. "Luck: rerolled the d20 (4 → 13): 4 → 13"
   card: string;   // the card's or feature's name
   by: string;     // the name of the actor who played it
-  img?: string;   // a RoBear-E Card's art. A new entry with `img` is shown on screen to everyone who can see the roll.
+  img?: string;   // a Hero Card's art. A new entry with `img` is shown on screen to everyone who can see the roll.
   icon?: string;  // Font Awesome classes, for entries without art: bonus dice and the Fighter's Indomitable
 }
 ```
@@ -334,7 +334,9 @@ out hit, miss and save results again.
 
 ## Settings
 
-All are world settings shown in **Configure Settings**, read with `game.settings.get("sogrom-robear-e", key)`.
+All are world settings, read with `game.settings.get("sogrom-table-tools", key)`. None is listed in **Configure
+Settings** itself: they're grouped into three menus there (`heroCards`, `diceRolling` and `rollRequests`), registered
+in `settings-menus.mjs`. A setting is added to a menu through its class's `SETTINGS`.
 
 | Key | Type | Default | Purpose |
 |---|---|---|---|
@@ -349,7 +351,7 @@ All are world settings shown in **Configure Settings**, read with `game.settings
 
 ## Socket messages
 
-The manifest sets `"socket": true`, and the module listens on `module.sogrom-robear-e` from `ready`. Bonus dice use
+The manifest sets `"socket": true`, and the module listens on `module.sogrom-table-tools` from `ready`. Bonus dice use
 it: a player can add a die to a roll they can see but can't update, such as a monster's, and the active GM's client
 makes the change.
 
@@ -358,13 +360,13 @@ makes the change.
 | `applyBonus` | The player spending the die | The active GM only | `{ source, target, sign }`: the bonus and target message IDs, and `1` or `-1` | The GM's client checks the request again as the sender, whose ID Foundry's server supplies, then applies it. With no GM online, nothing is sent and the player is warned. |
 | `bonusNotApplied` | The active GM | The sender only | `{ reason: "invalid" \| "error" }` | Warns the player that the GM refused it or couldn't apply it. The die isn't spent. |
 
-## How the RoBear-E Cards are found
+## How the Hero Cards are found
 
-An item is a RoBear-E Cards feature if any of these is true:
+An item is a Hero Cards feature if any of these is true:
 
-- its `system.identifier` is `robear-e`;
+- its `system.identifier` is `hero-cards`;
 - its `_stats.compendiumSource` ends with the compendium item's ID, `xFVsPIjSASjXaqUO`;
-- its name is exactly `RoBear-E Cards`.
+- its name is exactly `Hero Cards`.
 
 Each card is an activity on that item, with one use recovered on a long rest. The cards that change a roll are
 recognised by activity ID, falling back to the activity's name, case-insensitively:
@@ -378,7 +380,7 @@ recognised by activity ID, falling back to the activity's name, case-insensitive
 | Relentless | `28kjjOyF9Suf3hkq` | `relentless` | initiative (in combat round 1) |
 
 The art for every card, including those played only from the sheet, is in `assets/images`, mapped by activity name in
-`CARD_ART` in `scripts/robear-cards.mjs`. An activity with no mapped art uses its own icon.
+`CARD_ART` in `scripts/hero-cards.mjs`. An activity with no mapped art uses its own icon.
 
 A roll's kind comes from its chat message: dnd5e's `attack`, `damage`, `check` (or `initiative`) and `save` (not
 death saves) message types; a Divine Intervention d100 from a request; and a plain d20 made for a request, which is
@@ -386,32 +388,32 @@ treated as a check.
 
 ## Hooks and integration points
 
-RoBear-E fires no hooks of its own. It listens to these:
+Sogrom's Table Tools fires no hooks of its own. It listens to these:
 
 | Hook | Script | Why |
 |---|---|---|
-| `init` | `robear-cards.mjs`, `roll-requests.mjs`, `roll-request-popup.mjs` | Register settings, and set the API. |
-| `setup` | `robear-cards.mjs`, `natural-saves.mjs` | Wrap `Item#use` and the damage tray's target options (see below). |
+| `init` | `hero-cards.mjs`, `roll-requests.mjs`, `roll-request-popup.mjs`, `settings-menus.mjs` | Register settings and their menus, and set the API. |
+| `setup` | `hero-cards.mjs`, `natural-saves.mjs` | Wrap `Item#use` and the damage tray's target options (see below). |
 | `ready` | `bonus-rolls.mjs`, `roll-request-popup.mjs` | Start listening on the socket, and open pop-ups for recent requests. |
-| `dnd5e.renderChatMessage` | `robear-cards.mjs`, `roll-requests.mjs`, `bonus-rolls.mjs`, `class-features.mjs` | Add card buttons, natural 1/20 rings, notes, request cards, and the Indomitable button. |
-| `createChatMessage`, `updateChatMessage`, `deleteChatMessage` | `robear-cards.mjs`, `roll-requests.mjs`, `roll-request-popup.mjs` | Show played cards, redraw request cards, and open or close pop-ups. |
+| `dnd5e.renderChatMessage` | `hero-cards.mjs`, `roll-requests.mjs`, `bonus-rolls.mjs`, `class-features.mjs` | Add card buttons, natural 1/20 rings, notes, request cards, and the Indomitable button. |
+| `createChatMessage`, `updateChatMessage`, `deleteChatMessage` | `hero-cards.mjs`, `roll-requests.mjs`, `roll-request-popup.mjs` | Show played cards, redraw request cards, and open or close pop-ups. |
 | `dnd5e.preCalculateDamage` | `natural-saves.mjs` | Raise each damage to its maximum for a target the damage tray marked for it. |
 | `preDeleteChatMessage` | `roll-requests.mjs` | Stop players deleting a roll made for a request. |
 | `getChatMessageContextOptions` | `bonus-rolls.mjs`, `class-features.mjs` | Add **Add to a roll…**, **Subtract from a roll…** and **Use Indomitable** to the right-click menu. |
 | `renderChatInput` | `roll-requests.mjs` | Add the GM's anchor button to the chat controls. |
-| `getSceneControlButtons` | `roll-requests.mjs` | Add **Request RoBear-E Rolls** to the token controls. |
-| `dnd5e.postUseActivity` | `robear-cards.mjs` | Note an Advantage card played from the sheet. |
-| `dnd5e.preRollD20TestV2`, `dnd5e.postD20TestRollConfiguration` | `robear-cards.mjs` | Apply, then clear, that pending advantage. |
+| `getSceneControlButtons` | `roll-requests.mjs` | Add **Request Rolls** to the token controls. |
+| `dnd5e.postUseActivity` | `hero-cards.mjs` | Note an Advantage card played from the sheet. |
+| `dnd5e.preRollD20TestV2`, `dnd5e.postD20TestRollConfiguration` | `hero-cards.mjs` | Apply, then clear, that pending advantage. |
 
-**`Item#use` is wrapped.** dnd5e has no hook before its list of an item's activities, so RoBear-E replaces
-`CONFIG.Item.documentClass.prototype.use` at `setup`. For a RoBear-E Cards item it opens the card window instead.
-Shift-click, or any other item, goes to the original. A module that wraps `Item#use` itself sees RoBear-E's wrapper
+**`Item#use` is wrapped.** dnd5e has no hook before its list of an item's activities, so Sogrom's Table Tools replaces
+`CONFIG.Item.documentClass.prototype.use` at `setup`. For a Hero Cards item it opens the card window instead.
+Shift-click, or any other item, goes to the original. A module that wraps `Item#use` itself sees the module's wrapper
 as the original.
 
 **The damage tray's target options are wrapped.** dnd5e's `damage-application` element keeps each target's options
-private, so RoBear-E replaces its `getTargetOptions` at `setup`, giving each target its starting options the first time
+private, so Sogrom's Table Tools replaces its `getTargetOptions` at `setup`, giving each target its starting options the first time
 the tray asks for them. A natural 20 gets a multiplier of `0`. A natural 1 gets a multiplier of `1`, its resistances and
-immunities in `ignore.resistance` and `ignore.immunity`, and `{ "sogrom-robear-e": { maximize: true } }`, which the
+immunities in `ignore.resistance` and `ignore.immunity`, and `{ "sogrom-table-tools": { maximize: true } }`, which the
 `dnd5e.preCalculateDamage` hook reads to put each damage at its maximum, from the message's rolls evaluated with
 `maximize`. Changes the GM makes in the tray afterwards are left alone.
 
@@ -427,16 +429,18 @@ like the roll they change.
 ```
 module.json           Manifest. The module ID, packs, and the dnd5e spell lists it registers.
 scripts/
-  robear-cards.mjs          The cards: finding them, the card window, playing them on rolls, played-card art,
+  hero-cards.mjs            The cards: finding them, the card window, playing them on rolls, played-card art,
                             natural 1/20 rings, and helpers shared by the others (MODULE_ID, localize, reportError).
   roll-requests.mjs         Roll requests: the API, validation, results, and drawing the request card.
-  roll-request-config.mjs   The Request RoBear-E Rolls window (ApplicationV2).
+  roll-request-config.mjs   The Request Rolls window (ApplicationV2).
   roll-request-popup.mjs    The roll request pop-ups.
   bonus-rolls.mjs           Adding another feature's die to a roll, and the socket messages for it.
   class-features.mjs        Fighter's Indomitable.
   natural-saves.mjs         Natural 1s and 20s on saves against an activity's damage.
+  settings-menus.mjs        The Hero Cards, Dice Rolling and Roll Requests settings menus (ApplicationV2).
 templates/roll-request.hbs  The request window's form.
-styles/                     fonts.css (Cinzel and Spectral, shipped in assets/fonts), robear-cards.css, roll-requests.css.
+templates/settings-menu.hbs A settings menu's form.
+styles/                     fonts.css (Cinzel and Spectral, shipped in assets/fonts), hero-cards.css, roll-requests.css.
 lang/en.json                Every string the module shows.
 assets/                     Card art, campaign art and fonts.
 src/packs/                  Compendium sources, as YAML. Built into packs/ (not committed).
@@ -455,7 +459,7 @@ npm install        # dev tooling only; nothing here ships in the module archive
 npm run check      # manifest validation, lint and unit tests, as CI runs them
 ```
 
-Link the repository into Foundry's `Data/modules` folder as `sogrom-robear-e`, then build the compendiums. See
+Link the repository into Foundry's `Data/modules` folder as `sogrom-table-tools`, then build the compendiums. See
 [CONTRIBUTING.md](CONTRIBUTING.md#getting-set-up) for the commands.
 
 ### Compendium packs

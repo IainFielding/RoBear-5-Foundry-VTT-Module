@@ -17,16 +17,16 @@ system:
       greater than the belt’s
       score.</p><table><thead><tr><td>Belt</td><td>Dex.</td><td>Rarity</td></tr></thead><tbody><tr><td><em>Belt
       of Phoenix Dexterity</em>
-      (@UUID[Compendium.sogrom-robear-e.items.Item.Hx713Y5wUnBJ1SMu]{hill})</td><td>21</td><td>Rare</td></tr><tr><td><em>Belt
+      (@UUID[Compendium.sogrom-table-tools.items.Item.Hx713Y5wUnBJ1SMu]{hill})</td><td>21</td><td>Rare</td></tr><tr><td><em>Belt
       of Phoenix Dexterity</em>
-      (@UUID[Compendium.sogrom-robear-e.items.Item.IOAZ5DcLI4QHa640]{frost} or
-      @UUID[Compendium.sogrom-robear-e.items.Item.VKRX3Yh2Eafbgx6i]{stone})</td><td>23</td><td>Very
+      (@UUID[Compendium.sogrom-table-tools.items.Item.IOAZ5DcLI4QHa640]{frost} or
+      @UUID[Compendium.sogrom-table-tools.items.Item.VKRX3Yh2Eafbgx6i]{stone})</td><td>23</td><td>Very
       Rare</td></tr><tr><td><em>Belt of Phoenix Dexterity</em>
-      (@UUID[Compendium.sogrom-robear-e.items.Item.DgvvrpSPOsV6cGvV]{fire})</td><td>25</td><td>Very
+      (@UUID[Compendium.sogrom-table-tools.items.Item.DgvvrpSPOsV6cGvV]{fire})</td><td>25</td><td>Very
       Rare</td></tr><tr><td><em>Belt of Phoenix Dexterity</em>
-      (@UUID[Compendium.sogrom-robear-e.items.Item.aZyiNxkKi0v8m8ih]{cloud})</td><td>27</td><td>Legendary</td></tr><tr><td><em>Belt
+      (@UUID[Compendium.sogrom-table-tools.items.Item.aZyiNxkKi0v8m8ih]{cloud})</td><td>27</td><td>Legendary</td></tr><tr><td><em>Belt
       of Phoenix Dexterity</em>
-      (@UUID[Compendium.sogrom-robear-e.items.Item.uhk0yCUz3ifyNGlu]{storm})</td><td>29</td><td>Legendary</td></tr></tbody></table>
+      (@UUID[Compendium.sogrom-table-tools.items.Item.uhk0yCUz3ifyNGlu]{storm})</td><td>29</td><td>Legendary</td></tr></tbody></table>
     chat: ''
   identifier: belt-of-phoenix-dexterity
   source:
@@ -34,7 +34,7 @@ system:
     rules: '2024'
     book: ''
     page: ''
-    custom: RoBear - E
+    custom: Sogrom's Table Tools
     license: ''
   identified: true
   unidentified:

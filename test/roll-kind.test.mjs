@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MODULE_ID, getRollKind } from "../scripts/robear-cards.mjs";
+import { MODULE_ID, getRollKind } from "../scripts/hero-cards.mjs";
 
 /**
  * @param {object} data

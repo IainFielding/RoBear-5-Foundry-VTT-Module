@@ -84,10 +84,10 @@ async function spendBonus(session, id, entry, target) {
   const entries = await contextEntries(session, id);
   assert(entries.includes(entry), `"${entry}" is not in the menu: ${entries.join(", ")}`);
   await session.page.locator("#context-menu .context-item", { hasText: entry }).click();
-  const dialog = session.page.locator(".robear-bonus-dialog.application");
-  await dialog.locator(".robear-bonus-choice").first().waitFor({ timeout: 5000 });
-  const offered = (await dialog.locator(".robear-bonus-choice").allTextContents()).map(t => t.replace(/\s+/g, " ").trim());
-  const choice = dialog.locator(".robear-bonus-choice", { hasText: target });
+  const dialog = session.page.locator(".stt-bonus-dialog.application");
+  await dialog.locator(".stt-bonus-choice").first().waitFor({ timeout: 5000 });
+  const offered = (await dialog.locator(".stt-bonus-choice").allTextContents()).map(t => t.replace(/\s+/g, " ").trim());
+  const choice = dialog.locator(".stt-bonus-choice", { hasText: target });
   assert(await choice.count(), `"${target}" was not offered. Offered: ${offered.join(" | ")}`);
   await choice.first().click();
   return offered;
@@ -122,10 +122,10 @@ test("bonus rolls: a feature's die is added to a requested roll from the right-c
 
   // The note shows on the request card, and the spent bonus says where it went.
   await waitForCard(player, id, c => row(c, "Aria").results[0]?.text === "13", "the bonus, for the player");
-  const rowNote = await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-details .robear-card-log`)
+  const rowNote = await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-details .stt-card-log`)
     .textContent();
   assert(rowNote.includes("added 1d6 (4): 9 → 13"), `the note on the request card: ${rowNote}`);
-  const used = await player.page.locator(`#chat .chat-log li[data-message-id="${bonus}"] .robear-bonus-used`).textContent();
+  const used = await player.page.locator(`#chat .chat-log li[data-message-id="${bonus}"] .stt-bonus-used`).textContent();
   assertEqual(used.trim(), "Added to Aria · Strength (Athletics) Check", "the note on the bonus roll");
 
   // A spent bonus cannot be spent again.

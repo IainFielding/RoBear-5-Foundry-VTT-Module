@@ -12,10 +12,10 @@ npm run test:e2e   # end-to-end tests against a local Foundry install — see te
 ```
 
 To try the module in Foundry, symlink or copy the repository into your `Data/modules/`
-directory as `sogrom-robear-e`. On Windows a directory junction works without admin rights:
+directory as `sogrom-table-tools`. On Windows a directory junction works without admin rights:
 
 ```powershell
-New-Item -ItemType Junction -Path "$env:LOCALAPPDATA\FoundryVTT\Data\modules\sogrom-robear-e" -Target (Get-Location)
+New-Item -ItemType Junction -Path "$env:LOCALAPPDATA\FoundryVTT\Data\modules\sogrom-table-tools" -Target (Get-Location)
 ```
 
 ## Compendium packs

@@ -126,12 +126,12 @@ export async function waitFor(session, fn, arg, what = "condition", timeout = 10
 export function forceDice(session, dice) {
   const values = dice.map(([result, faces]) => 1 - ((result - 0.5) / faces));
   return session.eval(values => {
-    if ( !globalThis.__robearDice ) {
-      globalThis.__robearDice = [];
+    if ( !globalThis.__sttDice ) {
+      globalThis.__sttDice = [];
       const random = CONFIG.Dice.randomUniform;
-      CONFIG.Dice.randomUniform = () => (globalThis.__robearDice.length ? globalThis.__robearDice.shift() : random());
+      CONFIG.Dice.randomUniform = () => (globalThis.__sttDice.length ? globalThis.__sttDice.shift() : random());
     }
-    globalThis.__robearDice.push(...values);
+    globalThis.__sttDice.push(...values);
   }, values);
 }
 
@@ -140,7 +140,7 @@ export function forceDice(session, dice) {
  * @returns {Promise<number>}  Forced dice not yet used.
  */
 export function unusedDice(session) {
-  return session.eval(() => globalThis.__robearDice?.length ?? 0);
+  return session.eval(() => globalThis.__sttDice?.length ?? 0);
 }
 
 /**
@@ -155,7 +155,7 @@ export async function postRequest({ gm, player }, request) {
     return (await createRequest({ successes: 2, showDC: true, rollMode: "public", ...request })).id;
   }, { moduleId: MODULE_ID, request });
   for ( const session of [gm, player] ) {
-    await waitFor(session, id => !!document.querySelector(`#chat .chat-log [data-message-id="${id}"] .robear-request`),
+    await waitFor(session, id => !!document.querySelector(`#chat .chat-log [data-message-id="${id}"] .stt-request`),
       id, "the request card to render");
   }
   return id;
@@ -169,38 +169,38 @@ export async function postRequest({ gm, player }, request) {
  */
 export function readCard(session, id) {
   return session.eval(id => {
-    const card = document.querySelector(`#chat .chat-log [data-message-id="${id}"] .robear-request`);
+    const card = document.querySelector(`#chat .chat-log [data-message-id="${id}"] .stt-request`);
     if ( !card ) return null;
     const text = el => el?.textContent.replace(/\s+/g, " ").trim() ?? null;
     return {
-      title: text(card.querySelector(".robear-request-header h3")),
-      subtitle: text(card.querySelector(".robear-request-subtitle")),
-      rows: [...card.querySelectorAll(".robear-request-actor")].map(row => ({
-        name: text(row.querySelector(".robear-request-name")),
+      title: text(card.querySelector(".stt-request-header h3")),
+      subtitle: text(card.querySelector(".stt-request-subtitle")),
+      rows: [...card.querySelectorAll(".stt-request-actor")].map(row => ({
+        name: text(row.querySelector(".stt-request-name")),
         classes: ["success", "failure", "removed"].filter(c => row.classList.contains(c)),
-        results: [...row.querySelectorAll(".robear-request-result")].map(p => ({
+        results: [...row.querySelectorAll(".stt-request-result")].map(p => ({
           text: text(p), classes: ["success", "failure", "critical", "fumble", "uncounted"].filter(c => p.classList.contains(c))
         })),
-        range: text(row.querySelector(".robear-request-range")),
-        rollButtons: row.querySelectorAll(".robear-request-roll").length,
-        pending: row.querySelectorAll(".robear-request-pending").length,
-        cardButton: !!row.querySelector(".robear-card-button"),
-        badge: text(row.querySelector(".robear-request-badge")),
+        range: text(row.querySelector(".stt-request-range")),
+        rollButtons: row.querySelectorAll(".stt-request-roll").length,
+        pending: row.querySelectorAll(".stt-request-pending").length,
+        cardButton: !!row.querySelector(".stt-card-button"),
+        badge: text(row.querySelector(".stt-request-badge")),
         tooltip: row.dataset.tooltipText ?? null
       })),
-      sides: [...card.querySelectorAll(".robear-request-side")].map(side => ({
+      sides: [...card.querySelectorAll(".stt-request-side")].map(side => ({
         name: text(side.querySelector("h4")),
-        score: text(side.querySelector(".robear-request-score")),
+        score: text(side.querySelector(".stt-request-score")),
         classes: ["success", "failure", "tie"].filter(c => side.classList.contains(c))
       })),
       // The summary's parts sit side by side, so they are read one by one rather than as run-together text.
       summary: (() => {
-        const summary = card.querySelector(".robear-request-summary");
+        const summary = card.querySelector(".stt-request-summary");
         if ( !summary ) return null;
         return summary.children.length ? [...summary.children].map(text).join(" ") : text(summary);
       })(),
-      summaryClasses: ["success", "failure", "tie"].filter(c => card.querySelector(".robear-request-summary")?.classList.contains(c)),
-      reveal: text(card.querySelector(".robear-request-reveal"))
+      summaryClasses: ["success", "failure", "tie"].filter(c => card.querySelector(".stt-request-summary")?.classList.contains(c)),
+      reveal: text(card.querySelector(".stt-request-reveal"))
     };
   }, id);
 }
@@ -232,7 +232,7 @@ export async function waitForCard(session, id, check, what) {
  */
 export function rollButton(session, id, name) {
   return session.page.locator(`#chat .chat-log [data-message-id="${id}"] `
-    + `li.robear-request-actor:has(.robear-request-name:text-is("${name}")) .robear-request-roll`);
+    + `li.stt-request-actor:has(.stt-request-name:text-is("${name}")) .stt-request-roll`);
 }
 
 /**
@@ -283,7 +283,7 @@ export function waitForRoll(session, id, uuid, part = 0) {
 }
 
 /**
- * Open the RoBear-E Card chooser from the card button beside an actor's result, list what it offers, and cancel.
+ * Open the Hero Card chooser from the card button beside an actor's result, list what it offers, and cancel.
  * @param {import("./session.mjs").Session} session
  * @param {string} id
  * @param {string} name  The actor's name.
@@ -291,12 +291,12 @@ export function waitForRoll(session, id, uuid, part = 0) {
  */
 export async function cardsOnRow(session, id, name) {
   const button = session.page.locator(`#chat .chat-log [data-message-id="${id}"] `
-    + `li.robear-request-actor:has(.robear-request-name:text-is("${name}")) .robear-card-button`);
+    + `li.stt-request-actor:has(.stt-request-name:text-is("${name}")) .stt-card-button`);
   assertEqual(await button.count(), 1, `card buttons for ${name}`);
   await button.click();
-  const dialog = session.page.locator(".robear-card-dialog.application").last();
-  await dialog.locator(".robear-card-choice").first().waitFor({ timeout: 10_000 });
-  const offered = (await dialog.locator(".robear-card-choice span").allTextContents()).map(t => t.trim());
+  const dialog = session.page.locator(".stt-card-dialog.application").last();
+  await dialog.locator(".stt-card-choice").first().waitFor({ timeout: 10_000 });
+  const offered = (await dialog.locator(".stt-card-choice span").allTextContents()).map(t => t.trim());
   await dialog.locator('button[data-action="cancel"]').click();
   await dialog.waitFor({ state: "detached", timeout: 5000 }).catch(() => {});
   return offered;
@@ -305,7 +305,7 @@ export async function cardsOnRow(session, id, name) {
 /* -------------------------------------------- */
 
 /**
- * Open the RoBear-E Card chooser from the card button beside an actor's result, and play a card.
+ * Open the Hero Card chooser from the card button beside an actor's result, and play a card.
  * @param {import("./session.mjs").Session} session
  * @param {string} id
  * @param {string} name   The actor's name.
@@ -314,13 +314,13 @@ export async function cardsOnRow(session, id, name) {
  */
 export async function playCard(session, id, name, card) {
   const button = session.page.locator(`#chat .chat-log [data-message-id="${id}"] `
-    + `li.robear-request-actor:has(.robear-request-name:text-is("${name}")) .robear-card-button`);
+    + `li.stt-request-actor:has(.stt-request-name:text-is("${name}")) .stt-card-button`);
   assertEqual(await button.count(), 1, `card buttons for ${name}`);
   await button.click();
-  const dialog = session.page.locator(".robear-card-dialog.application").last();
-  await dialog.locator(".robear-card-choice").first().waitFor({ timeout: 10_000 });
-  const offered = (await dialog.locator(".robear-card-choice span").allTextContents()).map(t => t.trim());
-  const choice = dialog.locator(".robear-card-choice", { hasText: card });
+  const dialog = session.page.locator(".stt-card-dialog.application").last();
+  await dialog.locator(".stt-card-choice").first().waitFor({ timeout: 10_000 });
+  const offered = (await dialog.locator(".stt-card-choice span").allTextContents()).map(t => t.trim());
+  const choice = dialog.locator(".stt-card-choice", { hasText: card });
   assert(await choice.count(), `${card} was not offered. Offered: ${offered.join(", ")}`);
   await choice.first().click();
   return offered;

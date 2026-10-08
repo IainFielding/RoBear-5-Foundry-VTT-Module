@@ -8,7 +8,7 @@
  * before applying it.
  */
 
-import { MODULE_ID, getNatural } from "./robear-cards.mjs";
+import { MODULE_ID, getNatural } from "./hero-cards.mjs";
 
 /**
  * Damage tray options already given their starting values, so a change the GM makes isn't overwritten.

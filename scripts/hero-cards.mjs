@@ -1,11 +1,11 @@
 /**
- * RoBear-E Cards: let a player spend a card from the "RoBear-E Cards" feature on a roll that is already in chat.
+ * Hero Cards: let a player spend a card from the "Hero Cards" feature on a roll that is already in chat.
  * The chat message's rolls are rewritten in place, so dnd5e re-evaluates hit/miss and save success on re-render.
  */
 
-export const MODULE_ID = "sogrom-robear-e";
+export const MODULE_ID = "sogrom-table-tools";
 const CARDS_ITEM_ID = "xFVsPIjSASjXaqUO";
-const CARDS_IDENTIFIER = "robear-e";
+const CARDS_IDENTIFIER = "hero-cards";
 const IMAGE_PATH = `modules/${MODULE_ID}/assets/images`;
 
 /**
@@ -97,7 +97,7 @@ const playedCardQueue = [];
 
 /**
  * Translate one of the module's strings from its language file.
- * @param {string} key      A key in lang/en.json, such as "ROBEAR.Cards.Button".
+ * @param {string} key      A key in lang/en.json, such as "STT.Cards.Button".
  * @param {object} [data]   Values for the string's {placeholders}.
  * @returns {string}
  */
@@ -132,36 +132,36 @@ Hooks.on("dnd5e.postD20TestRollConfiguration", onPostD20TestRollConfiguration);
  */
 function registerSettings() {
   game.settings.register(MODULE_ID, "lockNaturals", {
-    name: "ROBEAR.Settings.LockNaturals.Name",
-    hint: "ROBEAR.Settings.LockNaturals.Hint",
+    name: "STT.Settings.LockNaturals.Name",
+    hint: "STT.Settings.LockNaturals.Hint",
     scope: "world",
-    config: true,
+    config: false,
     type: Boolean,
     default: true
   });
   game.settings.register(MODULE_ID, "markNaturals", {
-    name: "ROBEAR.Settings.MarkNaturals.Name",
-    hint: "ROBEAR.Settings.MarkNaturals.Hint",
+    name: "STT.Settings.MarkNaturals.Name",
+    hint: "STT.Settings.MarkNaturals.Hint",
     scope: "world",
-    config: true,
+    config: false,
     type: Boolean,
     default: true,
     onChange: () => game.messages.forEach(m => ui.chat.updateMessage(m))
   });
   game.settings.register(MODULE_ID, "naturalSaves", {
-    name: "ROBEAR.Settings.NaturalSaves.Name",
-    hint: "ROBEAR.Settings.NaturalSaves.Hint",
+    name: "STT.Settings.NaturalSaves.Name",
+    hint: "STT.Settings.NaturalSaves.Hint",
     scope: "world",
-    config: true,
+    config: false,
     type: Boolean,
     default: true,
     onChange: () => game.messages.filter(m => m.type === "damage").forEach(m => ui.chat.updateMessage(m))
   });
   game.settings.register(MODULE_ID, "showPlayedCards", {
-    name: "ROBEAR.Settings.ShowPlayedCards.Name",
-    hint: "ROBEAR.Settings.ShowPlayedCards.Hint",
+    name: "STT.Settings.ShowPlayedCards.Name",
+    hint: "STT.Settings.ShowPlayedCards.Hint",
     scope: "world",
-    config: true,
+    config: false,
     type: Boolean,
     default: true
   });
@@ -171,7 +171,7 @@ function registerSettings() {
 
 /**
  * dnd5e offers no hook before its activity choice list, so wrap Item#use to show the card picker instead for the
- * RoBear-E Cards feature. Shift-click still uses dnd5e's own behaviour.
+ * Hero Cards feature. Shift-click still uses dnd5e's own behaviour.
  */
 function wrapItemUse() {
   const proto = CONFIG.Item.documentClass.prototype;
@@ -182,10 +182,10 @@ function wrapItemUse() {
       .filter(a => a.canUse && hasUsesLeft(a))
       .map(activity => ({ activity, label: getCardLabel(activity), img: getCardArt(activity) }));
     if ( !options.length ) {
-      ui.notifications.warn(localize("ROBEAR.Cards.NoneLeft"));
+      ui.notifications.warn(localize("STT.Cards.NoneLeft"));
       return;
     }
-    const option = await chooseCard(options, localize("ROBEAR.Cards.ChooseFromSheet"));
+    const option = await chooseCard(options, localize("STT.Cards.ChooseFromSheet"));
     if ( option ) return option.activity.use(config, dialog, message);
   };
 }
@@ -231,7 +231,7 @@ function markNaturals(message, html) {
   if ( !game.settings.get(MODULE_ID, "markNaturals") ) return;
   // Rolls of other messages, summarised inside this one, aren't this message's rolls.
   markRolls(message, [...html.querySelectorAll(".message-content .dice-roll")]
-    .filter(el => !el.closest(".card-summary, .robear-request")));
+    .filter(el => !el.closest(".card-summary, .stt-request")));
   for ( const summary of html.querySelectorAll(".card-summary[data-message-id]") ) {
     const child = game.messages.get(summary.dataset.messageId);
     if ( child?.isContentVisible ) markRolls(child, [...summary.querySelectorAll(".dice-roll")]);
@@ -248,7 +248,7 @@ function markRolls(message, rolls) {
     // The classic layout's total, or the whole roll in dnd5e's compact layout, which has no separate total.
     const natural = getNatural(roll);
     if ( [1, 20].includes(natural) ) {
-      (rolls[i].querySelector(".dice-total") ?? rolls[i]).classList.add(`robear-natural-${natural}`);
+      (rolls[i].querySelector(".dice-total") ?? rolls[i]).classList.add(`stt-natural-${natural}`);
     }
   });
 }
@@ -257,7 +257,7 @@ function markRolls(message, rolls) {
 
 /**
  * @param {ChatMessage5e} message
- * @returns {Activity|void}  The card activity, if this is the chat record of a RoBear-E Card played from the sheet.
+ * @returns {Activity|void}  The card activity, if this is the chat record of a Hero Card played from the sheet.
  */
 function getCardActivity(message) {
   if ( message.type !== "usage" ) return;
@@ -275,12 +275,12 @@ function getCardActivity(message) {
  * @param {Activity} activity
  */
 function compactCardUsage(html, activity) {
-  html.classList.add("robear-card-usage");
+  html.classList.add("stt-card-usage");
   html.querySelector(".card-description")?.classList.add("collapsed");
   const icon = html.querySelector(".activity-icon img");
   if ( icon ) {
     icon.dataset.tooltipHtml = cardArtHTML(getCardArt(activity), getCardLabel(activity));
-    icon.dataset.tooltipClass = "robear-card-tooltip";
+    icon.dataset.tooltipClass = "stt-card-tooltip";
     icon.dataset.tooltipDirection = "LEFT";
   }
 }
@@ -329,7 +329,7 @@ async function onPostUseActivity(activity) {
   const actor = activity.actor;
   if ( !actor ) return;
   await actor.setFlag(MODULE_ID, "advantage", true);
-  ui.notifications.info(localize("ROBEAR.Cards.NextRollAdvantage", { name: actor.name }));
+  ui.notifications.info(localize("STT.Cards.NextRollAdvantage", { name: actor.name }));
 }
 
 /* -------------------------------------------- */
@@ -414,7 +414,7 @@ function getCardKey(activity) {
 
 /**
  * @param {Actor5e} actor
- * @returns {Item5e[]}  The actor's RoBear-E Cards features.
+ * @returns {Item5e[]}  The actor's Hero Cards features.
  */
 function getCardItems(actor) {
   return actor.items.filter(isCardItem);
@@ -424,12 +424,12 @@ function getCardItems(actor) {
 
 /**
  * @param {Item5e} item
- * @returns {boolean}  Is this a RoBear-E Cards feature?
+ * @returns {boolean}  Is this a Hero Cards feature?
  */
 function isCardItem(item) {
   return (item.system.identifier === CARDS_IDENTIFIER)
     || !!item._stats?.compendiumSource?.endsWith(CARDS_ITEM_ID)
-    || (item.name === "RoBear-E Cards");
+    || (item.name === "Hero Cards");
 }
 
 /* -------------------------------------------- */
@@ -489,7 +489,7 @@ export function getCardOptions(message) {
       if ( !card?.appliesTo.includes(kind) ) continue;
       if ( !hasUsesLeft(activity) ) continue;
       if ( locked ) continue;
-      // A natural 1 is fixed in RoBear-E: nothing rerolls it, whatever the Natural 1s and 20s setting.
+      // A natural 1 is fixed in Sogrom's Table Tools: nothing rerolls it, whatever the Natural 1s and 20s setting.
       if ( card.rerolls && (natural === 1) ) continue;
 
       switch ( key ) {
@@ -501,7 +501,7 @@ export function getCardOptions(message) {
           if ( !d20 || [1, 20].includes(natural) ) continue;
           break;
         case "advantage":
-          if ( kind === "divine" ? roll.options.robearAdvantage : (!d20 || roll.hasAdvantage) ) continue;
+          if ( kind === "divine" ? roll.options.sttAdvantage : (!d20 || roll.hasAdvantage) ) continue;
           break;
         case "indomitable":
           if ( !d20 || !isKnownFailure(message) ) continue;
@@ -590,11 +590,11 @@ export function findCombatant(message) {
 export function createCardButton(message, { compact=false }={}) {
   const button = document.createElement("button");
   button.type = "button";
-  button.className = compact ? "robear-card-button icon" : "robear-card-button";
-  button.dataset.tooltipText = localize("ROBEAR.Cards.ButtonTooltip");
-  button.setAttribute("aria-label", localize("ROBEAR.Cards.ButtonTooltip"));
+  button.className = compact ? "stt-card-button icon" : "stt-card-button";
+  button.dataset.tooltipText = localize("STT.Cards.ButtonTooltip");
+  button.setAttribute("aria-label", localize("STT.Cards.ButtonTooltip"));
   button.innerHTML = '<i class="fa-solid fa-anchor fa-rotate-90" inert></i>';
-  if ( !compact ) button.append(` ${localize("ROBEAR.Cards.Button")}`);
+  if ( !compact ) button.append(` ${localize("STT.Cards.Button")}`);
   button.addEventListener("click", event => {
     event.preventDefault();
     event.stopPropagation();
@@ -621,27 +621,27 @@ export function createCardButton(message, { compact=false }={}) {
 export function renderLog(message) {
   return (message.getFlag(MODULE_ID, "log") ?? []).map(entry => {
     const p = document.createElement("p");
-    p.className = "supplement robear-card-log";
+    p.className = "supplement stt-card-log";
     // Notes written before 2.0.0 are plain text, so they need a label to say where they came from.
     if ( typeof entry === "string" ) {
       const strong = document.createElement("strong");
-      strong.textContent = localize("ROBEAR.Cards.LegacyLabel");
+      strong.textContent = localize("STT.Cards.LegacyLabel");
       p.append(strong, " ", entry);
       return p;
     }
     // A card's note leads with a thumbnail of the card; a bonus roll's, with an icon.
     if ( entry.img ) {
       const art = document.createElement("img");
-      art.className = "robear-card-log-art";
+      art.className = "stt-card-log-art";
       art.src = entry.img;
       art.alt = entry.card;
       art.dataset.tooltipHtml = cardArtHTML(entry.img, entry.card);
-      art.dataset.tooltipClass = "robear-card-tooltip";
+      art.dataset.tooltipClass = "stt-card-tooltip";
       art.dataset.tooltipDirection = "UP";
       p.append(art);
     } else if ( entry.icon ) {
       const icon = document.createElement("i");
-      icon.className = `${entry.icon} robear-card-log-icon`;
+      icon.className = `${entry.icon} stt-card-log-icon`;
       icon.inert = true;
       p.append(icon);
     }
@@ -683,12 +683,12 @@ function showPlayedCard(entry) {
  * the row never holds more than three.
  */
 function showQueuedCards() {
-  let overlay = document.getElementById("robear-played-card");
+  let overlay = document.getElementById("stt-played-card");
   while ( playedCardQueue.length && ((overlay?.childElementCount ?? 0) < PLAYED_CARD_MAX) ) {
     if ( !overlay ) {
       overlay = document.createElement("div");
-      overlay.id = "robear-played-card";
-      overlay.className = "robear-played-card";
+      overlay.id = "stt-played-card";
+      overlay.className = "stt-played-card";
       overlay.setAttribute("role", "status");
       document.body.append(overlay);
     }
@@ -705,23 +705,23 @@ function showQueuedCards() {
  */
 function createPlayedCard(entry) {
   const card = document.createElement("div");
-  card.className = "robear-played-card-entry";
+  card.className = "stt-played-card-entry";
   card.innerHTML = `
     <img alt="">
-    <div class="robear-played-card-caption">
-      <span class="robear-played-card-by"></span>
-      <span class="robear-played-card-name"></span>
+    <div class="stt-played-card-caption">
+      <span class="stt-played-card-by"></span>
+      <span class="stt-played-card-name"></span>
     </div>
   `;
   card.querySelector("img").src = entry.img;
-  card.querySelector(".robear-played-card-by").textContent = localize("ROBEAR.Cards.Plays", { name: entry.by ?? "" });
-  card.querySelector(".robear-played-card-name").textContent = entry.card ?? "";
+  card.querySelector(".stt-played-card-by").textContent = localize("STT.Cards.Plays", { name: entry.by ?? "" });
+  card.querySelector(".stt-played-card-name").textContent = entry.card ?? "";
   const dismiss = () => {
     if ( card.classList.contains("leaving") ) return;
     card.classList.add("leaving");
     // The last card out takes the backdrop with it.
     const overlay = card.parentElement;
-    const staying = overlay?.querySelector(".robear-played-card-entry:not(.leaving)");
+    const staying = overlay?.querySelector(".stt-played-card-entry:not(.leaving)");
     if ( !staying && !playedCardQueue.length ) overlay?.classList.add("leaving");
     setTimeout(() => {
       card.remove();
@@ -751,7 +751,7 @@ async function promptCard(message, button) {
   playing.add(message.id);
   button.disabled = true;
   try {
-    const option = await chooseCard(options, localize("ROBEAR.Cards.ChooseOnRoll"));
+    const option = await chooseCard(options, localize("STT.Cards.ChooseOnRoll"));
     if ( option ) await applyCard(message, option);
   } catch(err) {
     reportError(err);
@@ -773,9 +773,9 @@ async function chooseCard(options, hint) {
   // The tooltip shows the card art at full size so its rules text is readable.
   const { escapeHTML } = foundry.utils;
   const cards = options.map((o, i) => `
-    <button type="button" class="robear-card-choice" data-index="${i}"
+    <button type="button" class="stt-card-choice" data-index="${i}"
             data-tooltip-html="${escapeHTML(cardArtHTML(o.img, o.label))}"
-            data-tooltip-class="robear-card-tooltip" data-tooltip-direction="UP">
+            data-tooltip-class="stt-card-tooltip" data-tooltip-direction="UP">
       <img src="${escapeHTML(o.img)}" alt="${escapeHTML(o.label)}">
       <span>${escapeHTML(o.label)}</span>
     </button>
@@ -784,16 +784,16 @@ async function chooseCard(options, hint) {
   // Card buttons live in the content rather than the footer, so the chosen index is returned through `close`.
   let chosen;
   await foundry.applications.api.DialogV2.wait({
-    classes: ["robear-card-dialog"],
-    window: { title: "ROBEAR.Cards.DialogTitle", icon: "fa-solid fa-anchor fa-rotate-90" },
+    classes: ["stt-card-dialog"],
+    window: { title: "STT.Cards.DialogTitle", icon: "fa-solid fa-anchor fa-rotate-90" },
     position: { width: Math.clamp(48 + (options.length * 124), 340, 792) },
     content: `
-      <p class="robear-card-hint">${foundry.utils.escapeHTML(hint)}</p>
-      <div class="robear-card-grid">${cards}</div>
+      <p class="stt-card-hint">${foundry.utils.escapeHTML(hint)}</p>
+      <div class="stt-card-grid">${cards}</div>
     `,
-    buttons: [{ action: "cancel", label: "ROBEAR.Common.Cancel", icon: "fa-solid fa-xmark" }],
+    buttons: [{ action: "cancel", label: "STT.Common.Cancel", icon: "fa-solid fa-xmark" }],
     render: (event, dialog) => {
-      for ( const el of dialog.element.querySelectorAll(".robear-card-choice") ) {
+      for ( const el of dialog.element.querySelectorAll(".stt-card-choice") ) {
         el.addEventListener("click", () => {
           chosen = Number(el.dataset.index);
           dialog.close();
@@ -858,7 +858,7 @@ async function playOnRoll(message, { key, activity, label }) {
       const { OperatorTerm } = foundry.dice.terms;
       rolls[0].terms.push(OperatorTerm.fromData({ class: "OperatorTerm", operator: "+", evaluated: true }), ...bonus.terms);
       finalize(rolls[0]);
-      detail = localize("ROBEAR.Cards.Log.Inspiration", {
+      detail = localize("STT.Cards.Log.Inspiration", {
         formula: bonus.formula, bonus: bonus.total, before, after: rolls[0].total
       });
       break;
@@ -866,18 +866,18 @@ async function playOnRoll(message, { key, activity, label }) {
     case "luck":
       if ( getRollKind(message) === "damage" ) {
         await rerollAllDice(rolls, message);
-        detail = localize("ROBEAR.Cards.Log.RerollDamage", { before: sumTotals(message.rolls), after: sumTotals(rolls) });
+        detail = localize("STT.Cards.Log.RerollDamage", { before: sumTotals(message.rolls), after: sumTotals(rolls) });
         break;
       }
       if ( getRollKind(message) === "divine" ) {
         await rerollAllDice(rolls, message);
-        detail = localize("ROBEAR.Cards.Log.RerollD100", { before, after: rolls[0].total });
+        detail = localize("STT.Cards.Log.RerollD100", { before, after: rolls[0].total });
         break;
       }
       // Falls through to reroll the d20.
     case "indomitable": {
       const [old, values] = await rerollD20(rolls[0], message);
-      detail = localize("ROBEAR.Cards.Log.RerollD20", {
+      detail = localize("STT.Cards.Log.RerollD20", {
         dice: describeD20s(values), old: old.join(", "), new: values.join(", "), before, after: rolls[0].total
       });
       break;
@@ -889,7 +889,7 @@ async function playOnRoll(message, { key, activity, label }) {
       const [old, values] = await rerollD20(rolls[0], message);
       const rerolled = rolls[0].total;
       if ( rerolled <= before ) rolls[0] = original;
-      detail = localize("ROBEAR.Cards.Log.RerollKeepHigher", {
+      detail = localize("STT.Cards.Log.RerollKeepHigher", {
         dice: describeD20s(values), old: old.join(", "), new: values.join(", "), before, rerolled, after: rolls[0].total
       });
       break;
@@ -897,20 +897,20 @@ async function playOnRoll(message, { key, activity, label }) {
     case "advantage": {
       if ( getRollKind(message) === "divine" ) {
         const [first, second] = await addDivineAdvantage(rolls[0], message);
-        detail = localize("ROBEAR.Cards.Log.DivineAdvantage", { first, second, total: rolls[0].total });
+        detail = localize("STT.Cards.Log.DivineAdvantage", { first, second, total: rolls[0].total });
         break;
       }
       if ( cancelDisadvantage(rolls[0]) ) {
-        detail = localize("ROBEAR.Cards.Log.CancelDisadvantage", { before, after: rolls[0].total });
+        detail = localize("STT.Cards.Log.CancelDisadvantage", { before, after: rolls[0].total });
         break;
       }
       const [first, second] = await addAdvantage(rolls[0], message);
-      detail = localize("ROBEAR.Cards.Log.Advantage", { first, second, before, after: rolls[0].total });
+      detail = localize("STT.Cards.Log.Advantage", { first, second, before, after: rolls[0].total });
       break;
     }
   }
 
-  const text = localize("ROBEAR.Cards.Log.Entry", { card: label, detail });
+  const text = localize("STT.Cards.Log.Entry", { card: label, detail });
   const entry = { text, card: label, img: getCardArt(activity), by: activity.actor?.name ?? "" };
   const log = [...(message.getFlag(MODULE_ID, "log") ?? []), entry];
   await message.update({ rolls: rolls.map(r => r.toJSON()), [`flags.${MODULE_ID}.log`]: log });
@@ -936,7 +936,7 @@ export function finalize(roll) {
  * @returns {string}  "the d20", or "both d20s" for a roll with advantage or disadvantage.
  */
 export function describeD20s(values) {
-  return localize(values.length > 1 ? "ROBEAR.Cards.Log.BothD20s" : "ROBEAR.Cards.Log.TheD20");
+  return localize(values.length > 1 ? "STT.Cards.Log.BothD20s" : "STT.Cards.Log.TheD20");
 }
 
 /* -------------------------------------------- */
@@ -1079,7 +1079,7 @@ async function addDivineAdvantage(roll, message) {
   const swap = inRange(value) && !inRange(current.result);
   if ( swap ) Object.assign(current, { active: false, discarded: true });
   die.results.push({ result: value, active: swap, discarded: !swap });
-  roll.options.robearAdvantage = true;
+  roll.options.sttAdvantage = true;
   finalize(roll);
   return [current.result, value];
 }

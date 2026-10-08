@@ -310,11 +310,11 @@ describe("Checking a request before it is posted", () => {
   };
 
   /**
-   * @param {string} key   The refusal's key under ROBEAR.Request.Invalid.
+   * @param {string} key   The refusal's key under STT.Request.Invalid.
    * @param {object} [data]
    * @returns {string}  The refusal's message, as the module words it.
    */
-  const refusal = (key, data) => game.i18n.format(`ROBEAR.Request.Invalid.${key}`, data);
+  const refusal = (key, data) => game.i18n.format(`STT.Request.Invalid.${key}`, data);
   const keys = { save: "str, dex, wis", check: "str, dex, wis", tool: "thief" };
 
   it("accepts a well-formed request of each kind", () => {
@@ -460,9 +460,9 @@ describe("Posting a request", () => {
   it("keeps only the rolls the mode uses, so the card offers no Roll button for an extra one", async () => {
     const d20 = { type: "d20", dc: 10 };
     const standard = await createRequest({ mode: "standard", actors: ["A"], parts: [d20, d20] });
-    expect(standard.flags["sogrom-robear-e"].request.parts).toEqual([d20]);
+    expect(standard.flags["sogrom-table-tools"].request.parts).toEqual([d20]);
     const challenge = await createRequest({ mode: "challenge", actors: ["A"], parts: [d20, d20, d20, d20] });
-    expect(challenge.flags["sogrom-robear-e"].request.parts).toHaveLength(3);
+    expect(challenge.flags["sogrom-table-tools"].request.parts).toHaveLength(3);
   });
 
   it("doesn't change the request it was given", async () => {

@@ -154,27 +154,27 @@ async function setSetting({ gm, player }, key, value) {
  * @returns {Promise<import("playwright").Locator>}
  */
 async function openWindow(gm, mode) {
-  await gm.page.locator("#chat-controls .robear-request-control").click();
-  const app = gm.page.locator("#robear-roll-request");
+  await gm.page.locator("#chat-controls .stt-request-control").click();
+  const app = gm.page.locator("#stt-roll-request");
   await app.waitFor({ timeout: 10_000 });
   if ( mode ) {
-    await app.locator(`.robear-request-mode:has(input[value="${mode}"])`).click();
-    await app.locator(`.robear-request-mode:has(input[value="${mode}"]:checked)`).waitFor({ timeout: 5000 });
+    await app.locator(`.stt-request-mode:has(input[value="${mode}"])`).click();
+    await app.locator(`.stt-request-mode:has(input[value="${mode}"]:checked)`).waitFor({ timeout: 5000 });
     await gm.page.waitForTimeout(300);
   }
   return app;
 }
 
 /**
- * Open the RoBear-E Card chooser from a roll's card button.
+ * Open the Hero Card chooser from a roll's card button.
  * @param {Session} session
  * @param {import("playwright").Locator} scope  The chat message, or the row of a request card.
  * @returns {Promise<import("playwright").Locator>}  The chooser.
  */
 async function openChooser(session, scope) {
-  await scope.locator(".robear-card-button:visible").first().click();
-  const dialog = session.page.locator(".robear-card-dialog.application").last();
-  await dialog.locator(".robear-card-choice").first().waitFor({ timeout: 10_000 });
+  await scope.locator(".stt-card-button:visible").first().click();
+  const dialog = session.page.locator(".stt-card-dialog.application").last();
+  await dialog.locator(".stt-card-choice").first().waitFor({ timeout: 10_000 });
   // The card art is loaded as the chooser opens.
   await session.page.waitForTimeout(800);
   return dialog;
@@ -185,7 +185,7 @@ async function openChooser(session, scope) {
  * @param {Session} session
  */
 async function waitForPlayedCard(session) {
-  await session.page.locator(".robear-played-card-entry").first().waitFor({ state: "detached", timeout: 10_000 })
+  await session.page.locator(".stt-played-card-entry").first().waitFor({ state: "detached", timeout: 10_000 })
     .catch(() => {});
 }
 
@@ -226,18 +226,18 @@ function equipBorin(gm) {
 shot("card window from the sheet, played card, and its chat record", async ({ player }) => {
   // Item#use is wrapped to open the card window, which waits for a choice, so it isn't awaited here.
   await player.eval(() => {
-    game.actors.getName("Aria").items.getName("RoBear-E Cards").use();
+    game.actors.getName("Aria").items.getName("Hero Cards").use();
   });
-  const dialog = player.page.locator(".robear-card-dialog.application").last();
-  await dialog.locator(".robear-card-choice").first().waitFor({ timeout: 10_000 });
+  const dialog = player.page.locator(".stt-card-dialog.application").last();
+  await dialog.locator(".stt-card-choice").first().waitFor({ timeout: 10_000 });
   await player.page.waitForTimeout(1000);
   await capture(player, "card-window", dialog);
 
-  await dialog.locator(".robear-card-choice", { hasText: "Charger" }).first().click();
+  await dialog.locator(".stt-card-choice", { hasText: "Charger" }).first().click();
   // dnd5e may ask how to use the activity: accept its defaults.
   const usage = player.page.locator(".application.activity-usage button[data-action=use]");
   if ( await usage.waitFor({ timeout: 2000 }).then(() => true, () => false) ) await usage.click();
-  const overlay = player.page.locator("#robear-played-card .robear-played-card-entry").first();
+  const overlay = player.page.locator("#stt-played-card .stt-played-card-entry").first();
   await overlay.waitFor({ timeout: 10_000 });
   await player.page.waitForTimeout(700);
   await capture(player, "played-card", overlay, { pad: 24 });
@@ -257,8 +257,8 @@ shot("a card played on a roll already in chat", async ({ player }) => {
   await capture(player, "card-chooser", dialog);
 
   await forceDice(player, [d8(7)]);
-  await dialog.locator(".robear-card-choice", { hasText: "1d8" }).first().click();
-  await waitFor(player, id => !!document.querySelector(`#chat [data-message-id="${id}"] .robear-card-log`), id,
+  await dialog.locator(".stt-card-choice", { hasText: "1d8" }).first().click();
+  await waitFor(player, id => !!document.querySelector(`#chat [data-message-id="${id}"] .stt-card-log`), id,
     "the card's note on the roll");
   await waitForPlayedCard(player);
   await capture(player, "card-played-on-roll", message(player, id));
@@ -287,12 +287,12 @@ shot("adding another feature's die to a roll", async (ctx) => {
   await capture(player, "bonus-menu", [message(player, bonus), menu]);
 
   await menu.locator(".context-item", { hasText: "Add to a roll" }).click();
-  const dialog = player.page.locator(".robear-bonus-dialog.application");
-  await dialog.locator(".robear-bonus-choice").first().waitFor({ timeout: 5000 });
+  const dialog = player.page.locator(".stt-bonus-dialog.application");
+  await dialog.locator(".stt-bonus-choice").first().waitFor({ timeout: 5000 });
   await capture(player, "bonus-chooser", dialog);
 
-  await dialog.locator(".robear-bonus-choice").first().click();
-  await waitFor(player, id => !!document.querySelector(`#chat [data-message-id="${id}"] .robear-card-log`), target,
+  await dialog.locator(".stt-bonus-choice").first().click();
+  await waitFor(player, id => !!document.querySelector(`#chat [data-message-id="${id}"] .stt-card-log`), target,
     "the bonus note on the roll");
   await capture(player, "bonus-applied", [message(player, target), message(player, bonus)]);
 });
@@ -301,12 +301,12 @@ shot("Fighter's Indomitable on a failed save", async ({ gm, player }) => {
   await equipBorin(gm);
   await forceDice(player, [d20(6)]);
   const id = await roll(player, "Borin", "save", { target: 15 });
-  await message(player, id).locator(".robear-feature-button").waitFor({ timeout: 10_000 });
+  await message(player, id).locator(".stt-feature-button").waitFor({ timeout: 10_000 });
   await capture(player, "indomitable-button", message(player, id));
 
   await forceDice(player, [d20(8)]);
-  await message(player, id).locator(".robear-feature-button").click();
-  await waitFor(player, id => !!document.querySelector(`#chat [data-message-id="${id}"] .robear-card-log`), id,
+  await message(player, id).locator(".stt-feature-button").click();
+  await waitFor(player, id => !!document.querySelector(`#chat [data-message-id="${id}"] .stt-card-log`), id,
     "Indomitable's note on the save");
   await capture(player, "indomitable-used", message(player, id));
 });
@@ -328,13 +328,13 @@ shot("choosing which roll to make", async (ctx) => {
     mode: "standard", actors: [ids.aria], showDC: true,
     parts: [{ ...athletics(15), alternatives: [{ type: "skill", key: "acr", dc: 10 }] }]
   });
-  await message(player, id).locator(".robear-request-roll").first().click();
-  const dialog = player.page.locator(".robear-choice-dialog.application");
+  await message(player, id).locator(".stt-request-roll").first().click();
+  const dialog = player.page.locator(".stt-choice-dialog.application");
   await dialog.waitFor({ timeout: 10_000 });
   // Beside the card it was opened from, rather than wherever Foundry put it.
   const card = await message(player, id).boundingBox();
   await player.eval(({ left, top }) => {
-    const app = [...foundry.applications.instances.values()].find(a => a.element?.classList.contains("robear-choice-dialog"));
+    const app = [...foundry.applications.instances.values()].find(a => a.element?.classList.contains("stt-choice-dialog"));
     app.setPosition({ left, top });
   }, { left: card.x - 340, top: card.y });
   await capture(player, "choice-dialog", [message(player, id), dialog]);
@@ -346,10 +346,10 @@ shot("picking Divine Intervention's numbers", async (ctx) => {
   const id = await postRequest(ctx, {
     mode: "divine", range: 16, parts: [{ type: "d100", key: null, dc: null }], actors: [ids.aria]
   });
-  await message(player, id).locator(".robear-request-roll").first().click();
-  const dialog = player.page.locator(".robear-divine-dialog.application");
+  await message(player, id).locator(".stt-request-roll").first().click();
+  const dialog = player.page.locator(".stt-divine-dialog.application");
   await dialog.waitFor({ timeout: 10_000 });
-  await dialog.locator('.robear-divine-number[data-number="40"]').click();
+  await dialog.locator('.stt-divine-number[data-number="40"]').click();
   await capture(player, "divine-picker", dialog);
 
   await forceDice(player, [d100(47)]);
@@ -364,7 +364,7 @@ shot("a player's roll request pop-up", async (ctx) => {
   await postRequest(ctx, {
     mode: "standard", parts: [{ type: "save", key: "dex", dc: 13 }], actors: [ids.aria, ids.borin], showDC: true
   });
-  const popup = player.page.locator(".robear-request-popup.application");
+  const popup = player.page.locator(".stt-request-popup.application");
   await popup.waitFor({ timeout: 10_000 });
   await capture(player, "popup-player", popup);
 });
@@ -387,14 +387,14 @@ shot("the request window", async ({ gm }) => {
   await gm.page.waitForTimeout(300);
   await app.locator('select[name*=".alternatives."]').first().selectOption("skill.acr");
   await app.locator('input[name*=".alternatives."][name$=".dc"]').first().fill("10");
-  await capture(gm, "gm-request-choices", app.locator(".robear-request-parts"));
+  await capture(gm, "gm-request-choices", app.locator(".stt-request-parts"));
   await app.locator('[data-action="close"]').click();
 
   for ( const mode of ["challenge", "rolloff", "divine"] ) {
     app = await openWindow(gm, mode);
     if ( mode === "rolloff" ) {
-      await app.locator(".robear-request-side").nth(0).locator("label", { hasText: "Aria" }).click();
-      await app.locator(".robear-request-side").nth(1).locator("label", { hasText: "Goblin" }).click();
+      await app.locator(".stt-request-side").nth(0).locator("label", { hasText: "Aria" }).click();
+      await app.locator(".stt-request-side").nth(1).locator("label", { hasText: "Goblin" }).click();
     }
     await capture(gm, `gm-request-window-${mode}`, app);
     await app.locator('[data-action="close"]').click();
@@ -417,12 +417,12 @@ shot("a standard roll, hidden and shown", async (ctx) => {
   await capture(gm, "gm-request-hidden", message(gm, id));
   await capture(player, "player-request-hidden", message(player, id));
 
-  await gm.page.locator(`#chat [data-message-id="${id}"] .robear-request-reveal`).click();
+  await gm.page.locator(`#chat [data-message-id="${id}"] .stt-request-reveal`).click();
   await waitForCard(player, id, c => c.summary, "the shown result");
   await capture(player, "player-request-shown", message(player, id));
 
-  await gm.page.locator(`#chat [data-message-id="${id}"] .robear-request-dc-edit`).first().click();
-  const dialog = gm.page.locator(".robear-dc-dialog.application");
+  await gm.page.locator(`#chat [data-message-id="${id}"] .stt-request-dc-edit`).first().click();
+  const dialog = gm.page.locator(".stt-dc-dialog.application");
   await dialog.waitFor({ timeout: 10_000 });
   await dialog.locator('input[name="dc"]').fill("12");
   await capture(gm, "gm-change-dc", dialog);
@@ -438,8 +438,8 @@ shot("letting someone roll again", async (ctx) => {
   await forceDice(player, [d20(4)]);
   await clickRoll(player, id, "Aria", { fastForward: true });
   await waitForCard(gm, id, c => c.rows[0].results.length, "Aria's result");
-  await message(gm, id).locator(".robear-request-result.expandable").first().click();
-  await message(gm, id).locator(".robear-request-roll-again").waitFor({ timeout: 5000 });
+  await message(gm, id).locator(".stt-request-result.expandable").first().click();
+  await message(gm, id).locator(".stt-request-roll-again").waitFor({ timeout: 5000 });
   await capture(gm, "gm-roll-again", message(gm, id));
 });
 
@@ -468,7 +468,7 @@ shot("a team challenge", async (ctx) => {
   await forceDice(gm, [d20(11)]);
   await clickRoll(gm, id, "Goblin", { fastForward: true });
   await waitForCard(gm, id, c => c.reveal === "Show to players", "the Show to players button");
-  await gm.page.locator(`#chat [data-message-id="${id}"] .robear-request-reveal`).click();
+  await gm.page.locator(`#chat [data-message-id="${id}"] .stt-request-reveal`).click();
   await waitForCard(gm, id, c => c.reveal === "Shown", "the result to be shown");
   await capture(gm, "gm-team-challenge", message(gm, id));
 });
@@ -511,7 +511,7 @@ shot("the GM's pop-up", async (ctx) => {
   await postRequest(ctx, {
     mode: "standard", parts: [{ type: "check", key: "wis", dc: 12 }], actors: [ids.aria, ids.goblin], showDC: true
   });
-  const popup = gm.page.locator(".robear-request-popup.application");
+  const popup = gm.page.locator(".stt-request-popup.application");
   await popup.waitFor({ timeout: 10_000 });
   await capture(gm, "popup-gm", popup);
 });

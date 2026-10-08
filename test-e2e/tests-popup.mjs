@@ -26,7 +26,7 @@ async function setSetting(gm, player, key, value) {
  * @returns {import("playwright").Locator}  The user's roll request pop-up.
  */
 function popup(session) {
-  return session.page.locator(".robear-request-popup.application");
+  return session.page.locator(".stt-request-popup.application");
 }
 
 /**
@@ -35,7 +35,7 @@ function popup(session) {
  */
 async function popupActors(session) {
   if ( !(await popup(session).count()) ) return null;
-  return popup(session).locator(".robear-request-name").allTextContents();
+  return popup(session).locator(".stt-request-name").allTextContents();
 }
 
 /**
@@ -65,7 +65,7 @@ function waitForPopupToClose(session) {
  * @returns {import("playwright").Locator}  An actor's Roll button in the user's pop-up.
  */
 function popupRollButton(session, name) {
-  return popup(session).locator(`li.robear-request-actor:has(.robear-request-name:text-is("${name}")) .robear-request-roll`);
+  return popup(session).locator(`li.stt-request-actor:has(.stt-request-name:text-is("${name}")) .stt-request-roll`);
 }
 
 /* -------------------------------------------- */
@@ -91,12 +91,12 @@ test("pop-ups: a player gets their own characters, rolls from the pop-up, and it
   const id = await postRequest(ctx, { mode: "standard", parts: [athletics(12)], actors: [ids.aria, ids.borin, ids.goblin] });
   assertEqual(await waitForPopup(player), ["Aria", "Borin"], "the actors in the player's pop-up");
   assertEqual(await popupActors(gm), null, "the GM's pop-up, with only the player setting on");
-  assertEqual(await popup(player).locator(".robear-request-header h3").textContent(), "Athletics Check", "the pop-up's title");
+  assertEqual(await popup(player).locator(".stt-request-header h3").textContent(), "Athletics Check", "the pop-up's title");
 
   await forceDice(player, [d20(14), d20(6)]);
   await popupRollButton(player, "Aria").click({ modifiers: ["Shift"] });
   await waitForRoll(gm, id, ids.aria);
-  await popup(player).locator('li:has(.robear-request-name:text-is("Aria")) .robear-request-result').waitFor({ timeout: 10_000 });
+  await popup(player).locator('li:has(.stt-request-name:text-is("Aria")) .stt-request-result').waitFor({ timeout: 10_000 });
   assert(await popup(player).isVisible(), "The pop-up closed with Borin still to roll.");
   assertEqual(await popupRollButton(player, "Aria").count(), 0, "Aria's Roll button once rolled");
 
@@ -146,9 +146,9 @@ test("pop-ups: a team challenge's pop-up marks no one's roll as passing or faili
   await forceDice(player, [d20(3)]);
   await popupRollButton(player, "Aria").click({ modifiers: ["Shift"] });
   await waitForRoll(gm, id, ids.aria);
-  const aria = popup(player).locator('li.robear-request-actor:has(.robear-request-name:text-is("Aria"))');
-  await aria.locator(".robear-request-result").waitFor({ timeout: 10_000 });
-  const marked = await aria.evaluate(row => [row, row.querySelector(".robear-request-result")]
+  const aria = popup(player).locator('li.stt-request-actor:has(.stt-request-name:text-is("Aria"))');
+  await aria.locator(".stt-request-result").waitFor({ timeout: 10_000 });
+  const marked = await aria.evaluate(row => [row, row.querySelector(".stt-request-result")]
     .some(el => el.classList.contains("success") || el.classList.contains("failure")));
   assertEqual(marked, false, "Aria's roll marked as passing or failing in the pop-up");
 });
@@ -189,7 +189,7 @@ test("pop-ups: a request a player wrote opens no one's pop-up, and draws no requ
   await waitFor(gm, id => !!document.querySelector(`#chat .chat-log [data-message-id="${id}"]`), id, "the message to reach the GM");
   await gm.page.waitForTimeout(500);
   assertEqual(await popupActors(gm), null, "the GM's pop-up");
-  const card = await gm.eval(id => !!document.querySelector(`#chat .chat-log [data-message-id="${id}"] .robear-request`), id);
+  const card = await gm.eval(id => !!document.querySelector(`#chat .chat-log [data-message-id="${id}"] .stt-request`), id);
   assertEqual(card, false, "a request card drawn for the player's message");
 });
 
@@ -202,9 +202,9 @@ test("pop-ups: divine intervention's number picker opens from the pop-up", async
   await waitForPopup(player);
   await forceDice(player, [[50, 100]]);
   await popupRollButton(player, "Aria").click();
-  const picker = player.page.locator(".robear-divine-dialog.application");
+  const picker = player.page.locator(".stt-divine-dialog.application");
   await picker.waitFor({ timeout: 10_000 });
-  await picker.locator('.robear-divine-number[data-number="45"]').click();
+  await picker.locator('.stt-divine-number[data-number="45"]').click();
   await picker.locator('button[data-action="roll"]').click();
   const roll = await waitForRoll(gm, id, ids.aria);
   assertEqual([roll.total, roll.flag.range], [50, { start: 45, end: 60 }], "the d100 and its range");
@@ -229,17 +229,17 @@ test("pop-ups: an open pop-up redraws when the GM shows the result, and a closed
   await forceDice(player, [d20(14)]);
   await popupRollButton(player, "Aria").click({ modifiers: ["Shift"] });
   await waitForRoll(gm, id, ids.aria);
-  const aria = popup(player).locator('li.robear-request-actor:has(.robear-request-name:text-is("Aria"))');
-  await aria.locator(".robear-request-result").waitFor({ timeout: 10_000 });
+  const aria = popup(player).locator('li.stt-request-actor:has(.stt-request-name:text-is("Aria"))');
+  await aria.locator(".stt-request-result").waitFor({ timeout: 10_000 });
   assertEqual(await aria.evaluate(li => li.classList.contains("success")), false, "Aria's pass, before the GM shows it");
 
   const reveal = revealed => gm.eval(({ id, moduleId, revealed }) => game.messages.get(id).setFlag(moduleId, "revealed", revealed),
     { id, moduleId: MODULE_ID, revealed });
   await reveal(true);
-  await waitFor(player, () => !!document.querySelector(".robear-request-popup li.robear-request-actor.success"), null,
+  await waitFor(player, () => !!document.querySelector(".stt-request-popup li.stt-request-actor.success"), null,
     "the pop-up to show Aria's pass");
 
-  await player.eval(id => foundry.applications.instances.get(`robear-request-popup-${id}`)?.close(), id);
+  await player.eval(id => foundry.applications.instances.get(`stt-request-popup-${id}`)?.close(), id);
   await waitForPopupToClose(player);
   await reveal(false);
   await player.page.waitForTimeout(1000);

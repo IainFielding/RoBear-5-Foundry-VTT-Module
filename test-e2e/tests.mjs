@@ -1,7 +1,7 @@
 /**
- * End-to-end tests for roll requests and RoBear-E Cards, run against a real Foundry world.
+ * End-to-end tests for roll requests and Hero Cards, run against a real Foundry world.
  *
- * The fixtures (see lib/world.mjs): the Player owns Aria and Borin, Aria holds the RoBear-E Cards, and the
+ * The fixtures (see lib/world.mjs): the Player owns Aria and Borin, Aria holds the Hero Cards, and the
  * Goblin belongs to the GM. Every actor has 10 in each ability and no proficiencies, so a roll's total is
  * exactly the die forced for it.
  */
@@ -22,15 +22,15 @@ const row = (card, name) => card.rows.find(r => r.name === name);
 /* -------------------------------------------- */
 
 test("the GM's chat controls have the request button, and the player's do not", async ({ gm, player }) => {
-  const count = s => s.eval(() => document.querySelectorAll("#chat-controls .robear-request-control").length);
+  const count = s => s.eval(() => document.querySelectorAll("#chat-controls .stt-request-control").length);
   assertEqual(await count(gm), 1, "GM request buttons");
   assertEqual(await count(player), 0, "player request buttons");
 });
 
 test("the token controls have the request button, rotated like the card button", async ({ gm, player }) => {
-  const tool = s => s.eval(() => ui.controls.controls.tokens?.tools.robearRequest ?? null);
+  const tool = s => s.eval(() => ui.controls.controls.tokens?.tools.sttRequest ?? null);
   const gmTool = await tool(gm);
-  assert(gmTool, "The GM has no Request RoBear-E Rolls tool.");
+  assert(gmTool, "The GM has no Request Rolls tool.");
   assertEqual(gmTool.icon, "fa-solid fa-anchor fa-rotate-90", "tool icon");
   assertEqual(gmTool.button, true, "tool is a button");
   assertEqual(await tool(player), null, "the player's tool");
@@ -43,7 +43,7 @@ test("the token controls' request button has a grey border like the tools beside
     // The active tool is ringed in orange too, so compare with one that isn't active.
     const other = document.querySelector('#scene-controls-tools button.tool[aria-pressed="false"]:not(.button, .toggle)');
     return {
-      request: border(document.querySelector('#scene-controls-tools button[data-tool="robearRequest"]')),
+      request: border(document.querySelector('#scene-controls-tools button[data-tool="sttRequest"]')),
       other: border(other)
     };
   });
@@ -74,7 +74,7 @@ test("the API opens the request window for the GM only", async ({ gm, player }) 
   const open = s => s.eval(async moduleId => {
     const app = game.modules.get(moduleId).api.requestRolls();
     await new Promise(r => setTimeout(r, 500));
-    const rendered = !!document.getElementById("robear-roll-request");
+    const rendered = !!document.getElementById("stt-roll-request");
     await app?.close();
     return rendered;
   }, MODULE_ID);
@@ -131,8 +131,8 @@ test("the API posts a request from a macro, filling in what it leaves out, and r
  * @param {import("./lib/session.mjs").Session} gm
  */
 async function openWindow(gm) {
-  await gm.page.locator("#chat-controls .robear-request-control").click();
-  const app = gm.page.locator("#robear-roll-request");
+  await gm.page.locator("#chat-controls .stt-request-control").click();
+  const app = gm.page.locator("#stt-roll-request");
   await app.waitFor({ timeout: 10_000 });
   return app;
 }
@@ -142,8 +142,8 @@ async function openWindow(gm) {
  * @param {string} mode
  */
 async function chooseMode(app, mode) {
-  await app.locator(`.robear-request-mode:has(input[value="${mode}"])`).click();
-  await app.locator(`.robear-request-mode:has(input[value="${mode}"]:checked)`).waitFor({ timeout: 5000 });
+  await app.locator(`.stt-request-mode:has(input[value="${mode}"])`).click();
+  await app.locator(`.stt-request-mode:has(input[value="${mode}"]:checked)`).waitFor({ timeout: 5000 });
   await app.page().waitForTimeout(300);
 }
 
@@ -153,8 +153,8 @@ async function chooseMode(app, mode) {
  */
 function readWindow(app) {
   return app.evaluate(el => ({
-    modes: [...el.querySelectorAll(".robear-request-mode input")].map(i => i.value),
-    checkedMode: el.querySelector(".robear-request-mode input:checked")?.value,
+    modes: [...el.querySelectorAll(".stt-request-mode input")].map(i => i.value),
+    checkedMode: el.querySelector(".stt-request-mode input:checked")?.value,
     rollSelects: [...el.querySelectorAll('select[name$=".roll"]')].map(s => s.name),
     rollValues: [...el.querySelectorAll('select[name$=".roll"]')].map(s => s.value),
     dcInputs: [...el.querySelectorAll('input[name$=".dc"]')].map(i => i.value),
@@ -163,7 +163,7 @@ function readWindow(app) {
     actors: [...el.querySelectorAll('input[name^="actors."]')].map(i => ({
       name: i.closest("label").textContent.trim(), checked: i.checked
     })),
-    sides: [...el.querySelectorAll(".robear-request-side")].map(s => ({
+    sides: [...el.querySelectorAll(".stt-request-side")].map(s => ({
       label: s.querySelector("legend").textContent.trim(),
       inputs: [...s.querySelectorAll("input")].map(i => i.type)
     })),
@@ -219,7 +219,7 @@ test("the request window shows each mode's own fields", async ({ gm }) => {
     assertEqual(form.range, { value: 16, min: 1, max: 50 }, "divine intervention range");
     assertEqual(form.showDC, false, "Show DC option in divine intervention");
   } finally {
-    await gm.eval(() => foundry.applications.instances.get("robear-roll-request")?.close());
+    await gm.eval(() => foundry.applications.instances.get("stt-roll-request")?.close());
   }
 });
 
@@ -247,7 +247,7 @@ test("the request window keeps what was filled in when the mode changes", async 
     await chooseMode(app, "rolloff");
     assertEqual((await readWindow(app)).rollValues, ["d20", "d100"], "roll-off rolls after visiting team vs team");
   } finally {
-    await gm.eval(() => foundry.applications.instances.get("robear-roll-request")?.close());
+    await gm.eval(() => foundry.applications.instances.get("stt-roll-request")?.close());
   }
 });
 
@@ -263,7 +263,7 @@ test("sending a standard request posts it to chat and closes the window", async 
   assertEqual(request.mode, "standard", "mode");
   assertEqual(request.parts, [{ type: "skill", key: "acr", dc: 13 }], "parts");
   assertEqual(request.actors, [ids.aria, ids.borin, ids.goblin], "actors");
-  await waitFor(gm, () => !document.getElementById("robear-roll-request"), null, "the window to close");
+  await waitFor(gm, () => !document.getElementById("stt-roll-request"), null, "the window to close");
 });
 
 test("the Show DC to Players box starts from the GM's setting", async ({ gm }) => {
@@ -278,7 +278,7 @@ test("the Show DC to Players box starts from the GM's setting", async ({ gm }) =
     assertEqual((await readWindow(app)).showDCChecked, true, "Show DC to Players with the setting on");
   } finally {
     await gm.eval(async moduleId => {
-      await foundry.applications.instances.get("robear-roll-request")?.close();
+      await foundry.applications.instances.get("stt-roll-request")?.close();
       await game.settings.set(moduleId, "showDCDefault", false);
     }, MODULE_ID);
   }
@@ -309,7 +309,7 @@ test("the request window refuses requests it cannot run", async ({ gm }) => {
       assertEqual(await gm.eval(() => game.messages.size), before, `messages after "${expected}"`);
       assert(await app.isVisible(), `The window closed after "${expected}".`);
     } finally {
-      await gm.eval(() => foundry.applications.instances.get("robear-roll-request")?.close());
+      await gm.eval(() => foundry.applications.instances.get("stt-roll-request")?.close());
       await gm.eval(() => ui.notifications.clear?.());
     }
   };
@@ -389,7 +389,7 @@ test("standard roll: players see no pass or fail, on the card or the roll, until
   card = await readCard(gm, id);
   assertEqual(card.rows.map(r => r.classes), [["failure"], ["success"]], "the GM's rows");
 
-  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-reveal`).click();
+  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-reveal`).click();
   card = await waitForCard(player, id, c => c.summary, "the result to be shown");
   assertEqual(card.rows.map(r => r.classes), [["failure"], ["success"]], "the player's rows once shown");
   assertEqual(card.rows.map(r => r.results[0].classes), [["failure"], ["success"]], "the player's results once shown");
@@ -406,13 +406,13 @@ test("standard roll: the summary is hidden from players until the GM shows it", 
   card = await waitForCard(player, id, c => c.rows[0].results.length, "the player's result");
   assertEqual(card.summary, null, "the player's summary before it is shown");
 
-  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-reveal`).click();
+  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-reveal`).click();
   card = await waitForCard(player, id, c => c.summary, "the player's summary");
   assertEqual(card.summary, "1 of 1 succeeded", "the player's summary once shown");
   assertEqual(card.reveal, null, "a reveal button for the player");
   card = await waitForCard(gm, id, c => c.reveal === "Shown", "the GM's Shown button");
 
-  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-reveal`).click();
+  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-reveal`).click();
   await waitForCard(player, id, c => !c.summary, "the summary to be hidden again");
 });
 
@@ -449,12 +449,12 @@ test("standard roll: the GM's Roll again button, under an attached roll's dice, 
 
   // Players open the dice too, but get no button: they can't delete the roll.
   const card = s => s.page.locator(`#chat .chat-log [data-message-id="${id}"]`);
-  await card(player).locator(".robear-request-result.expandable").click();
-  await card(player).locator(".robear-request-roll-detail").waitFor({ timeout: 5000 });
-  assertEqual(await card(player).locator(".robear-request-roll-again").count(), 0, "Roll again buttons for the player");
+  await card(player).locator(".stt-request-result.expandable").click();
+  await card(player).locator(".stt-request-roll-detail").waitFor({ timeout: 5000 });
+  assertEqual(await card(player).locator(".stt-request-roll-again").count(), 0, "Roll again buttons for the player");
 
-  await card(gm).locator(".robear-request-result.expandable").click();
-  const button = card(gm).locator(".robear-request-roll-detail .robear-request-roll-again");
+  await card(gm).locator(".stt-request-result.expandable").click();
+  const button = card(gm).locator(".stt-request-roll-detail .stt-request-roll-again");
   await button.waitFor({ timeout: 5000 });
   assertEqual(await button.getAttribute("data-tooltip-text"), "Delete this roll, so Aria can roll again.", "the tooltip");
 
@@ -515,7 +515,7 @@ test("standard roll: a double click makes one roll", async (ctx) => {
   const rolls = await gm.eval(({ id, moduleId }) => game.messages.filter(m => m.getFlag(moduleId, "requestRoll")?.request === id).length,
     { id, moduleId: MODULE_ID });
   assertEqual(rolls, 1, "roll messages after a double click");
-  await player.eval(() => { globalThis.__robearDice.length = 0; });
+  await player.eval(() => { globalThis.__sttDice.length = 0; });
 });
 
 test("standard roll: a plain d6 is rolled straight away and scored against the DC", async (ctx) => {
@@ -616,7 +616,7 @@ test("skill challenge: players see no outcome until the GM shows it", async (ctx
     .flatMap(li => [...li.querySelectorAll(".dice-roll.success, .dice-roll.failure")]).length);
   assertEqual(marked, 0, "rolls in the player's chat marked as passing or failing");
 
-  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-reveal`).click();
+  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-reveal`).click();
   card = await waitForCard(player, id, c => c.summary, "the outcome to be shown");
   assertEqual(card.summary, "1 of 1 passed the challenge", "the player's summary once shown");
   assertEqual([row(card, "Aria").classes, row(card, "Aria").badge], [["success"], "2/2"], "Aria's row once shown");
@@ -675,7 +675,7 @@ test("team challenge: a natural 1 takes the highest roll out of the average", as
  */
 async function revealSummary(gm, id) {
   await waitForCard(gm, id, c => c.reveal === "Show to players", "the GM's Show to players button");
-  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-reveal`).click();
+  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-reveal`).click();
 }
 
 test("team challenge: a natural 20 takes the lowest roll out of the average", async (ctx) => {
@@ -705,7 +705,7 @@ test("team challenge: the GM's summary keeps each word of the result whole besid
   await waitForCard(gm, id, c => c.reveal === "Shown", "the result to be shown");
   // A word broken across lines takes more than one line box.
   const broken = await gm.eval(id => {
-    const summary = document.querySelector(`#chat .chat-log [data-message-id="${id}"] .robear-request-summary`);
+    const summary = document.querySelector(`#chat .chat-log [data-message-id="${id}"] .stt-request-summary`);
     const words = [];
     for ( const strong of summary.querySelectorAll("strong") ) {
       const text = strong.firstChild;
@@ -764,7 +764,7 @@ test("roll-off: a d100 against a skill check, the higher total winning", async (
  */
 async function revealRival(gm, player, id) {
   await waitForCard(gm, id, c => c.reveal === "Show NPC roll", "the GM's Show NPC roll button");
-  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-reveal`).click();
+  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-reveal`).click();
   await waitForCard(player, id, c => c.rows.every(r => r.results.every(p => p.text !== "?")), "the NPC roll to be shown");
 }
 
@@ -808,7 +808,7 @@ test("roll-off: the NPC's roll is private to the GM until the GM shows it", asyn
   assertEqual(row(card, "Goblin").results[0].text, "16", "the Goblin's result once shown");
   await waitForCard(gm, id, c => c.reveal === "NPC roll shown", "the GM's button to show it is shown");
 
-  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-reveal`).click();
+  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-reveal`).click();
   card = await waitForCard(player, id, c => row(c, "Goblin").results[0].text === "?", "the NPC roll to be hidden again");
   assertEqual(card.summary, "The result is hidden.", "the player's summary once hidden again");
 });
@@ -834,7 +834,7 @@ test("roll-off: in a private request, showing the NPC's roll shows it only to th
   await waitFor(gm, ({ id, whisper }) => game.messages.get(id).whisper.join() === whisper.join(),
     { id: goblin.id, whisper: [...users.gms, users.player] }, "the Goblin's roll to be shown only to the GM and Aria's player");
 
-  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-reveal`).click();
+  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-reveal`).click();
   await waitFor(gm, ({ id, gms }) => game.messages.get(id).whisper.every(u => gms.includes(u)), { id: goblin.id, gms: users.gms },
     "the Goblin's roll to be hidden again");
   const card = await waitForCard(player, id, c => row(c, "Goblin").results[0]?.text === "?", "the NPC roll to be hidden again");
@@ -905,12 +905,12 @@ test("team vs team: each team pooled with the 1 and 20 rule, the higher average 
  */
 async function pickAndRoll(session, id, name, number) {
   await rollButton(session, id, name).click();
-  const dialog = session.page.locator(".robear-divine-dialog.application");
+  const dialog = session.page.locator(".stt-divine-dialog.application");
   await dialog.waitFor({ timeout: 10_000 });
   const roll = dialog.locator('button[data-action="roll"]');
   assertEqual(await roll.isDisabled(), true, "Roll d100 before picking");
-  await dialog.locator(`.robear-divine-number[data-number="${number}"]`).click();
-  const choice = (await dialog.locator(".robear-divine-choice").textContent()).trim();
+  await dialog.locator(`.stt-divine-number[data-number="${number}"]`).click();
+  const choice = (await dialog.locator(".stt-divine-choice").textContent()).trim();
   await roll.click();
   return choice;
 }
@@ -942,7 +942,7 @@ test("divine intervention: cancelling the picker rolls nothing", async (ctx) => 
     mode: "divine", range: 16, parts: [{ type: "d100", key: null, dc: null }], actors: [ids.aria]
   });
   await rollButton(player, id, "Aria").click();
-  const dialog = player.page.locator(".robear-divine-dialog.application");
+  const dialog = player.page.locator(".stt-divine-dialog.application");
   await dialog.waitFor({ timeout: 10_000 });
   await dialog.locator('button[data-action="cancel"]').click();
   await player.page.waitForTimeout(1000);
@@ -983,7 +983,7 @@ test("divine intervention: Advantage keeps a second d100 that lands in range", a
   let card = await waitForCard(player, id, c => row(c, "Aria").results[0].text === "50", "Advantage");
   assertEqual(card.summary, "1 of 1 answered The gods answer", "summary after Advantage");
   card = await readCard(player, id);
-  const offered = await player.eval(({ id }) => document.querySelector(`#chat .chat-log [data-message-id="${id}"] .robear-card-button`)
+  const offered = await player.eval(({ id }) => document.querySelector(`#chat .chat-log [data-message-id="${id}"] .stt-card-button`)
     ? "button" : "none", { id });
   assert(offered === "button", "Luck should still be playable after Advantage.");
 });
@@ -1005,7 +1005,7 @@ test("divine intervention: Advantage keeps the first d100 when the second misses
 });
 
 /* -------------------------------------------- */
-/*  RoBear-E Cards on Requested Rolls           */
+/*  Hero Cards on Requested Rolls           */
 /* -------------------------------------------- */
 
 test("cards: Advantage on a failed check updates the request card", async (ctx) => {
@@ -1048,7 +1048,7 @@ test("cards: Indomitable is offered on a failed requested save once the GM shows
   assert(notYet.includes("Luck"), `The card chooser did not open: ${notYet.join(", ")}`);
   assert(!notYet.includes("Indomitable"), `Indomitable was offered before the result was shown: ${notYet.join(", ")}`);
 
-  await gm.page.locator(`#chat .chat-log [data-message-id="${failed}"] .robear-request-reveal`).click();
+  await gm.page.locator(`#chat .chat-log [data-message-id="${failed}"] .stt-request-reveal`).click();
   await waitForCard(player, failed, c => c.summary, "the result to be shown");
   await forceDice(player, [d20(19)]);
   await playCard(player, failed, "Aria", "Indomitable");
@@ -1089,19 +1089,19 @@ test("attached rolls: on by default, the rolls are hidden from chat and shown on
   }
 
   // Clicking the result opens its dice under the row.
-  await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-result.expandable`).click();
-  const detail = player.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-roll-detail`);
+  await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-result.expandable`).click();
+  const detail = player.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-roll-detail`);
   await detail.locator(".dice-tooltip").waitFor({ timeout: 5000 });
-  assertEqual((await detail.locator(".robear-request-roll-formula").textContent()).trim(), "1d20 + 0 = 4", "the formula");
+  assertEqual((await detail.locator(".stt-request-roll-formula").textContent()).trim(), "1d20 + 0 = 4", "the formula");
 
   // A card played on the roll is noted under the row, and the open dice stay open through the redraw.
   await forceDice(player, [d20(13)]);
   await playCard(player, id, "Aria", "Luck");
   const card = await waitForCard(player, id, c => row(c, "Aria").results[0].text === "13", "Luck's reroll");
   assert(card, "The card did not update.");
-  const note = await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-details .robear-card-log`)
+  const note = await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-details .stt-card-log`)
     .textContent();
-  assertEqual(note.replace(/\s+/g, " ").trim(), "Luck: rerolled the d20 (4 → 13): 4 → 13", "the card's note, with no RoBear-E label");
+  assertEqual(note.replace(/\s+/g, " ").trim(), "Luck: rerolled the d20 (4 → 13): 4 → 13", "the card's note, with no Hero Cards label");
   assertEqual(await detail.count(), 1, "the dice breakdown after the redraw");
 });
 
@@ -1150,7 +1150,7 @@ test("attached rolls: turned off, each roll keeps its own chat message", async (
   for ( const session of [gm, player] ) {
     assertEqual(await rollMessageShown(session, roll.id), true, `Aria's roll message in chat (${session.user})`);
   }
-  const expandable = await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-result.expandable`).count();
+  const expandable = await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-result.expandable`).count();
   assertEqual(expandable, 0, "results that open their dice");
 });
 
@@ -1206,7 +1206,7 @@ test("choice of rolls: the request window offers alternatives where the mode all
       alternatives: [{ type: "save", key: "str", dc: 10 }, { type: "skill", key: "ani", dc: 15 }]
     }], "the parts sent");
   } finally {
-    await gm.eval(() => foundry.applications.instances.get("robear-roll-request")?.close());
+    await gm.eval(() => foundry.applications.instances.get("stt-roll-request")?.close());
   }
 });
 
@@ -1218,7 +1218,7 @@ test("choice of rolls: the player picks one, which is rolled and scored against 
 
   await forceDice(player, [d20(14)]);
   await rollButton(player, id, "Aria").click();
-  const dialog = player.page.locator(".robear-choice-dialog");
+  const dialog = player.page.locator(".stt-choice-dialog");
   await dialog.waitFor({ timeout: 10_000 });
   const labels = await dialog.locator(".form-footer button").allTextContents();
   assertEqual(labels.map(l => l.trim()), ["Athletics Check · DC 12", "Strength Save · DC 12"], "the rolls offered");
@@ -1228,7 +1228,7 @@ test("choice of rolls: the player picks one, which is rolled and scored against 
   assertEqual([roll.type, roll.total, roll.flag.choice], ["save", 14, 1], "Aria's roll");
   const card = await waitForCard(gm, id, c => row(c, "Aria").results.length, "Aria's result");
   assertEqual(row(card, "Aria").results, [{ text: "14", classes: ["success"] }], "Aria's result");
-  const tooltip = await gm.eval(id => document.querySelector(`#chat .chat-log [data-message-id="${id}"] .robear-request-result`)
+  const tooltip = await gm.eval(id => document.querySelector(`#chat .chat-log [data-message-id="${id}"] .stt-request-result`)
     ?.dataset.tooltipText, id);
   assert(tooltip?.startsWith("Strength Save: 14"), `The result doesn't say which roll was chosen: ${tooltip}`);
 });
@@ -1237,7 +1237,7 @@ test("choice of rolls: each choice is scored against its own DC, which the GM ca
   const { gm, player, ids } = ctx;
   const part = { type: "check", key: "dex", dc: 10, alternatives: [{ type: "check", key: "str", dc: 15 }] };
   const id = await postRequest(ctx, { mode: "standard", parts: [part], actors: [ids.aria, ids.borin], showDC: false });
-  const steps = session => session.eval(id => document.querySelector(`#chat .chat-log [data-message-id="${id}"] .robear-request-steps`)
+  const steps = session => session.eval(id => document.querySelector(`#chat .chat-log [data-message-id="${id}"] .stt-request-steps`)
     ?.textContent.replace(/\s+/g, " ").trim(), id);
   assertEqual(await steps(gm), "Dexterity Check DC 10 or Strength Check DC 15", "the GM's list of choices");
   assertEqual(await steps(player), "Dexterity Check DC ? or Strength Check DC ?", "the player's list of choices");
@@ -1245,7 +1245,7 @@ test("choice of rolls: each choice is scored against its own DC, which the GM ca
 
   // The player sees each choice's DC as far as the request shows it.
   await rollButton(player, id, "Aria").click();
-  const dialog = player.page.locator(".robear-choice-dialog");
+  const dialog = player.page.locator(".stt-choice-dialog");
   await dialog.waitFor({ timeout: 10_000 });
   const labels = await dialog.locator(".form-footer button").allTextContents();
   assertEqual(labels.map(l => l.trim()), ["Dexterity Check · DC ?", "Strength Check · DC ?"], "the rolls offered");
@@ -1255,7 +1255,7 @@ test("choice of rolls: each choice is scored against its own DC, which the GM ca
   await waitForRoll(gm, id, ids.aria);
   await rollButton(player, id, "Borin").click();
   await forceDice(player, [d20(12)]);
-  await player.page.locator('.robear-choice-dialog button[data-action="choice0"]').click({ modifiers: ["Shift"] });
+  await player.page.locator('.stt-choice-dialog button[data-action="choice0"]').click({ modifiers: ["Shift"] });
   await waitForRoll(gm, id, ids.borin);
 
   // 12 beats Dexterity's DC 10, but not Strength's DC 15.
@@ -1264,8 +1264,8 @@ test("choice of rolls: each choice is scored against its own DC, which the GM ca
   assertEqual(card.summary, "1 of 2 succeeded Show to players", "the summary");
 
   // Lowering Strength's DC scores Aria's roll again.
-  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-dc-edit`).nth(1).click();
-  const edit = gm.page.locator(".robear-dc-dialog");
+  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-dc-edit`).nth(1).click();
+  const edit = gm.page.locator(".stt-dc-dialog");
   await edit.waitFor({ timeout: 10_000 });
   assertEqual(await edit.locator('input[name="dc"]').inputValue(), "15", "the DC shown for Strength");
   await edit.locator('input[name="dc"]').fill("12");
@@ -1282,7 +1282,7 @@ test("choice of rolls: closing the choice makes no roll", async (ctx) => {
   const part = { type: "skill", key: "ath", dc: 12, alternatives: [{ type: "save", key: "str" }] };
   const id = await postRequest(ctx, { mode: "standard", parts: [part], actors: [ids.aria] });
   await rollButton(player, id, "Aria").click();
-  const dialog = player.page.locator(".robear-choice-dialog");
+  const dialog = player.page.locator(".stt-choice-dialog");
   await dialog.waitFor({ timeout: 10_000 });
   await dialog.locator('[data-action="close"]').click();
   await dialog.waitFor({ state: "detached", timeout: 10_000 });
@@ -1303,8 +1303,8 @@ test("choice of rolls: closing the choice makes no roll", async (ctx) => {
  * @returns {Promise<import("playwright").Locator>}  The dialog.
  */
 async function openDCDialog(gm, id, index = 0) {
-  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-dc-edit`).nth(index).click();
-  const dialog = gm.page.locator(".robear-dc-dialog");
+  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-dc-edit`).nth(index).click();
+  const dialog = gm.page.locator(".stt-dc-dialog");
   await dialog.waitFor({ timeout: 10_000 });
   return dialog;
 }
@@ -1326,7 +1326,7 @@ async function changeDC(gm, id, dc, index = 0) {
 test("changing the DC: the GM changes it on the card, and rolls already made are scored again", async (ctx) => {
   const { gm, player, ids } = ctx;
   const id = await postRequest(ctx, { mode: "standard", parts: [athletics(15)], actors: [ids.aria], showDC: true });
-  assertEqual(await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-request-dc-edit`).count(), 0,
+  assertEqual(await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-dc-edit`).count(), 0,
     "the player's DC buttons");
   await forceDice(player, [d20(12)]);
   await clickRoll(player, id, "Aria", { fastForward: true });

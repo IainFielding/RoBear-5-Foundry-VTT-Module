@@ -1,7 +1,7 @@
-# RoBear-E: GM Guide
+# Sogrom's Table Tools: GM Guide
 
-This guide is for the GM. It covers setting RoBear-E up, the settings, and asking the table for rolls. What players
-see and do, including how the RoBear-E Cards work, is in the [player guide](README.md). Read that first: as GM you
+This guide is for the GM. It covers setting Sogrom's Table Tools up, the settings, and asking the table for rolls. What players
+see and do, including how the Hero Cards work, is in the [player guide](README.md). Read that first: as GM you
 can do everything a player can.
 
 ## Contents
@@ -20,34 +20,48 @@ can do everything a player can.
 
 ## Setting up
 
-1. **Install.** In Foundry's setup screen, go to **Add-on Modules → Install Module**. Search for "RoBear-E" or paste
+1. **Install.** In Foundry's setup screen, go to **Add-on Modules → Install Module**. Search for "Sogrom's Table Tools" or paste
    the manifest URL:
    `https://github.com/IainFielding/RoBear-5-Foundry-VTT-Module/releases/latest/download/module.json`
-2. **Enable** RoBear-E in your world's **Manage Modules**. It needs Foundry VTT v14 and D&D 5e 6.x (tested on 6.0.5).
-3. **Give out the cards.** Drag the **RoBear-E Cards** feature from the **Items (RoBear-E)** compendium onto each
+2. **Enable** Sogrom's Table Tools in your world's **Manage Modules**. It needs Foundry VTT v14 and D&D 5e 6.x (tested on 6.0.5).
+3. **Give out the cards.** Drag the **Hero Cards** feature from the **Items (Sogrom's Table Tools)** compendium onto each
    character who should have them. Each card is an activity on that feature with one use, recovered on a long rest.
    To give a card back early, reset its uses on the character sheet.
 
-The compendiums sit in a **RoBear-E** folder in the Compendium sidebar. Players can view them.
+The compendiums sit in a **Sogrom's Table Tools** folder in the Compendium sidebar. Players can view them.
 
 | Compendium | What's in it |
 |---|---|
-| **Journal (RoBear-E)** | **Artwork**: the art of every card, and the campaign art. **Spell Lists**: a class spell list for each spellcasting class, registered with D&D 5e. |
-| **Items (RoBear-E)** | The **RoBear-E Cards** feature, the **Belts of Phoenix Dexterity**, and **Corn Liquor**. |
-| **Spells (RoBear-E)** | **Theodore's Morning Coffee**. |
+| **Journal (Sogrom's Table Tools)** | **Artwork**: the art of every card, and the campaign art. **Spell Lists**: a class spell list for each spellcasting class, registered with D&D 5e. |
+| **Items (Sogrom's Table Tools)** | The **Hero Cards** feature, the **Belts of Phoenix Dexterity**, and **Corn Liquor**. |
+| **Spells (Sogrom's Table Tools)** | **Theodore's Morning Coffee**. |
 
 ## Settings
 
-Find these in **Game Settings → Configure Settings → RoBear-E**. Each one applies to the whole world.
+In **Game Settings → Configure Settings → Sogrom's Table Tools**, the settings are grouped behind three buttons:
+**Hero Cards**, **Dice Rolling** and **Roll Requests**. Each opens a window with that group's settings. Only a GM
+can open them, and each setting applies to the whole world.
 
-<img src="docs/images/gm-settings.webp" alt="The RoBear-E tab of Foundry's settings, listing the settings below" width="640">
+<img src="docs/images/gm-settings.webp" alt="The Sogrom's Table Tools tab of Foundry's settings, with the Hero Cards, Dice Rolling and Roll Requests buttons" width="640">
+
+### Hero Cards
 
 | Setting | Default | What it does |
 |---|---|---|
-| **Natural 1s and 20s lock RoBear-E Cards** | On | No card can be played on a roll whose d20 shows a natural 1 or 20. Turn it off to allow Advantage and Inspiration on them. Either way, Luck can't be played on a natural 20, and nothing rerolls a natural 1. |
-| **Natural 1s and 20s on saves against damage** | On | When a spell or feature calls for a save and deals damage, a natural 20 on the save takes no damage, and a natural 1 takes the damage's maximum, every die at its highest (36 from 6d6), ignoring resistances and immunities. Each starts that way in the damage's **Apply** tray, where you can still change it. Turn it off for D&D 5e's own rules. |
-| **Ring natural 1s and 20s** | On | A roll whose d20 shows a natural 20 is ringed in gold in chat, and a natural 1 in red: checks, saving throws and attacks, a save summarised inside the card of the spell that called for it, and a result on a request card. Turn it off for plain totals. |
+| **Natural 1s and 20s lock Hero Cards** | On | No card can be played on a roll whose d20 shows a natural 1 or 20. Turn it off to allow Advantage and Inspiration on them. Either way, Luck can't be played on a natural 20, and nothing rerolls a natural 1. |
 | **Show played cards on screen** | On | A played card's art appears in the middle of the screen for everyone who can see the roll. Chat keeps a record either way. |
+
+### Dice Rolling
+
+| Setting | Default | What it does |
+|---|---|---|
+| **Ring natural 1s and 20s** | On | A roll whose d20 shows a natural 20 is ringed in gold in chat, and a natural 1 in red: checks, saving throws and attacks, a save summarised inside the card of the spell that called for it, and a result on a request card. Turn it off for plain totals. |
+| **Natural 1s and 20s on saves against damage** | On | When a spell or feature calls for a save and deals damage, a natural 20 on the save takes no damage, and a natural 1 takes the damage's maximum, every die at its highest (36 from 6d6), ignoring resistances and immunities. Each starts that way in the damage's **Apply** tray, where you can still change it. Turn it off for D&D 5e's own rules. |
+
+### Roll Requests
+
+| Setting | Default | What it does |
+|---|---|---|
 | **Show the DC to players by default** | Off | Whether **Show DC to Players** starts ticked in the request window. You can still change it for each request. |
 | **Attach rolls to the request card** | On | The rolls made for a request show on its card rather than as messages of their own, as D&D 5e does for an item's saves. Click a result to see its dice. |
 | **Pop up roll requests for players** | Off | Opens a window for each player with a character in a request, with a Roll button for each of their characters. |
@@ -59,12 +73,12 @@ Open the request window from the **anchor** button in the chat controls, under t
 
 <img src="docs/images/gm-chat-control.webp" alt="The chat controls, with the anchor button for roll requests among the buttons on the right" width="300">
 
-When the chat sidebar is closed, use **Request RoBear-E Rolls** in the token controls instead. Only a GM sees these
+When the chat sidebar is closed, use **Request Rolls** in the token controls instead. Only a GM sees these
 buttons.
 
 ### The request window
 
-<img src="docs/images/gm-request-window.webp" alt="The Request RoBear-E Rolls window: six kinds of roll, the roll and DC, who rolls, and options" width="520">
+<img src="docs/images/gm-request-window.webp" alt="The Request Rolls window: six kinds of roll, the roll and DC, who rolls, and options" width="520">
 
 1. **Kind of roll.** Pick one of the six kinds described below. The fields below change to suit it, and anything
    you've filled in carries over when you switch.
@@ -177,7 +191,7 @@ Rolls already made are scored again against the new DC.
 
 <img src="docs/images/gm-request-dc-changed.webp" alt="The card after changing the DC to 12: the Goblin's 12 now succeeds, 2 of 3 succeeded" width="300">
 
-**Cards on requested rolls.** Requested rolls are ordinary D&D 5e rolls, so players can play RoBear-E Cards on them,
+**Cards on requested rolls.** Requested rolls are ordinary D&D 5e rolls, so players can play Hero Cards on them,
 from the anchor button beside their result. The card updates as soon as a card changes a roll.
 
 **Attached rolls.** With **Attach rolls to the request card** on (the default), the rolls don't get chat messages of
@@ -219,7 +233,7 @@ Each window closes once everything in it is rolled. The chat card works either w
 ## Cards and dice at the table
 
 - **You can play cards for players.** As GM you can open the card chooser on any roll by a character who holds
-  RoBear-E Cards, and play one for them.
+  Hero Cards, and play one for them.
 - **Bonus dice need a GM online.** When a player adds a die such as Bardic Inspiration to a roll that isn't theirs,
   such as a monster's roll for Cutting Words, your Foundry makes the change. If no GM is logged in, or your Foundry
   can't make it, the player is told and the die isn't spent.
@@ -232,14 +246,14 @@ Each window closes once everything in it is rolled. The chat card works either w
 A macro can open the request window, or post a request without it:
 
 ```js
-const robear = game.modules.get("sogrom-robear-e").api;
+const tools = game.modules.get("sogrom-table-tools").api;
 
 // Open the request window, as the anchor button does.
-robear.requestRolls();
+tools.requestRolls();
 
 // Ask the party's player characters for a DC 15 Athletics check.
 const party = game.actors.filter(a => a.hasPlayerOwner && (a.type === "character"));
-await robear.createRequest({
+await tools.createRequest({
   mode: "standard",
   parts: [{ type: "skill", key: "ath", dc: 15 }],
   actors: party.map(a => a.uuid)
