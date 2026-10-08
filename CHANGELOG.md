@@ -17,6 +17,9 @@ All notable changes to Sogrom's Table Tools.
 - **Settings are grouped into three menus.** **Configure Settings** now shows **Hero Cards**, **Dice Rolling** and
   **Roll Requests** buttons, each opening a window with that group's settings, instead of listing all eight.
 
+- **A tankard replaces the anchor icon.** The roll request button, the Hero Card button, and their windows and
+  settings menus now show a tankard.
+
 ### New
 
 - **Death saves are asked for.** With the new **Ask for death saves** setting on, a death save request is posted at

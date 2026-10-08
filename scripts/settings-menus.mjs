@@ -104,7 +104,7 @@ class RollRequestSettings extends SettingsMenu {
   /** @override */
   static DEFAULT_OPTIONS = {
     id: "stt-settings-roll-requests",
-    window: { title: "STT.Settings.Menus.RollRequests.Name", icon: "fa-solid fa-anchor fa-rotate-90" }
+    window: { title: "STT.Settings.Menus.RollRequests.Name", icon: "fa-solid fa-beer-mug-empty" }
   };
 
   /** @override */

@@ -593,7 +593,7 @@ test("played cards: shown on everyone's screen, with no chat card pushing the ro
     }, null, `the played card on ${session.user}'s screen`, 3000);
     assert(shown, "No played card.");
     assertEqual(await playedCardOnScreen(session), {
-      img: "modules/sogrom-table-tools/assets/images/luckdc20.webp", by: "Aria plays", name: "Luck"
+      img: "modules/sogrom-table-tools/assets/images/lucky.webp", by: "Aria plays", name: "Luck"
     }, `the played card (${session.user})`);
   }
   assertEqual(await gm.eval(() => game.messages.size), before, "chat messages after playing the card");
@@ -620,7 +620,7 @@ test("played cards: up to three played together show side by side, and the rest 
   await waitFor(player, ids => ids.every(id => game.messages.has(id)), ids, "the messages to reach the player");
   // Every card is played at once, as players acting together would.
   await gm.eval(({ ids, cards, moduleId }) => Promise.all(ids.map((id, i) => game.messages.get(id).setFlag(moduleId, "log",
-    [{ text: `${cards[i]}: played`, card: cards[i], img: `modules/${moduleId}/assets/images/luckdc20.webp`, by: "Aria" }]
+    [{ text: `${cards[i]}: played`, card: cards[i], img: `modules/${moduleId}/assets/images/lucky.webp`, by: "Aria" }]
   ))), { ids, cards, moduleId: MODULE_ID });
 
   // The updates may arrive in any order, so which card waits is whichever one was not shown first.
@@ -658,8 +658,8 @@ test("played cards: the roll's note carries a thumbnail of the card, full size o
   await afterCard(player, id);
   const art = player.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-card-log .stt-card-log-art`);
   await art.waitFor({ timeout: 5000 });
-  assertEqual(await art.getAttribute("src"), "modules/sogrom-table-tools/assets/images/inspiration-1d8-dc20.webp", "the thumbnail");
-  assert((await art.getAttribute("data-tooltip-html")).includes("inspiration-1d8-dc20.webp"), "The thumbnail has no full-size art.");
+  assertEqual(await art.getAttribute("src"), "modules/sogrom-table-tools/assets/images/inspiration1d8.webp", "the thumbnail");
+  assert((await art.getAttribute("data-tooltip-html")).includes("inspiration1d8.webp"), "The thumbnail has no full-size art.");
   const loaded = await art.evaluate(img => img.complete && img.naturalWidth > 0);
   assert(loaded, "The thumbnail's art did not load.");
   const note = await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-card-log`).textContent();
@@ -691,7 +691,7 @@ test("played cards: a card played from the sheet is shown on screen, with a shor
     await waitFor(session, () => !!document.getElementById("stt-played-card"), null,
       `the played card on ${session.user}'s screen`, 5000);
     assertEqual(await playedCardOnScreen(session), {
-      img: "modules/sogrom-table-tools/assets/images/chargerdc20.webp", by: "Aria plays", name: "Charger"
+      img: "modules/sogrom-table-tools/assets/images/charger.webp", by: "Aria plays", name: "Charger"
     }, `the played card (${session.user})`);
   }
 
@@ -707,7 +707,7 @@ test("played cards: a card played from the sheet is shown on screen, with a shor
   }));
   assertEqual(state.collapsed, true, "the description collapsed");
   assertEqual(state.tags, "none", "the tag row");
-  assert(state.hoverArt?.includes("chargerdc20.webp"), `The header's art has no full-size hover: ${state.hoverArt}`);
+  assert(state.hoverArt?.includes("charger.webp"), `The header's art has no full-size hover: ${state.hoverArt}`);
   assert(state.height < 200, `The chat record is ${state.height}px tall.`);
 
   // Clicking the header still opens the description.
@@ -762,7 +762,7 @@ test("played cards: a card played on a roll the player can't see isn't shown to 
   });
   await player.page.waitForTimeout(500);
   await gm.eval(async ({ id, moduleId }) => {
-    const img = `modules/${moduleId}/assets/images/luckdc20.webp`;
+    const img = `modules/${moduleId}/assets/images/lucky.webp`;
     await game.messages.get(id).setFlag(moduleId, "log", [{ text: "Luck: rerolled", card: "Luck", img, by: "Goblin" }]);
   }, { id, moduleId: MODULE_ID });
   await waitFor(gm, () => !!document.getElementById("stt-played-card"), null, "the played card on the GM's screen");

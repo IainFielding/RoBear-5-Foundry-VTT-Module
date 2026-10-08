@@ -48,7 +48,7 @@ but those are internal and may change in any release.
 
 ### `requestRolls()`
 
-Opens the **Request Rolls** window, as the anchor button in the chat controls does. If the window is already
+Opens the **Request Rolls** window, as the tankard button in the chat controls does. If the window is already
 open, it is brought to the front, keeping what the GM has filled in.
 
 | | |
@@ -416,7 +416,7 @@ Sogrom's Table Tools fires no hooks of its own. It listens to these:
 | `dnd5e.preCalculateDamage` | `natural-saves.mjs` | Raise each damage to its maximum for a target the damage tray marked for it. |
 | `preDeleteChatMessage` | `roll-requests.mjs` | Stop players deleting a roll made for a request. |
 | `getChatMessageContextOptions` | `bonus-rolls.mjs`, `class-features.mjs` | Add **Add to a roll…**, **Subtract from a roll…** and **Use Indomitable** to the right-click menu. |
-| `renderChatInput` | `roll-requests.mjs` | Add the GM's anchor button to the chat controls. |
+| `renderChatInput` | `roll-requests.mjs` | Add the GM's tankard button to the chat controls. |
 | `combatTurnChange` | `death-saves.mjs` | On the active GM's client, post a death save request for the creature whose turn started, while `deathSavePrompt` is on. |
 | `dnd5e.rollDeathSave` | `death-saves.mjs` | Add the `stable` flag to the updates of a save that stabilizes the actor. |
 | `preUpdateActor`, `updateActor` | `death-saves.mjs` | Clear the `stable` flag when the actor is healed or takes a failure, and remove its unrolled death save requests when it is healed. |

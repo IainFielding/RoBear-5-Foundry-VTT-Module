@@ -156,7 +156,7 @@ normal.
 
 <img src="docs/images/request-player.webp" alt="A request card for an Athletics check, DC 15: Aria has rolled 17, and Borin has a Roll button" width="320">
 
-Once you've rolled, your result shows on the card. The anchor button beside it plays a Hero Card on that roll.
+Once you've rolled, your result shows on the card. The tankard button beside it plays a Hero Card on that roll.
 Click the result itself to see its dice.
 
 Things you may see on a request card:

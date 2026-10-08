@@ -31,7 +31,7 @@ test("the token controls have the request button, rotated like the card button",
   const tool = s => s.eval(() => ui.controls.controls.tokens?.tools.sttRequest ?? null);
   const gmTool = await tool(gm);
   assert(gmTool, "The GM has no Request Rolls tool.");
-  assertEqual(gmTool.icon, "fa-solid fa-anchor fa-rotate-90", "tool icon");
+  assertEqual(gmTool.icon, "fa-solid fa-beer-mug-empty", "tool icon");
   assertEqual(gmTool.button, true, "tool is a button");
   assertEqual(await tool(player), null, "the player's tool");
 });

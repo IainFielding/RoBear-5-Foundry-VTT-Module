@@ -82,9 +82,9 @@ Optional changes to tokens and actor sheets. Each is off until you turn it on.
 
 ## Asking for rolls
 
-Open the request window from the **anchor** button in the chat controls, under the chat log:
+Open the request window from the **tankard** button in the chat controls, under the chat log:
 
-<img src="docs/images/gm-chat-control.webp" alt="The chat controls, with the anchor button for roll requests among the buttons on the right" width="300">
+<img src="docs/images/gm-chat-control.webp" alt="The chat controls, with the tankard button for roll requests among the buttons on the right" width="300">
 
 When the chat sidebar is closed, use **Request Rolls** in the token controls instead. Only a GM sees these
 buttons.
@@ -205,7 +205,7 @@ Rolls already made are scored again against the new DC.
 <img src="docs/images/gm-request-dc-changed.webp" alt="The card after changing the DC to 12: the Goblin's 12 now succeeds, 2 of 3 succeeded" width="300">
 
 **Cards on requested rolls.** Requested rolls are ordinary D&D 5e rolls, so players can play Hero Cards on them,
-from the anchor button beside their result. The card updates as soon as a card changes a roll.
+from the tankard button beside their result. The card updates as soon as a card changes a roll.
 
 **Attached rolls.** With **Attach rolls to the request card** on (the default), the rolls don't get chat messages of
 their own. Click a result to see its dice. Notes on any cards played show under the row.
@@ -280,7 +280,7 @@ A macro can open the request window, or post a request without it:
 ```js
 const tools = game.modules.get("sogrom-table-tools").api;
 
-// Open the request window, as the anchor button does.
+// Open the request window, as the tankard button does.
 tools.requestRolls();
 
 // Ask the party's player characters for a DC 15 Athletics check.

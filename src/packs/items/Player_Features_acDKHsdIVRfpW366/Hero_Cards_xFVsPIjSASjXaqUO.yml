@@ -57,7 +57,7 @@ system:
         visible: false
         name: ''
         formula: ''
-      img: modules/sogrom-table-tools/assets/images/relentlessdc20.webp
+      img: modules/sogrom-table-tools/assets/images/relentless.webp
       appliedEffects: []
       visibility:
         level:
@@ -174,7 +174,7 @@ system:
         visible: false
         name: ''
         formula: ''
-      img: modules/sogrom-table-tools/assets/images/luckdc20.webp
+      img: modules/sogrom-table-tools/assets/images/lucky.webp
       appliedEffects: []
       visibility:
         level:
@@ -232,7 +232,7 @@ system:
         visible: false
         name: ''
         formula: ''
-      img: modules/sogrom-table-tools/assets/images/indomitabledc20.webp
+      img: modules/sogrom-table-tools/assets/images/indomitable.webp
       appliedEffects: []
       visibility:
         level:
@@ -290,7 +290,7 @@ system:
         visible: false
         name: ''
         formula: ''
-      img: modules/sogrom-table-tools/assets/images/extrastrikedc20.webp
+      img: modules/sogrom-table-tools/assets/images/extrastrike.webp
       appliedEffects: []
       visibility:
         level:
@@ -348,7 +348,7 @@ system:
         name: ''
         formula: ''
       name: Charger
-      img: modules/sogrom-table-tools/assets/images/chargerdc20.webp
+      img: modules/sogrom-table-tools/assets/images/charger.webp
       appliedEffects: []
       visibility:
         level:
@@ -406,7 +406,7 @@ system:
         visible: false
         name: ''
         formula: ''
-      img: modules/sogrom-table-tools/assets/images/advantagedc20.webp
+      img: modules/sogrom-table-tools/assets/images/advantage.webp
       appliedEffects: []
       visibility:
         level:
@@ -522,7 +522,7 @@ system:
         visible: false
         name: Inspiration - 1d6
         formula: 1d6
-      img: modules/sogrom-table-tools/assets/images/inspiration-1d6-dc20.webp
+      img: modules/sogrom-table-tools/assets/images/inspiration1d6.webp
       appliedEffects: []
       visibility:
         level:
@@ -580,7 +580,7 @@ system:
         formula: 1d8
         name: Inspiration - 1d8
       _id: na7uWxkaPiGn00ZK
-      img: modules/sogrom-table-tools/assets/images/inspiration-1d8-dc20.webp
+      img: modules/sogrom-table-tools/assets/images/inspiration1d8.webp
       appliedEffects: []
       visibility:
         level:
@@ -638,7 +638,7 @@ system:
         formula: 1d10
         name: Inspiration - 1d10
       _id: l1s90u72J3Q34HFN
-      img: modules/sogrom-table-tools/assets/images/inspiration-1d10-dc20.webp
+      img: modules/sogrom-table-tools/assets/images/inspiration1d10.webp
       appliedEffects: []
       visibility:
         level:

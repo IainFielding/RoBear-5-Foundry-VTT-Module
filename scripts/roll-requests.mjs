@@ -192,7 +192,7 @@ function onRenderChatInput(_app, elements) {
   if ( !game.user.isGM || !controls || controls.querySelector(".stt-request-control") ) return;
   const button = document.createElement("button");
   button.type = "button";
-  button.className = "ui-control icon fa-solid fa-anchor fa-rotate-90 stt-request-control";
+  button.className = "ui-control icon fa-solid fa-beer-mug-empty stt-request-control";
   button.dataset.tooltipText = localize("STT.Request.WindowTitle");
   button.setAttribute("aria-label", localize("STT.Request.WindowTitle"));
   button.addEventListener("click", openRollRequest);
@@ -211,7 +211,7 @@ function onGetSceneControlButtons(controls) {
     name: "sttRequest",
     order: Object.keys(controls.tokens.tools).length + 1,
     title: "STT.Request.WindowTitle",
-    icon: "fa-solid fa-anchor fa-rotate-90",
+    icon: "fa-solid fa-beer-mug-empty",
     button: true,
     onChange: openRollRequest
   };

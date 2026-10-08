@@ -48,18 +48,18 @@ const CARDS = {
  * Card art in IMAGE_PATH for every card, keyed by lower-case activity name.
  */
 const CARD_ART = {
-  "advantage": "advantagedc20.webp",
-  "charger": "chargerdc20.webp",
+  "advantage": "advantage.webp",
+  "charger": "charger.webp",
   "divine intervention": "divineintervention.webp",
-  "extra strike": "extrastrikedc20.webp",
-  "indomitable": "indomitabledc20.webp",
-  "inspiration - 1d6": "inspiration-1d6-dc20.webp",
-  "inspiration - 1d8": "inspiration-1d8-dc20.webp",
-  "inspiration - 1d10": "inspiration-1d10-dc20.webp",
-  "luck": "luckdc20.webp",
+  "extra strike": "extrastrike.webp",
+  "indomitable": "indomitable.webp",
+  "inspiration - 1d6": "inspiration1d6.webp",
+  "inspiration - 1d8": "inspiration1d8.webp",
+  "inspiration - 1d10": "inspiration1d10.webp",
+  "luck": "lucky.webp",
   "minds eye": "mindseye.webp",
   "reaction surge": "reactionsurge.webp",
-  "relentless": "relentlessdc20.webp"
+  "relentless": "relentless.webp"
 };
 
 /**
@@ -593,7 +593,7 @@ export function createCardButton(message, { compact=false }={}) {
   button.className = compact ? "stt-card-button icon" : "stt-card-button";
   button.dataset.tooltipText = localize("STT.Cards.ButtonTooltip");
   button.setAttribute("aria-label", localize("STT.Cards.ButtonTooltip"));
-  button.innerHTML = '<i class="fa-solid fa-anchor fa-rotate-90" inert></i>';
+  button.innerHTML = '<i class="fa-solid fa-beer-mug-empty" inert></i>';
   if ( !compact ) button.append(` ${localize("STT.Cards.Button")}`);
   button.addEventListener("click", event => {
     event.preventDefault();
@@ -785,7 +785,7 @@ async function chooseCard(options, hint) {
   let chosen;
   await foundry.applications.api.DialogV2.wait({
     classes: ["stt-card-dialog"],
-    window: { title: "STT.Cards.DialogTitle", icon: "fa-solid fa-anchor fa-rotate-90" },
+    window: { title: "STT.Cards.DialogTitle", icon: "fa-solid fa-beer-mug-empty" },
     position: { width: Math.clamp(48 + (options.length * 124), 340, 792) },
     content: `
       <p class="stt-card-hint">${foundry.utils.escapeHTML(hint)}</p>
