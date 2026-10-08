@@ -532,5 +532,5 @@ guides use.
 Publishing a GitHub release, tagged `v1.2.3` or `1.2.3`, runs `.github/workflows/main.yml`. It fills in the version
 and URLs in `module.json`,
 runs `npm run check`, builds the packs, and attaches `module.json` and `module.zip` to the release. The archive holds
-only what the module needs at runtime, as listed in the workflow's `zip` step; the guides other than the README, the
+only what the module needs at runtime, as listed in the workflow's `zip` step; the guides (the README included), the
 screenshots and the dev tooling aren't in it. Record user-facing changes in [CHANGELOG.md](CHANGELOG.md).

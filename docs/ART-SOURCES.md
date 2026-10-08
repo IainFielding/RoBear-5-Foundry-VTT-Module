@@ -5,6 +5,10 @@ design with its title and rules text, so no original image is distributed as it 
 
 This file records the licence behind each card. It is kept in the repository but isn't part of the release archive.
 
+**Provenance checks (8 October 2026):** the Adobe Stock images were found with Adobe's "Exclude generative AI" search
+filter. Checking the downloaded illustrations (the card template, Relentless, Reaction Surge, Extra Strike and
+Indomitable) at [contentcredentials.org/verify](https://contentcredentials.org/verify) showed no generative AI use.
+
 ## Adobe Stock (Standard License)
 
 | Card | File | Image | Contributor | Asset ID | Photo page |
