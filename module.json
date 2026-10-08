@@ -36,7 +36,8 @@
     "scripts/roll-request-popup.mjs",
     "scripts/bonus-rolls.mjs",
     "scripts/class-features.mjs",
-    "scripts/natural-saves.mjs"
+    "scripts/natural-saves.mjs",
+    "scripts/settings-menus.mjs"
   ],
   "socket": true,
   "languages": [

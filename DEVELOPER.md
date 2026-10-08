@@ -334,7 +334,9 @@ out hit, miss and save results again.
 
 ## Settings
 
-All are world settings shown in **Configure Settings**, read with `game.settings.get("sogrom-table-tools", key)`.
+All are world settings, read with `game.settings.get("sogrom-table-tools", key)`. None is listed in **Configure
+Settings** itself: they're grouped into three menus there (`heroCards`, `diceRolling` and `rollRequests`), registered
+in `settings-menus.mjs`. A setting is added to a menu through its class's `SETTINGS`.
 
 | Key | Type | Default | Purpose |
 |---|---|---|---|
@@ -390,7 +392,7 @@ Sogrom's Table Tools fires no hooks of its own. It listens to these:
 
 | Hook | Script | Why |
 |---|---|---|
-| `init` | `hero-cards.mjs`, `roll-requests.mjs`, `roll-request-popup.mjs` | Register settings, and set the API. |
+| `init` | `hero-cards.mjs`, `roll-requests.mjs`, `roll-request-popup.mjs`, `settings-menus.mjs` | Register settings and their menus, and set the API. |
 | `setup` | `hero-cards.mjs`, `natural-saves.mjs` | Wrap `Item#use` and the damage tray's target options (see below). |
 | `ready` | `bonus-rolls.mjs`, `roll-request-popup.mjs` | Start listening on the socket, and open pop-ups for recent requests. |
 | `dnd5e.renderChatMessage` | `hero-cards.mjs`, `roll-requests.mjs`, `bonus-rolls.mjs`, `class-features.mjs` | Add card buttons, natural 1/20 rings, notes, request cards, and the Indomitable button. |
@@ -427,7 +429,7 @@ like the roll they change.
 ```
 module.json           Manifest. The module ID, packs, and the dnd5e spell lists it registers.
 scripts/
-  hero-cards.mjs          The cards: finding them, the card window, playing them on rolls, played-card art,
+  hero-cards.mjs            The cards: finding them, the card window, playing them on rolls, played-card art,
                             natural 1/20 rings, and helpers shared by the others (MODULE_ID, localize, reportError).
   roll-requests.mjs         Roll requests: the API, validation, results, and drawing the request card.
   roll-request-config.mjs   The Request Rolls window (ApplicationV2).
@@ -435,7 +437,9 @@ scripts/
   bonus-rolls.mjs           Adding another feature's die to a roll, and the socket messages for it.
   class-features.mjs        Fighter's Indomitable.
   natural-saves.mjs         Natural 1s and 20s on saves against an activity's damage.
+  settings-menus.mjs        The Hero Cards, Dice Rolling and Roll Requests settings menus (ApplicationV2).
 templates/roll-request.hbs  The request window's form.
+templates/settings-menu.hbs A settings menu's form.
 styles/                     fonts.css (Cinzel and Spectral, shipped in assets/fonts), hero-cards.css, roll-requests.css.
 lang/en.json                Every string the module shows.
 assets/                     Card art, campaign art and fonts.

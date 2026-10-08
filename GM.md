@@ -38,16 +38,30 @@ The compendiums sit in a **Sogrom's Table Tools** folder in the Compendium sideb
 
 ## Settings
 
-Find these in **Game Settings → Configure Settings → Sogrom's Table Tools**. Each one applies to the whole world.
+In **Game Settings → Configure Settings → Sogrom's Table Tools**, the settings are grouped behind three buttons:
+**Hero Cards**, **Dice Rolling** and **Roll Requests**. Each opens a window with that group's settings. Only a GM
+can open them, and each setting applies to the whole world.
 
-<img src="docs/images/gm-settings.webp" alt="The Sogrom's Table Tools tab of Foundry's settings, listing the settings below" width="640">
+<img src="docs/images/gm-settings.webp" alt="The Sogrom's Table Tools tab of Foundry's settings, with the Hero Cards, Dice Rolling and Roll Requests buttons" width="640">
+
+### Hero Cards
 
 | Setting | Default | What it does |
 |---|---|---|
 | **Natural 1s and 20s lock Hero Cards** | On | No card can be played on a roll whose d20 shows a natural 1 or 20. Turn it off to allow Advantage and Inspiration on them. Either way, Luck can't be played on a natural 20, and nothing rerolls a natural 1. |
-| **Natural 1s and 20s on saves against damage** | On | When a spell or feature calls for a save and deals damage, a natural 20 on the save takes no damage, and a natural 1 takes the damage's maximum, every die at its highest (36 from 6d6), ignoring resistances and immunities. Each starts that way in the damage's **Apply** tray, where you can still change it. Turn it off for D&D 5e's own rules. |
-| **Ring natural 1s and 20s** | On | A roll whose d20 shows a natural 20 is ringed in gold in chat, and a natural 1 in red: checks, saving throws and attacks, a save summarised inside the card of the spell that called for it, and a result on a request card. Turn it off for plain totals. |
 | **Show played cards on screen** | On | A played card's art appears in the middle of the screen for everyone who can see the roll. Chat keeps a record either way. |
+
+### Dice Rolling
+
+| Setting | Default | What it does |
+|---|---|---|
+| **Ring natural 1s and 20s** | On | A roll whose d20 shows a natural 20 is ringed in gold in chat, and a natural 1 in red: checks, saving throws and attacks, a save summarised inside the card of the spell that called for it, and a result on a request card. Turn it off for plain totals. |
+| **Natural 1s and 20s on saves against damage** | On | When a spell or feature calls for a save and deals damage, a natural 20 on the save takes no damage, and a natural 1 takes the damage's maximum, every die at its highest (36 from 6d6), ignoring resistances and immunities. Each starts that way in the damage's **Apply** tray, where you can still change it. Turn it off for D&D 5e's own rules. |
+
+### Roll Requests
+
+| Setting | Default | What it does |
+|---|---|---|
 | **Show the DC to players by default** | Off | Whether **Show DC to Players** starts ticked in the request window. You can still change it for each request. |
 | **Attach rolls to the request card** | On | The rolls made for a request show on its card rather than as messages of their own, as D&D 5e does for an item's saves. Click a result to see its dice. |
 | **Pop up roll requests for players** | Off | Opens a window for each player with a character in a request, with a Roll button for each of their characters. |

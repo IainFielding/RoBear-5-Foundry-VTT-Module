@@ -1,0 +1,11 @@
+<div class="stt-settings-list">
+    {{#each settings}}
+    <div class="form-group">
+        <label for="{{id}}">{{label}}</label>
+        <div class="form-fields">
+            <input type="checkbox" id="{{id}}" name="{{key}}" {{checked value}}>
+        </div>
+        <p class="hint">{{hint}}</p>
+    </div>
+    {{/each}}
+</div>

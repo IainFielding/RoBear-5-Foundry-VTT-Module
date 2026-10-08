@@ -135,7 +135,7 @@ function registerSettings() {
     name: "STT.Settings.LockNaturals.Name",
     hint: "STT.Settings.LockNaturals.Hint",
     scope: "world",
-    config: true,
+    config: false,
     type: Boolean,
     default: true
   });
@@ -143,7 +143,7 @@ function registerSettings() {
     name: "STT.Settings.MarkNaturals.Name",
     hint: "STT.Settings.MarkNaturals.Hint",
     scope: "world",
-    config: true,
+    config: false,
     type: Boolean,
     default: true,
     onChange: () => game.messages.forEach(m => ui.chat.updateMessage(m))
@@ -152,7 +152,7 @@ function registerSettings() {
     name: "STT.Settings.NaturalSaves.Name",
     hint: "STT.Settings.NaturalSaves.Hint",
     scope: "world",
-    config: true,
+    config: false,
     type: Boolean,
     default: true,
     onChange: () => game.messages.filter(m => m.type === "damage").forEach(m => ui.chat.updateMessage(m))
@@ -161,7 +161,7 @@ function registerSettings() {
     name: "STT.Settings.ShowPlayedCards.Name",
     hint: "STT.Settings.ShowPlayedCards.Hint",
     scope: "world",
-    config: true,
+    config: false,
     type: Boolean,
     default: true
   });

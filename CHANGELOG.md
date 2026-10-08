@@ -12,6 +12,11 @@ All notable changes to Sogrom's Table Tools.
   `game.modules.get("sogrom-table-tools").api`. Chat notes and request cards made before the rename no longer show
   their extras.
 
+### Changed
+
+- **Settings are grouped into three menus.** **Configure Settings** now shows **Hero Cards**, **Dice Rolling** and
+  **Roll Requests** buttons, each opening a window with that group's settings, instead of listing all eight.
+
 ### New
 
 - **Natural 1s and 20s on a save against damage.** When a spell or feature calls for a save and deals damage, a

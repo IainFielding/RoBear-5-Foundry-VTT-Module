@@ -1,7 +1,6 @@
 # Sogrom's Table Tools
 
-A [Foundry VTT](https://foundryvtt.com/) module for the **D&D 5e** system. It adds
-the **Hero Cards**, a deck of one-use boons you can play on your rolls. It also adds a way for the GM to ask
+A [Foundry VTT](https://foundryvtt.com/) module for the **D&D 5e** system. It adds the **Hero Cards**, a deck of one-use boons you can play on your rolls. It also adds a way for the GM to ask
 the table for rolls, and some extra rules for rolls in chat.
 
 This guide is for players. If you run the game, read the **[GM Guide](GM.md)** too. If you write macros or work on the

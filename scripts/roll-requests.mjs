@@ -139,7 +139,7 @@ function registerSettings() {
     name: "STT.Settings.ShowDCDefault.Name",
     hint: "STT.Settings.ShowDCDefault.Hint",
     scope: "world",
-    config: true,
+    config: false,
     type: Boolean,
     default: false
   });
@@ -147,7 +147,7 @@ function registerSettings() {
     name: "STT.Settings.AttachRolls.Name",
     hint: "STT.Settings.AttachRolls.Hint",
     scope: "world",
-    config: true,
+    config: false,
     type: Boolean,
     default: true,
     onChange: () => {

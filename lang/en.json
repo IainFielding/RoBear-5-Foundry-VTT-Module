@@ -6,6 +6,23 @@
       "Unknown": "Unknown"
     },
     "Settings": {
+      "Menus": {
+        "HeroCards": {
+          "Name": "Hero Cards",
+          "Label": "Hero Card Settings",
+          "Hint": "Whether natural 1s and 20s lock the cards, and whether played cards show on screen."
+        },
+        "DiceRolling": {
+          "Name": "Dice Rolling",
+          "Label": "Dice Rolling Settings",
+          "Hint": "Rings on natural 1s and 20s in chat, and natural 1s and 20s on saves against damage."
+        },
+        "RollRequests": {
+          "Name": "Roll Requests",
+          "Label": "Roll Request Settings",
+          "Hint": "Showing the DC by default, attaching rolls to the request card, and pop-up windows for players and the GM."
+        }
+      },
       "LockNaturals": {
         "Name": "Natural 1s and 20s lock Hero Cards",
         "Hint": "No Hero Card can be played on a roll whose d20 shows a natural 1 or 20. Turn this off to allow Advantage and Inspiration on them. A natural 1 is fixed either way: Luck, Indomitable and Relentless never reroll one, and Luck can't be played on a natural 20."

@@ -38,7 +38,7 @@ function registerSettings() {
     name: "STT.Settings.PopupPlayers.Name",
     hint: "STT.Settings.PopupPlayers.Hint",
     scope: "world",
-    config: true,
+    config: false,
     type: Boolean,
     default: false
   });
@@ -46,7 +46,7 @@ function registerSettings() {
     name: "STT.Settings.PopupGM.Name",
     hint: "STT.Settings.PopupGM.Hint",
     scope: "world",
-    config: true,
+    config: false,
     type: Boolean,
     default: false
   });
