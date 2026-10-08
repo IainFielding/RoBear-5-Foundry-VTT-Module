@@ -19,6 +19,12 @@ All notable changes to Sogrom's Table Tools.
 
 ### New
 
+- **World Altering Scripts.** A fourth settings menu with five optional scripts, each off until the GM turns it
+  on: **Bloodied Token Tint** tints a Bloodied creature's token red, **Fade Unprepared Spells** fades spells that
+  could be prepared but aren't, **Item Rarity Colours** tints item rows on actor sheets by rarity, **Chat Button
+  Labels** writes each icon button's name beside it on compact chat cards, and **One-Tab Activities** lays an
+  activity's tabs side by side in one window.
+
 - **Natural 1s and 20s on a save against damage.** When a spell or feature calls for a save and deals damage, a
   creature whose save shows a natural 20 takes no damage, and one whose save shows a natural 1 takes the most the
   damage could do, every die at its highest (36 from 6d6, plus any modifier), ignoring its resistances and

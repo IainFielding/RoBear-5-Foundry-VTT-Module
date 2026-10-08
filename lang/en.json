@@ -21,7 +21,32 @@
           "Name": "Roll Requests",
           "Label": "Roll Request Settings",
           "Hint": "Showing the DC by default, attaching rolls to the request card, and pop-up windows for players and the GM."
+        },
+        "WorldScripts": {
+          "Name": "World Altering Scripts",
+          "Label": "World Altering Scripts",
+          "Hint": "Optional changes to tokens and actor sheets: a red tint on Bloodied tokens, faded unprepared spells, item rows tinted by rarity, labels on chat card buttons, and a one-tab layout for activities. Each is off until you turn it on."
         }
+      },
+      "BloodiedTint": {
+        "Name": "Bloodied Token Tint",
+        "Hint": "Adds a red tint and red token ring colours when the D&D 5e Bloodied effect is created. A token that is already Bloodied changes the next time it becomes Bloodied."
+      },
+      "FadeUnprepared": {
+        "Name": "Fade Unprepared Spells",
+        "Hint": "Fades spells that are not prepared for classes that prepare spells. Only applies to spells of level 1 or higher."
+      },
+      "ChatButtonLabels": {
+        "Name": "Chat Button Labels",
+        "Hint": "Writes each icon button's name beside its icon on compact chat cards, so you don't have to hover over them to see what they do."
+      },
+      "OneTabActivities": {
+        "Name": "One-Tab Activities",
+        "Hint": "Lays an activity's Identity, Activation and Effect tabs side by side in one wide window, without their hints. Convenient for mass content creation."
+      },
+      "RarityColours": {
+        "Name": "Item Rarity Colours",
+        "Hint": "Tints each item on actor sheets by its rarity, using the same colour scheme as World of Warcraft for quick recognition: green for uncommon, blue for rare, purple for very rare, orange for legendary and gold for artifact."
       },
       "LockNaturals": {
         "Name": "Natural 1s and 20s lock Hero Cards",

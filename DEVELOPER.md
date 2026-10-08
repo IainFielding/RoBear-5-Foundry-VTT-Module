@@ -335,7 +335,7 @@ out hit, miss and save results again.
 ## Settings
 
 All are world settings, read with `game.settings.get("sogrom-table-tools", key)`. None is listed in **Configure
-Settings** itself: they're grouped into three menus there (`heroCards`, `diceRolling` and `rollRequests`), registered
+Settings** itself: they're grouped into four menus there (`heroCards`, `diceRolling`, `rollRequests` and `worldScripts`), registered
 in `settings-menus.mjs`. A setting is added to a menu through its class's `SETTINGS`.
 
 | Key | Type | Default | Purpose |
@@ -348,6 +348,11 @@ in `settings-menus.mjs`. A setting is added to a menu through its class's `SETTI
 | `attachRolls` | Boolean | `true` | Draw requested rolls on the request card and hide their own messages. Changing it redraws every request and roll. |
 | `popupPlayers` | Boolean | `false` | Open a pop-up for each player in a request. |
 | `popupGM` | Boolean | `false` | Open a pop-up for the GM, for actors no player owns. |
+| `bloodiedTint` | Boolean | `false` | Add a red token tint and ring background to D&D 5e's Bloodied effect as it's created. |
+| `fadeUnprepared` | Boolean | `false` | Fade unprepared, preparable spells of level 1 or higher on actor sheets. |
+| `rarityColours` | Boolean | `false` | Tint item rows on actor sheets by rarity. |
+| `oneTabActivities` | Boolean | `false` | Lay an activity sheet's tabs side by side, through the `stt-one-tab-activities` body class. |
+| `chatButtonLabels` | Boolean | `false` | Show icon buttons' labels on compact chat cards, through the `stt-chat-button-labels` body class. |
 
 ## Socket messages
 
@@ -401,6 +406,8 @@ Sogrom's Table Tools fires no hooks of its own. It listens to these:
 | `preDeleteChatMessage` | `roll-requests.mjs` | Stop players deleting a roll made for a request. |
 | `getChatMessageContextOptions` | `bonus-rolls.mjs`, `class-features.mjs` | Add **Add to a roll…**, **Subtract from a roll…** and **Use Indomitable** to the right-click menu. |
 | `renderChatInput` | `roll-requests.mjs` | Add the GM's anchor button to the chat controls. |
+| `preCreateActiveEffect` | `bloodied-tint.mjs` | Add the tint to a Bloodied effect, while `bloodiedTint` is on. |
+| `renderBaseActorSheet` | `fade-unprepared.mjs`, `rarity-colours.mjs` | Fade unprepared spells, and tint items by rarity, while their settings are on. |
 | `getSceneControlButtons` | `roll-requests.mjs` | Add **Request Rolls** to the token controls. |
 | `dnd5e.postUseActivity` | `hero-cards.mjs` | Note an Advantage card played from the sheet. |
 | `dnd5e.preRollD20TestV2`, `dnd5e.postD20TestRollConfiguration` | `hero-cards.mjs` | Apply, then clear, that pending advantage. |
@@ -437,10 +444,16 @@ scripts/
   bonus-rolls.mjs           Adding another feature's die to a roll, and the socket messages for it.
   class-features.mjs        Fighter's Indomitable.
   natural-saves.mjs         Natural 1s and 20s on saves against an activity's damage.
-  settings-menus.mjs        The Hero Cards, Dice Rolling and Roll Requests settings menus (ApplicationV2).
+  bloodied-tint.mjs         World Altering Scripts: the red tint on D&D 5e's Bloodied effect.
+  fade-unprepared.mjs       World Altering Scripts: fading unprepared spells on actor sheets.
+  rarity-colours.mjs        World Altering Scripts: tinting item rows on actor sheets by rarity.
+  chat-button-labels.mjs    World Altering Scripts: labels on compact chat cards' icon buttons.
+  one-tab-activities.mjs    World Altering Scripts: an activity sheet's tabs side by side.
+  settings-menus.mjs        The settings menus (ApplicationV2).
 templates/roll-request.hbs  The request window's form.
 templates/settings-menu.hbs A settings menu's form.
-styles/                     fonts.css (Cinzel and Spectral, shipped in assets/fonts), hero-cards.css, roll-requests.css.
+styles/                     fonts.css (Cinzel and Spectral, shipped in assets/fonts), hero-cards.css, roll-requests.css,
+                            world-scripts.css.
 lang/en.json                Every string the module shows.
 assets/                     Card art, campaign art and fonts.
 src/packs/                  Compendium sources, as YAML. Built into packs/ (not committed).

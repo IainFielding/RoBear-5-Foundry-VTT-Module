@@ -38,8 +38,8 @@ The compendiums sit in a **Sogrom's Table Tools** folder in the Compendium sideb
 
 ## Settings
 
-In **Game Settings → Configure Settings → Sogrom's Table Tools**, the settings are grouped behind three buttons:
-**Hero Cards**, **Dice Rolling** and **Roll Requests**. Each opens a window with that group's settings. Only a GM
+In **Game Settings → Configure Settings → Sogrom's Table Tools**, the settings are grouped behind four buttons:
+**Hero Cards**, **Dice Rolling**, **Roll Requests** and **World Altering Scripts**. Each opens a window with that group's settings. Only a GM
 can open them, and each setting applies to the whole world.
 
 <img src="docs/images/gm-settings.webp" alt="The Sogrom's Table Tools tab of Foundry's settings, with the Hero Cards, Dice Rolling and Roll Requests buttons" width="640">
@@ -66,6 +66,17 @@ can open them, and each setting applies to the whole world.
 | **Attach rolls to the request card** | On | The rolls made for a request show on its card rather than as messages of their own, as D&D 5e does for an item's saves. Click a result to see its dice. |
 | **Pop up roll requests for players** | Off | Opens a window for each player with a character in a request, with a Roll button for each of their characters. |
 | **Pop up roll requests for the GM** | Off | Opens a window for you when a request includes NPCs, or any actor no player owns. |
+### World Altering Scripts
+
+Optional changes to tokens and actor sheets. Each is off until you turn it on.
+
+| Setting | Default | What it does |
+|---|---|---|
+| **Bloodied Token Tint** | Off | When D&D 5e marks a creature Bloodied, its token is tinted red and its token ring's background turns red. A token that's already Bloodied when you turn this on changes the next time it becomes Bloodied. |
+| **Fade Unprepared Spells** | Off | On actor sheets, spells of level 1 or higher that could be prepared but aren't are faded. Cantrips, always-prepared spells, and spells from items or at-will and innate sections stay as they are. |
+| **Chat Button Labels** | Off | On compact chat cards, each icon button shows its name beside its icon, so you don't have to hover over it to see what it does. |
+| **One-Tab Activities** | Off | An activity's **Identity**, **Activation** and **Effect** tabs are laid out side by side in one wide window, without their hints. Handy when you're making a lot of content. |
+| **Item Rarity Colours** | Off | Tints each item row on actor sheets by its rarity: green for uncommon, blue for rare, purple for very rare, orange for legendary and gold for artifact. |
 
 ## Asking for rolls
 
