@@ -203,8 +203,9 @@ they remove your roll from the card, and your **Roll** button comes back.
 
 Inspired by the RoBear-E campaign. Sogrom's Table Tools is not affiliated with, or endorsed by, its creators.
 
-The card art is the work of [Captain RoBear](https://www.youtube.com/channel/UCktEYryPmattKzrpo0_kGzA) and remains
-the property of its creator. The Cinzel and Spectral fonts are under the SIL Open Font License (see `assets/fonts`).
+The card art is made from images licensed from [Adobe Stock](https://stock.adobe.com) and [Pexels](https://www.pexels.com),
+which remain the property of their creators. No AI-generated imagery is used. [docs/ART-SOURCES.md](docs/ART-SOURCES.md)
+lists the source of each card. The Cinzel and Spectral fonts are under the SIL Open Font License (see `assets/fonts`).
 
 ## Author
 

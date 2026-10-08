@@ -23,7 +23,7 @@ can do everything a player can.
 
 1. **Install.** In Foundry's setup screen, go to **Add-on Modules → Install Module**. Search for "Sogrom's Table Tools" or paste
    the manifest URL:
-   `https://github.com/IainFielding/RoBear-5-Foundry-VTT-Module/releases/latest/download/module.json`
+   `https://github.com/IainFielding/Sogroms-Table-Tools/releases/latest/download/module.json`
 2. **Enable** Sogrom's Table Tools in your world's **Manage Modules**. It needs Foundry VTT v14 and D&D 5e 6.x (tested on 6.0.5).
 3. **Give out the cards.** Drag the **Hero Cards** feature from the **Items (Sogrom's Table Tools)** compendium onto each
    character who should have them. Each card is an activity on that feature with one use, recovered on a long rest.
