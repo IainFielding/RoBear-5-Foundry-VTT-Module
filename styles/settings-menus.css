@@ -1,0 +1,14 @@
+/*
+ * Settings menus: each row is a name, a checkbox and a hint. The checkbox needs no more room than itself, so the name
+ * takes the rest of the row, and a name that still wraps keeps its lines together, as in Foundry's own Configure
+ * Settings window.
+ */
+.stt-settings-menu .form-group > label {
+  line-height: 1.25;
+  align-self: center;
+}
+
+.stt-settings-menu .form-group > .form-fields {
+  flex: 0 0 2rem;
+  justify-content: flex-end;
+}

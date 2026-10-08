@@ -538,7 +538,8 @@ shot("each settings menu", async ({ gm }) => {
     await app.waitFor({ timeout: 10_000 });
     await gm.page.waitForTimeout(300);
     await capture(gm, `gm-settings-${name}`, app);
-    await app.locator('[data-action="close"]').click();
+    // Closed from code: clicking the close button would leave its tooltip fading out over the next menu's picture.
+    await gm.eval(id => foundry.applications.instances.get(id)?.close(), `stt-settings-${name}`);
     await app.waitFor({ state: "detached", timeout: 5000 });
   }
 });

@@ -57,7 +57,8 @@
     "styles/fonts.css",
     "styles/hero-cards.css",
     "styles/roll-requests.css",
-    "styles/world-scripts.css"
+    "styles/world-scripts.css",
+    "styles/settings-menus.css"
   ],
   "packs": [
     {
