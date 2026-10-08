@@ -21,7 +21,7 @@ const CARDS = {
   },
   luck: {
     ids: ["uPqHABvpmYZr0ASg"],
-    names: ["lucky", "luck"],
+    names: ["lucky"],
     appliesTo: ["attack", "damage", "check", "save", "initiative", "divine"],
     rerolls: true
   },
@@ -45,8 +45,7 @@ const CARDS = {
 };
 
 /**
- * Card art in IMAGE_PATH for every card, keyed by lower-case activity name. "luck" and "minds eye" are the cards' names
- * before they were renamed to match their art, kept so a Hero Cards item made before then still shows it.
+ * Card art in IMAGE_PATH for every card, keyed by lower-case activity name.
  */
 const CARD_ART = {
   "advantage": "advantage.webp",
@@ -58,9 +57,7 @@ const CARD_ART = {
   "inspiration - 1d8": "inspiration1d8.webp",
   "inspiration - 1d10": "inspiration1d10.webp",
   "lucky": "lucky.webp",
-  "luck": "lucky.webp",
   "mind's eye": "mindseye.webp",
-  "minds eye": "mindseye.webp",
   "reaction surge": "reactionsurge.webp",
   "relentless": "relentless.webp"
 };

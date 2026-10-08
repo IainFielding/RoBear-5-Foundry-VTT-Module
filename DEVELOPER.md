@@ -390,7 +390,7 @@ recognised by activity ID, falling back to the activity's name, case-insensitive
 | Card | Activity IDs | Name | Rolls it can be played on |
 |---|---|---|---|
 | Inspiration | `iE0w9Rp70zne6zuJ`, `na7uWxkaPiGn00ZK`, `l1s90u72J3Q34HFN` | `inspiration - 1d6` / `1d8` / `1d10` | attack, damage, check, save, initiative |
-| Lucky | `uPqHABvpmYZr0ASg` | `lucky`, `luck` | attack, damage, check, save, initiative, divine |
+| Lucky | `uPqHABvpmYZr0ASg` | `lucky` | attack, damage, check, save, initiative, divine |
 | Advantage | `OkUWoFMxuyT5TxX7` | `advantage` | attack, check, save, initiative, divine |
 | Indomitable | `aE8dyIQUgvXfcu3M` | `indomitable` | save (a known failure) |
 | Relentless | `28kjjOyF9Suf3hkq` | `relentless` | initiative (in combat round 1) |
