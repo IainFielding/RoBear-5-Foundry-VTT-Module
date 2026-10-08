@@ -10,50 +10,79 @@
         "HeroCards": {
           "Name": "Hero Cards",
           "Label": "Hero Card Settings",
-          "Hint": "Whether natural 1s and 20s lock the cards, and whether played cards show on screen."
+          "Hint": "Customise how Hero Cards behave, including whether natural 1s and 20s can be modified and how played cards are displayed."
         },
         "DiceRolling": {
           "Name": "Dice Rolling",
           "Label": "Dice Rolling Settings",
-          "Hint": "Rings on natural 1s and 20s in chat, and natural 1s and 20s on saves against damage."
+          "Hint": "Control how natural 1s and 20s are highlighted in chat and how critical saving throws against damage are handled."
         },
         "RollRequests": {
           "Name": "Roll Requests",
           "Label": "Roll Request Settings",
-          "Hint": "Showing the DC by default, attaching rolls to the request card, and pop-up windows for players and the GM."
+          "Hint": "Configure roll request behaviour, including DC visibility, roll display options, pop-up prompts, and automatic death save requests."
+        },
+        "WorldScripts": {
+          "Name": "World Altering Scripts",
+          "Label": "World Altering Scripts",
+          "Hint": "Optional quality-of-life improvements for tokens, character sheets, chat cards, and activity windows. Enable only the features you want to use."
         }
+      },
+      "BloodiedTint": {
+        "Name": "Bloodied Token Tint",
+        "Hint": "Highlights Bloodied creatures with a red tint and matching token ring colours, making them easier to spot during play."
+      },
+      "FadeUnprepared": {
+        "Name": "Fade Unprepared Spells",
+        "Hint": "Dim unprepared spells on character sheets to help players quickly identify available options."
+      },
+      "ChatButtonLabels": {
+        "Name": "Chat Button Labels",
+        "Hint": "Display text labels alongside chat card icons, making actions easier to identify at a glance."
+      },
+      "OneTabActivities": {
+        "Name": "One-Tab Activities",
+        "Hint": "Combine activity details into a single expanded view for faster editing and content creation."
+      },
+      "RarityColours": {
+        "Name": "Item Rarity Colours",
+        "Hint": "Colour-code items by rarity using familiar RPG-style colours, helping you identify valuable items more quickly."
       },
       "LockNaturals": {
         "Name": "Natural 1s and 20s lock Hero Cards",
-        "Hint": "No Hero Card can be played on a roll whose d20 shows a natural 1 or 20. Turn this off to allow Advantage and Inspiration on them. A natural 1 is fixed either way: Luck, Indomitable and Relentless never reroll one, and Luck can't be played on a natural 20."
+        "Hint": "Prevent Hero Cards from being played on natural 1s and natural 20s. Disable this setting to allow Advantage and Inspiration to affect those rolls. Natural 1s are always final, and can't be rerolled by Lucky, Indomitable, or Relentless."
       },
       "MarkNaturals": {
         "Name": "Ring natural 1s and 20s",
-        "Hint": "A roll in chat whose d20 shows a natural 20 is ringed in gold, and one showing a natural 1 in red: checks, saving throws and attacks, including a save or check summarised inside the card of the spell or feature that called for it, and a result on a roll request's card."
+        "Hint": "Clearly marks natural 20s in gold and natural 1s in red across chat, including attacks, checks, saves, spell and feature card rolls, and roll request results."
       },
       "NaturalSaves": {
         "Name": "Natural 1s and 20s on saves against damage",
-        "Hint": "A creature whose saving throw against a spell's or feature's damage shows a natural 20 takes no damage. One whose save shows a natural 1 takes the most the damage could do, every die at its highest (36 from 6d6), ignoring its resistances and immunities. Both start that way in the damage's Apply tray, where the GM can still change them."
+        "Hint": "By default, a natural 20 on a saving throw against a spell's or feature's damage means no damage is taken. A natural 1 deals the maximum possible damage instead, treating every damage die as though it rolled its highest value (for example, 36 from 6d6), and ignoring any resistances or immunities. The Apply tray is automatically populated with these results, but the GM remains free to adjust them before applying damage."
       },
       "ShowPlayedCards": {
-        "Name": "Show played cards on screen",
-        "Hint": "When a Hero Card is played, its art appears in the middle of the screen for a moment, for everyone who can see the roll. Either way, chat keeps a record of it, with a thumbnail of the card."
+        "Name": "Show Played Cards on Screen",
+        "Hint": "Briefly display Hero Card artwork when a card is played, creating a more cinematic experience for everyone at the table."
       },
       "ShowDCDefault": {
         "Name": "Show the DC to players by default",
-        "Hint": "Whether Show DC to Players starts ticked when you open the request window. You can still change it for each request. A hidden DC is kept off the chat card, but it still reaches each player's Foundry with the request, so it isn't a secret from a player who goes looking."
+        "Hint": "Decides whether players can see the DC by default when you create a roll request. You can override it for any request. Hiding the DC removes it from the chat card."
       },
       "AttachRolls": {
-        "Name": "Attach rolls to the request card",
-        "Hint": "Rolls made for a roll request are shown on its card, rather than as messages of their own. Click a result on the card to see its dice."
+        "Name": "Attach Rolls to Request Cards",
+        "Hint": "Keep related rolls neatly grouped within their request card instead of creating separate chat messages."
       },
       "PopupPlayers": {
-        "Name": "Pop up roll requests for players",
-        "Hint": "When the GM posts a roll request, a window opens for each player with a character in it, with a Roll button for each of their characters. The chat card works either way."
+        "Name": "Pop Up Roll Requests for Players",
+        "Hint": "Open roll requests automatically for players, allowing them to respond with a single click."
       },
       "PopupGM": {
-        "Name": "Pop up roll requests for the GM",
-        "Hint": "When a roll request includes NPCs, or any actor no player owns, a window opens for the GM with their Roll buttons. Otherwise the GM rolls for them from the chat card."
+        "Name": "Pop Up Roll Requests for the GM",
+        "Hint": "Automatically open a roll request window for the GM when NPCs or unowned actors need to roll."
+      },
+      "DeathSavePrompt": {
+        "Name": "Automatic Death Save Requests",
+        "Hint": "Automatically prompt dying characters to make death saves at the start of their turn, helping combat run more smoothly."
       }
     },
     "RollKind": {
@@ -65,9 +94,9 @@
       "Divine": "Divine Intervention"
     },
     "Cards": {
-      "NoneLeft": "You have no Hero Cards left until your next long rest.",
-      "ChooseFromSheet": "Choose a card to play. It will be spent until your next long rest.",
-      "ChooseOnRoll": "Choose a card to play on this roll. It will be spent until your next long rest.",
+      "NoneLeft": "You have used all of your Hero Cards. They will refresh after your next long rest.",
+      "ChooseFromSheet": "Choose a Hero Card to play. Once used, it remains unavailable until your next long rest.",
+      "ChooseOnRoll": "Choose a Hero Card to enhance this roll. The card will be spent until your next long rest",
       "NextRollAdvantage": "{name}'s next attack roll, ability check, or saving throw will be made with advantage.",
       "ButtonTooltip": "Use a Hero Card on this roll",
       "Button": "Hero Card",
@@ -163,7 +192,8 @@
       "Labels": {
         "Check": "{name} Check",
         "Save": "{name} Save",
-        "DieRoll": "{die} Roll"
+        "DieRoll": "{die} Roll",
+        "DeathSave": "Death Save"
       },
       "Subtitle": {
         "Challenge": "{count} of {total} to succeed",
@@ -187,8 +217,8 @@
       "Challenge": {
         "Done": "Done",
         "DoneTooltip": "Finished. The GM will show how it went.",
-        "Passed": "Challenge passed",
-        "Failed": "Challenge failed"
+        "Passed": "Challenge Complete",
+        "Failed": "Challenge Failed"
       },
       "Result": {
         "Hidden": "Hidden roll",
@@ -205,7 +235,7 @@
       },
       "Divine": {
         "Answered": "The gods answer",
-        "NoAnswer": "No answer",
+        "NoAnswer": "The gods remain silent",
         "Picked": "The numbers picked",
         "DialogTitle": "Divine Intervention: {name}",
         "DialogHint": "Pick {count} numbers in a row. You then roll a d100, and must roll one of them.",
@@ -261,7 +291,8 @@
         "Range": "Divine Intervention needs from {min} to {max} numbers to pick, not {range}.",
         "DivineRoll": "Divine Intervention's roll is a d100, not {type}.",
         "Choices": "Only a Standard Roll, Team Challenge or Skill Challenge can offer a choice of rolls, and at most {max} to choose from, given as a list of alternatives.",
-        "ChoiceDC": "A Team Challenge's rolls are averaged against one DC, so its alternatives can't have DCs of their own."
+        "ChoiceDC": "A Team Challenge's rolls are averaged against one DC, so its alternatives can't have DCs of their own.",
+        "DeathSave": "A death save can only be asked for in a Standard Roll, with no other rolls to choose from."
       },
       "Config": {
         "KindOfRoll": "Kind of Roll",

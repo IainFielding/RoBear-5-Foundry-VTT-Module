@@ -6,7 +6,7 @@
  *   HEADED=1 npm run test:e2e         # watch the browsers
  *
  * Starts the harness's own Foundry on the configured port with the test world, joins as the GM and as a
- * player in two browsers, and runs tests.mjs, tests-cards.mjs, tests-popup.mjs and tests-bonus.mjs.
+ * player in two browsers, and runs every tests-*.mjs file imported below.
  */
 
 import { GM_USER, MODULE_ID, PLAYER_USER, WORLD } from "./config.mjs";
@@ -20,6 +20,8 @@ import "./tests-popup.mjs";
 import "./tests-bonus.mjs";
 import "./tests-features.mjs";
 import "./tests-natural-saves.mjs";
+import "./tests-death-saves.mjs";
+import "./tests-world-scripts.mjs";
 
 const filter = process.argv.slice(2).find(a => !a.startsWith("--"));
 

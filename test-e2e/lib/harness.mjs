@@ -287,7 +287,7 @@ export function waitForRoll(session, id, uuid, part = 0) {
  * @param {import("./session.mjs").Session} session
  * @param {string} id
  * @param {string} name  The actor's name.
- * @returns {Promise<string[]>}  Every card offered.
+ * @returns {Promise<string[]>}  Every card offered, by its activity's name.
  */
 export async function cardsOnRow(session, id, name) {
   const button = session.page.locator(`#chat .chat-log [data-message-id="${id}"] `
@@ -296,7 +296,7 @@ export async function cardsOnRow(session, id, name) {
   await button.click();
   const dialog = session.page.locator(".stt-card-dialog.application").last();
   await dialog.locator(".stt-card-choice").first().waitFor({ timeout: 10_000 });
-  const offered = (await dialog.locator(".stt-card-choice span").allTextContents()).map(t => t.trim());
+  const offered = await dialog.locator(".stt-card-choice").evaluateAll(els => els.map(el => el.dataset.card));
   await dialog.locator('button[data-action="cancel"]').click();
   await dialog.waitFor({ state: "detached", timeout: 5000 }).catch(() => {});
   return offered;
@@ -309,7 +309,7 @@ export async function cardsOnRow(session, id, name) {
  * @param {import("./session.mjs").Session} session
  * @param {string} id
  * @param {string} name   The actor's name.
- * @param {string} card   The card's label, e.g. "Advantage" or "Luck".
+ * @param {string} card   The card's activity name, e.g. "Advantage" or "Inspiration - 1d6".
  * @returns {Promise<string[]>}  Every card that was offered.
  */
 export async function playCard(session, id, name, card) {
@@ -319,8 +319,8 @@ export async function playCard(session, id, name, card) {
   await button.click();
   const dialog = session.page.locator(".stt-card-dialog.application").last();
   await dialog.locator(".stt-card-choice").first().waitFor({ timeout: 10_000 });
-  const offered = (await dialog.locator(".stt-card-choice span").allTextContents()).map(t => t.trim());
-  const choice = dialog.locator(".stt-card-choice", { hasText: card });
+  const offered = await dialog.locator(".stt-card-choice").evaluateAll(els => els.map(el => el.dataset.card));
+  const choice = dialog.locator(`.stt-card-choice[data-card="${card}"]`);
   assert(await choice.count(), `${card} was not offered. Offered: ${offered.join(", ")}`);
   await choice.first().click();
   return offered;

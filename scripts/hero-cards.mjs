@@ -21,7 +21,7 @@ const CARDS = {
   },
   luck: {
     ids: ["uPqHABvpmYZr0ASg"],
-    names: ["luck"],
+    names: ["lucky"],
     appliesTo: ["attack", "damage", "check", "save", "initiative", "divine"],
     rerolls: true
   },
@@ -48,18 +48,18 @@ const CARDS = {
  * Card art in IMAGE_PATH for every card, keyed by lower-case activity name.
  */
 const CARD_ART = {
-  "advantage": "advantagedc20.webp",
-  "charger": "chargerdc20.webp",
+  "advantage": "advantage.webp",
+  "charger": "charger.webp",
   "divine intervention": "divineintervention.webp",
-  "extra strike": "extrastrikedc20.webp",
-  "indomitable": "indomitabledc20.webp",
-  "inspiration - 1d6": "inspiration-1d6-dc20.webp",
-  "inspiration - 1d8": "inspiration-1d8-dc20.webp",
-  "inspiration - 1d10": "inspiration-1d10-dc20.webp",
-  "luck": "luckdc20.webp",
-  "minds eye": "mindseye.webp",
+  "extra strike": "extrastrike.webp",
+  "indomitable": "indomitable.webp",
+  "inspiration - 1d6": "inspiration1d6.webp",
+  "inspiration - 1d8": "inspiration1d8.webp",
+  "inspiration - 1d10": "inspiration1d10.webp",
+  "lucky": "lucky.webp",
+  "mind's eye": "mindseye.webp",
   "reaction surge": "reactionsurge.webp",
-  "relentless": "relentlessdc20.webp"
+  "relentless": "relentless.webp"
 };
 
 /**
@@ -446,10 +446,10 @@ function hasUsesLeft(activity) {
 
 /**
  * @param {Activity} activity
- * @returns {string}  Display name, with Inspiration shown as the die it adds.
+ * @returns {string}  Display name. The Inspiration cards are all "Inspiration": their art shows the die each adds.
  */
 function getCardLabel(activity) {
-  return activity.name.replace(/^Inspiration\s*-\s*/i, "Inspiration + ");
+  return activity.name.replace(/^Inspiration\s*-.*$/i, "Inspiration");
 }
 
 /* -------------------------------------------- */
@@ -593,7 +593,7 @@ export function createCardButton(message, { compact=false }={}) {
   button.className = compact ? "stt-card-button icon" : "stt-card-button";
   button.dataset.tooltipText = localize("STT.Cards.ButtonTooltip");
   button.setAttribute("aria-label", localize("STT.Cards.ButtonTooltip"));
-  button.innerHTML = '<i class="fa-solid fa-anchor fa-rotate-90" inert></i>';
+  button.innerHTML = '<i class="fa-solid fa-beer-mug-empty" inert></i>';
   if ( !compact ) button.append(` ${localize("STT.Cards.Button")}`);
   button.addEventListener("click", event => {
     event.preventDefault();
@@ -765,7 +765,7 @@ async function promptCard(message, button) {
 
 /**
  * Show the card picker.
- * @param {{ label: string, img: string }[]} options
+ * @param {{ activity: Activity, label: string, img: string }[]} options
  * @param {string} hint  Instruction shown above the cards.
  * @returns {Promise<object|void>}  The chosen option.
  */
@@ -773,10 +773,10 @@ async function chooseCard(options, hint) {
   // The tooltip shows the card art at full size so its rules text is readable.
   const { escapeHTML } = foundry.utils;
   const cards = options.map((o, i) => `
-    <button type="button" class="stt-card-choice" data-index="${i}"
+    <button type="button" class="stt-card-choice" data-index="${i}" data-card="${escapeHTML(o.activity.name)}"
             data-tooltip-html="${escapeHTML(cardArtHTML(o.img, o.label))}"
             data-tooltip-class="stt-card-tooltip" data-tooltip-direction="UP">
-      <img src="${escapeHTML(o.img)}" alt="${escapeHTML(o.label)}">
+      <img src="${escapeHTML(o.img)}" alt="${escapeHTML(o.activity.name)}">
       <span>${escapeHTML(o.label)}</span>
     </button>
   `).join("");
@@ -785,7 +785,7 @@ async function chooseCard(options, hint) {
   let chosen;
   await foundry.applications.api.DialogV2.wait({
     classes: ["stt-card-dialog"],
-    window: { title: "STT.Cards.DialogTitle", icon: "fa-solid fa-anchor fa-rotate-90" },
+    window: { title: "STT.Cards.DialogTitle", icon: "fa-solid fa-beer-mug-empty" },
     position: { width: Math.clamp(48 + (options.length * 124), 340, 792) },
     content: `
       <p class="stt-card-hint">${foundry.utils.escapeHTML(hint)}</p>

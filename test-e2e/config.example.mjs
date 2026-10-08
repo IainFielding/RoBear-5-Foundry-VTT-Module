@@ -5,6 +5,8 @@
  * is gitignored for that reason.
  */
 
+import fs from "node:fs";
+
 /** Where Foundry Virtual Tabletop's Node build is installed (the directory holding `main.mjs`). */
 export const FOUNDRY_ROOT = "C:/foundryvtt";
 
@@ -17,7 +19,20 @@ export const DATA_DIR = `${DATA_PATH}/Data`;
 /** The harness runs its own Foundry on this port, so one already running on 30000 is left alone. */
 export const PORT = 30099;
 
-export const BASE_URL = `http://127.0.0.1:${PORT}`;
+/**
+ * Foundry serves HTTPS instead of HTTP once its `options.json` names a certificate, as it does after it sets up a
+ * self-signed one. The harness accepts a self-signed certificate (see `lib/server.mjs` and `lib/session.mjs`).
+ */
+export const SSL = (() => {
+  try {
+    const options = JSON.parse(fs.readFileSync(`${DATA_PATH}/Config/options.json`, "utf8"));
+    return !!(options.sslCert && options.sslKey);
+  } catch {
+    return false;
+  }
+})();
+
+export const BASE_URL = `${SSL ? "https" : "http"}://127.0.0.1:${PORT}`;
 
 /** The module under test. It must be linked into `Data/modules`: see `README.md`. */
 export const MODULE_ID = "sogrom-table-tools";
@@ -32,7 +47,7 @@ export const WORLD = {
 
 export const SYSTEM = "dnd5e";
 export const SYSTEM_VERSION = "6.0.5";
-export const CORE_VERSION = "14.368";
+export const CORE_VERSION = "14.369";
 
 /** Foundry creates this passwordless GM in a world that has none. */
 export const GM_USER = "Gamemaster";

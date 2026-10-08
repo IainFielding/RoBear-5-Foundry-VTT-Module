@@ -4,7 +4,7 @@ import { requestMessage, rollMessage } from "./helpers/messages.mjs";
 import {
   DIVINE_RANGE, MAX_CHOICES, MODES, createRequest, formatRun, getChallengeState, getChoiceDC, getChoiceLabel, getChoices,
   getGroupOutcome, getPartLabel, getRequest, getRequestSubtitle, getRequestTitle, getResults, getRowGroup, hasChoiceDCs,
-  isContest, poolTeamRolls, validateRequest, withDefaults
+  isContest, poolTeamRolls, postRequest, validateRequest, withDefaults
 } from "../scripts/roll-requests.mjs";
 
 const entries = rows => rows.map(([uuid, total, natural]) => ({ uuid, total, natural }));
@@ -427,6 +427,16 @@ describe("Checking a request before it is posted", () => {
       expect(errorFor({ ...valid.standard, parts: [{ ...part, dc: 15 }] })).toBeNull();
     }
   });
+
+  it("accepts a death save only on its own in a Standard Roll, since it counts towards dying", () => {
+    const death = { type: "death", dc: 10 };
+    expect(errorFor({ ...valid.standard, parts: [death] })).toBeNull();
+    expect(errorFor({ ...valid.standard, mode: "team", parts: [death] })).toBe(refusal("DeathSave"));
+    expect(errorFor({ ...valid.challenge, parts: [part, death, part] })).toBe(refusal("DeathSave"));
+    expect(errorFor({ ...valid.rolloff, parts: [death, part] })).toBe(refusal("DeathSave"));
+    expect(errorFor({ ...valid.standard, parts: [{ ...death, alternatives: [{ type: "d20" }] }] })).toBe(refusal("DeathSave"));
+    expect(errorFor({ ...valid.standard, parts: [{ ...part, alternatives: [{ type: "death" }] }] })).toBe(refusal("DeathSave"));
+  });
 });
 
 /* -------------------------------------------- */
@@ -478,6 +488,14 @@ describe("Posting a request", () => {
     await expect(createRequest({ mode: "standard", actors: ["A"], parts: [{ type: "d20", dc: 10 }] }))
       .rejects.toThrow("Only a GM can post a roll request.");
     expect(posted).toBe(false);
+  });
+
+  it("sets other flags beside the request, without letting them replace it", async () => {
+    const request = { mode: "standard", actors: ["A"], parts: [{ type: "death", dc: 10 }] };
+    const posted = await postRequest(request, { revealed: true, request: "forged" });
+    expect(posted.flags["sogrom-table-tools"].revealed).toBe(true);
+    expect(posted.flags["sogrom-table-tools"].request.parts).toEqual(request.parts);
+    expect(posted.content).toBe("<p>Death Save</p>");
   });
 
   it("refuses a request that can't be rolled, posting nothing", async () => {
@@ -607,6 +625,7 @@ describe("Modes and labels", () => {
     expect(getPartLabel({ type: "check", key: "str" })).toBe("Strength Check");
     expect(getPartLabel({ type: "save", key: "dex" })).toBe("Dexterity Save");
     expect(getPartLabel({ type: "tool", key: "thief" })).toBe("Thieves' Tools Check");
+    expect(getPartLabel({ type: "death" })).toBe("Death Save");
     expect(getPartLabel({ type: "d20" })).toBe("d20");
     expect(getPartLabel({ type: "d100" })).toBe("d100");
     for ( const die of ["d6", "d8", "d10", "d12"] ) expect(getPartLabel({ type: die })).toBe(die);

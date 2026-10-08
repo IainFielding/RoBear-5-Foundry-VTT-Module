@@ -61,7 +61,7 @@ if ( manifest ) {
 
 /**
  * Every card image the scripts name must be in assets/images: a missing one only shows in the game as a broken
- * picture when the card is played. The scripts name each file as a string literal, such as "luckdc20.webp".
+ * picture when the card is played. The scripts name each file as a string literal, such as "lucky.webp".
  */
 async function validateCardArt() {
   const scripts = (await readdir(resolve(root, "scripts"))).filter(f => f.endsWith(".mjs"));

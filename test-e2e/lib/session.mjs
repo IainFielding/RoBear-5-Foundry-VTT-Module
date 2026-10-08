@@ -33,7 +33,10 @@ export class Session {
       headless: !HEADED,
       args: ["--use-gl=swiftshader", "--enable-unsafe-swiftshader", "--mute-audio", "--disable-dev-shm-usage"]
     });
-    const context = await browser.newContext({ viewport: { width: 1600, height: 1000 }, deviceScaleFactor: scale });
+    // Foundry's HTTPS certificate may be self-signed.
+    const context = await browser.newContext({
+      viewport: { width: 1600, height: 1000 }, deviceScaleFactor: scale, ignoreHTTPSErrors: true
+    });
     const page = await context.newPage();
     const session = new Session(browser, page, user);
 
@@ -69,7 +72,8 @@ export class Session {
   /** Load the join page, pick the user, and wait for the world. Handles both join-screen themes. */
   async join() {
     await this.page.goto(`${BASE_URL}/join`, { waitUntil: "domcontentloaded" });
-    const select = this.page.locator("select[name=userid]");
+    // The user list is named "userid" before Foundry 14.369 and "userId" from it.
+    const select = this.page.locator("select[name=userid], select[name=userId]");
     const username = this.page.locator("input[name=username]");
     await Promise.race([select.waitFor({ timeout: 30_000 }), username.waitFor({ timeout: 30_000 })]).catch(() => {
       throw new Error(`The join form never appeared. Page: ${this.page.url()}`);

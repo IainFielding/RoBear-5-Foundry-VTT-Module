@@ -15,6 +15,7 @@ can do everything a player can.
   - [Who can roll, and rolling again](#who-can-roll-and-rolling-again)
   - [Private rolls and what "hidden" means](#private-rolls-and-what-hidden-means)
   - [Pop-ups](#pop-ups)
+  - [Death saves](#death-saves)
 - [Cards and dice at the table](#cards-and-dice-at-the-table)
 - [Macros](#macros)
 
@@ -22,7 +23,7 @@ can do everything a player can.
 
 1. **Install.** In Foundry's setup screen, go to **Add-on Modules → Install Module**. Search for "Sogrom's Table Tools" or paste
    the manifest URL:
-   `https://github.com/IainFielding/RoBear-5-Foundry-VTT-Module/releases/latest/download/module.json`
+   `https://github.com/IainFielding/Sogroms-Table-Tools/releases/latest/download/module.json`
 2. **Enable** Sogrom's Table Tools in your world's **Manage Modules**. It needs Foundry VTT v14 and D&D 5e 6.x (tested on 6.0.5).
 3. **Give out the cards.** Drag the **Hero Cards** feature from the **Items (Sogrom's Table Tools)** compendium onto each
    character who should have them. Each card is an activity on that feature with one use, recovered on a long rest.
@@ -38,20 +39,24 @@ The compendiums sit in a **Sogrom's Table Tools** folder in the Compendium sideb
 
 ## Settings
 
-In **Game Settings → Configure Settings → Sogrom's Table Tools**, the settings are grouped behind three buttons:
-**Hero Cards**, **Dice Rolling** and **Roll Requests**. Each opens a window with that group's settings. Only a GM
+In **Game Settings → Configure Settings → Sogrom's Table Tools**, the settings are grouped behind four buttons:
+**Hero Cards**, **Dice Rolling**, **Roll Requests** and **World Altering Scripts**. Each opens a window with that group's settings. Only a GM
 can open them, and each setting applies to the whole world.
 
-<img src="docs/images/gm-settings.webp" alt="The Sogrom's Table Tools tab of Foundry's settings, with the Hero Cards, Dice Rolling and Roll Requests buttons" width="640">
+<img src="docs/images/gm-settings.webp" alt="The Sogrom's Table Tools tab of Foundry's settings, with the Hero Cards, Dice Rolling, Roll Requests and World Altering Scripts buttons" width="640">
 
 ### Hero Cards
 
+<img src="docs/images/gm-settings-hero-cards.webp" alt="The Hero Card Settings window, with its two settings" width="420">
+
 | Setting | Default | What it does |
 |---|---|---|
-| **Natural 1s and 20s lock Hero Cards** | On | No card can be played on a roll whose d20 shows a natural 1 or 20. Turn it off to allow Advantage and Inspiration on them. Either way, Luck can't be played on a natural 20, and nothing rerolls a natural 1. |
+| **Natural 1s and 20s lock Hero Cards** | On | No card can be played on a roll whose d20 shows a natural 1 or 20. Turn it off to allow Advantage and Inspiration on them. Either way, Lucky can't be played on a natural 20, and nothing rerolls a natural 1. |
 | **Show played cards on screen** | On | A played card's art appears in the middle of the screen for everyone who can see the roll. Chat keeps a record either way. |
 
 ### Dice Rolling
+
+<img src="docs/images/gm-settings-dice-rolling.webp" alt="The Dice Rolling Settings window, with its two settings" width="420">
 
 | Setting | Default | What it does |
 |---|---|---|
@@ -60,18 +65,44 @@ can open them, and each setting applies to the whole world.
 
 ### Roll Requests
 
+<img src="docs/images/gm-settings-roll-requests.webp" alt="The Roll Request Settings window, with its five settings" width="420">
+
 | Setting | Default | What it does |
 |---|---|---|
 | **Show the DC to players by default** | Off | Whether **Show DC to Players** starts ticked in the request window. You can still change it for each request. |
 | **Attach rolls to the request card** | On | The rolls made for a request show on its card rather than as messages of their own, as D&D 5e does for an item's saves. Click a result to see its dice. |
 | **Pop up roll requests for players** | Off | Opens a window for each player with a character in a request, with a Roll button for each of their characters. |
 | **Pop up roll requests for the GM** | Off | Opens a window for you when a request includes NPCs, or any actor no player owns. |
+| **Ask for death saves** | Off | Posts a death save request at the start of a dying character's turn in combat. See [Death saves](#death-saves). |
+
+### World Altering Scripts
+
+Optional changes to tokens and actor sheets. Each is off until you turn it on.
+
+<img src="docs/images/gm-settings-world-scripts.webp" alt="The World Altering Scripts window, with its five scripts, each unticked" width="420">
+
+| Setting | Default | What it does |
+|---|---|---|
+| **Bloodied Token Tint** | Off | When D&D 5e marks a creature Bloodied, its token is tinted red and its token ring's background turns red. A token that's already Bloodied when you turn this on changes the next time it becomes Bloodied. |
+| **Fade Unprepared Spells** | Off | On actor sheets, spells of level 1 or higher that could be prepared but aren't are faded. Cantrips, always-prepared spells, and spells from items or at-will and innate sections stay as they are. |
+| **Chat Button Labels** | Off | On compact chat cards, each icon button shows its name beside its icon, so you don't have to hover over it to see what it does. |
+| **One-Tab Activities** | Off | An activity's **Identity**, **Activation** and **Effect** tabs are laid out side by side in one wide window, without their hints. Handy when you're making a lot of content. |
+| **Item Rarity Colours** | Off | Tints each item row on actor sheets by its rarity: green for uncommon, blue for rare, purple for very rare, orange for legendary and gold for artifact. |
+
+<table><tr>
+<td><img src="docs/images/world-scripts-rarity.webp" alt="Aria's inventory with Item Rarity Colours on: a cream Potion of Healing, a green Cloak of Elvenkind, a blue Flame Tongue, a purple Staff of Power, an orange Holy Avenger and a gold Orb of Dragonkind" width="400"></td>
+<td><img src="docs/images/world-scripts-fade.webp" alt="Aria's spells with Fade Unprepared Spells on: Sleep and Misty Step are faded, Magic Missile, Shield and Hold Person are not" width="400"></td>
+</tr></table>
+
+<img src="docs/images/world-scripts-chat-labels.webp" alt="A Dagger card in chat with Chat Button Labels on: its buttons read Attack and Damage" width="300">
+
+<img src="docs/images/world-scripts-one-tab.webp" alt="A Dagger's Attack activity with One-Tab Activities on: its Identity, Activation and Effect tabs side by side" width="640">
 
 ## Asking for rolls
 
-Open the request window from the **anchor** button in the chat controls, under the chat log:
+Open the request window from the **tankard** button in the chat controls, under the chat log:
 
-<img src="docs/images/gm-chat-control.webp" alt="The chat controls, with the anchor button for roll requests among the buttons on the right" width="300">
+<img src="docs/images/gm-chat-control.webp" alt="The chat controls, with the tankard button for roll requests among the buttons on the right" width="300">
 
 When the chat sidebar is closed, use **Request Rolls** in the token controls instead. Only a GM sees these
 buttons.
@@ -175,7 +206,7 @@ team's rolls are pooled like a Team Challenge, natural 1s and 20s included, and 
 
 Set how many numbers each player picks, from 1 to 50 (16 by default). When a player clicks **Roll**, they pick that
 many numbers in a row from 1 to 100, then roll a d100, and must roll one of their numbers. The **Advantage** card
-rolls a second d100 and keeps whichever lands in their numbers, and **Luck** rerolls the d100.
+rolls a second d100 and keeps whichever lands in their numbers, and **Lucky** rerolls the d100.
 
 <img src="docs/images/gm-request-window-divine.webp" alt="The request window set to Divine Intervention, with Numbers to Pick set to 16" width="520">
 
@@ -192,7 +223,7 @@ Rolls already made are scored again against the new DC.
 <img src="docs/images/gm-request-dc-changed.webp" alt="The card after changing the DC to 12: the Goblin's 12 now succeeds, 2 of 3 succeeded" width="300">
 
 **Cards on requested rolls.** Requested rolls are ordinary D&D 5e rolls, so players can play Hero Cards on them,
-from the anchor button beside their result. The card updates as soon as a card changes a roll.
+from the tankard button beside their result. The card updates as soon as a card changes a roll.
 
 **Attached rolls.** With **Attach rolls to the request card** on (the default), the rolls don't get chat messages of
 their own. Click a result to see its dice. Notes on any cards played show under the row.
@@ -230,6 +261,27 @@ Two settings, both off by default, open a window when a request is posted:
 
 Each window closes once everything in it is rolled. The chat card works either way.
 
+### Death saves
+
+With **Ask for death saves** on, a **Death Save** request is posted at the start of a creature's turn in combat if it's
+at 0 hit points and dying. It's an ordinary request, for that one creature, so it opens a pop-up under the two settings
+above: the player's window for their character, and yours only for a creature no player owns. You can always roll it
+from the chat card.
+
+<img src="docs/images/death-save-request.webp" alt="A Death Save request card, Standard Roll at DC 10, with a Roll button for Aria" width="300">
+
+- **Who is asked.** Characters, and NPCs marked **Important** on their sheet, as D&D 5e shows death saves for. A
+  creature that is defeated in the combat tracker, dead, or stable isn't asked.
+- **The result shows at once.** A death save's result goes onto the sheet as soon as it's rolled, so the card shows
+  pass or fail, against DC 10, without waiting for **Show to players**.
+- **Stable.** After a third success D&D 5e clears the creature's successes but leaves it at 0 hit points, so Sogrom's
+  Table Tools notes that it's stable and stops asking. It's asked again once it takes a failure (mark one on its
+  sheet when it's hurt at 0 hit points: D&D 5e doesn't) or after it's been healed and drops again. The **Stable**
+  condition stops the requests too.
+- **Healed before rolling.** If the creature is healed before its death save is rolled, the request is removed and its
+  pop-ups close.
+- **Once a round.** Going back a turn and forward again doesn't post a second request for the same round.
+
 ## Cards and dice at the table
 
 - **You can play cards for players.** As GM you can open the card chooser on any roll by a character who holds
@@ -248,7 +300,7 @@ A macro can open the request window, or post a request without it:
 ```js
 const tools = game.modules.get("sogrom-table-tools").api;
 
-// Open the request window, as the anchor button does.
+// Open the request window, as the tankard button does.
 tools.requestRolls();
 
 // Ask the party's player characters for a DC 15 Athletics check.

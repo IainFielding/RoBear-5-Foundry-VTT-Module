@@ -48,7 +48,7 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
     tag: "form",
     window: {
       title: "STT.Request.WindowTitle",
-      icon: "fa-solid fa-anchor fa-rotate-90",
+      icon: "fa-solid fa-beer-mug-empty",
       contentClasses: ["standard-form"]
     },
     position: { width: 600, height: "auto" },

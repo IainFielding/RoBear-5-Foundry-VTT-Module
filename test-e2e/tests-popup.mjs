@@ -77,7 +77,7 @@ test("pop-ups: both settings exist, and are off by default", async (ctx) => {
     return { key, config: s?.config, scope: s?.scope, default: s?.default, value: game.settings.get(moduleId, key) };
   }), MODULE_ID);
   for ( const s of settings ) {
-    assertEqual([s.config, s.scope, s.default, s.value], [true, "world", false, false], `the ${s.key} setting`);
+    assertEqual([s.config, s.scope, s.default, s.value], [false, "world", false, false], `the ${s.key} setting`);
   }
   await postRequest(ctx, { mode: "standard", parts: [athletics(12)], actors: [ids.aria, ids.goblin] });
   await player.page.waitForTimeout(1000);

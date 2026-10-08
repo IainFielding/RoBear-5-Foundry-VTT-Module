@@ -66,9 +66,9 @@ async function cardsOffered(session, id, card) {
   await button.first().click();
   const dialog = session.page.locator(".stt-card-dialog.application").last();
   await dialog.locator(".stt-card-choice").first().waitFor({ timeout: 10_000 });
-  const offered = (await dialog.locator(".stt-card-choice span").allTextContents()).map(t => t.trim());
+  const offered = await dialog.locator(".stt-card-choice").evaluateAll(els => els.map(el => el.dataset.card));
   if ( card ) {
-    const choice = dialog.locator(".stt-card-choice", { hasText: card });
+    const choice = dialog.locator(`.stt-card-choice[data-card="${card}"]`);
     assert(await choice.count(), `${card} was not offered. Offered: ${offered.join(", ")}`);
     await choice.first().click();
   } else {
@@ -128,7 +128,7 @@ test("cards: offered on the player's own roll, and not on rolls by someone witho
 test("cards: a double click opens one card chooser, so only one card is spent", async ({ player }) => {
   await forceDice(player, [d20(5)]);
   const id = await roll(player, "Aria", "skill");
-  const before = await usesLeft(player, "Luck");
+  const before = await usesLeft(player, "Lucky");
   // Both clicks land before the chooser opens, as a quick double click's would.
   await cardButton(player, id).first().evaluate(button => {
     button.click();
@@ -139,16 +139,16 @@ test("cards: a double click opens one card chooser, so only one card is spent", 
   assertEqual(await choosers.count(), 1, "card choosers open");
 
   await forceDice(player, [d20(14)]);
-  await choosers.locator(".stt-card-choice", { hasText: "Luck" }).first().click();
+  await choosers.locator(".stt-card-choice", { hasText: "Lucky" }).first().click();
   const after = await afterCard(player, id);
   assertEqual(after.log.length, 1, "cards noted on the roll");
-  assertEqual(await usesLeft(player, "Luck"), before - 1, "Luck uses left");
+  assertEqual(await usesLeft(player, "Lucky"), before - 1, "Luck uses left");
 });
 
 test("cards: a card is given back, and the player told why, if its roll can't be changed", async ({ player }) => {
   await forceDice(player, [d20(5)]);
   const id = await roll(player, "Aria", "skill");
-  const before = await usesLeft(player, "Luck");
+  const before = await usesLeft(player, "Lucky");
   // The next save of this roll fails, as it would if the server refused it.
   await player.eval(id => {
     const message = game.messages.get(id);
@@ -159,10 +159,10 @@ test("cards: a card is given back, and the player told why, if its roll can't be
   }, id);
 
   await forceDice(player, [d20(14)]);
-  await cardsOffered(player, id, "Luck");
+  await cardsOffered(player, id, "Lucky");
   await waitFor(player, () => [...document.querySelectorAll("#notifications .notification.error")]
     .some(n => n.textContent.includes("The roll could not be saved.")), undefined, "the error to be shown");
-  assertEqual(await usesLeft(player, "Luck"), before, "Luck uses left");
+  assertEqual(await usesLeft(player, "Lucky"), before, "Luck uses left");
   const log = await player.eval(({ id, moduleId }) => game.messages.get(id).getFlag(moduleId, "log") ?? [],
     { id, moduleId: MODULE_ID });
   assertEqual(log, [], "cards noted on the roll");
@@ -182,8 +182,8 @@ test("inspiration: adds its die to the check, and is spent", async ({ player }) 
   await forceDice(player, [d20(5)]);
   const id = await roll(player, "Aria", "skill");
   await forceDice(player, [[4, 6]]);
-  const offered = await cardsOffered(player, id, "Inspiration + 1d6");
-  for ( const card of ["Inspiration + 1d6", "Inspiration + 1d8", "Inspiration + 1d10", "Luck", "Advantage"] ) {
+  const offered = await cardsOffered(player, id, "Inspiration - 1d6");
+  for ( const card of ["Inspiration - 1d6", "Inspiration - 1d8", "Inspiration - 1d10", "Lucky", "Advantage"] ) {
     assert(offered.includes(card), `${card} was not offered on a check. Offered: ${offered.join(", ")}`);
   }
   for ( const card of ["Indomitable", "Relentless"] ) {
@@ -191,11 +191,11 @@ test("inspiration: adds its die to the check, and is spent", async ({ player }) 
   }
   const result = await afterCard(player, id);
   assertEqual(result.total, 9, "total after Inspiration");
-  assertEqual(result.log, ["Inspiration + 1d6: added 1d6 (4): 5 + 4 = 9"], "the card's note");
-  assertEqual(await usesLeft(player, "Inspiration - 1d6"), 0, "Inspiration + 1d6 uses left");
+  assertEqual(result.log, ["Inspiration: added 1d6 (4): 5 + 4 = 9"], "the card's note");
+  assertEqual(await usesLeft(player, "Inspiration - 1d6"), 0, "Inspiration - 1d6 uses left");
 
   const again = await cardsOffered(player, id);
-  assert(!again.includes("Inspiration + 1d6"), "A spent card was offered again.");
+  assert(!again.includes("Inspiration - 1d6"), "A spent card was offered again.");
 });
 
 /* -------------------------------------------- */
@@ -213,7 +213,7 @@ test("dice so nice: a card's dice are shown with the roll's speaker and message"
     await forceDice(player, [d20(5)]);
     const id = await roll(player, "Aria", "skill");
     await forceDice(player, [d20(13)]);
-    await cardsOffered(player, id, "Luck");
+    await cardsOffered(player, id, "Lucky");
     await afterCard(player, id);
     const calls = await player.eval(id => window.dsnCalls.map(([roll, user, , , , messageId, speaker]) => ({
       formula: roll.formula, user: user.id === game.user.id, messageId, actor: speaker?.actor,
@@ -233,10 +233,10 @@ test("luck: rerolls the d20 of a check, and the new result stands", async ({ pla
   await forceDice(player, [d20(5)]);
   const id = await roll(player, "Aria", "skill");
   await forceDice(player, [d20(3)]);
-  await cardsOffered(player, id, "Luck");
+  await cardsOffered(player, id, "Lucky");
   const result = await afterCard(player, id);
   assertEqual(result.total, 3, "total after Luck, even though it is lower");
-  assertEqual(result.log, ["Luck: rerolled the d20 (5 → 3): 5 → 3"], "the card's note");
+  assertEqual(result.log, ["Lucky: rerolled the d20 (5 → 3): 5 → 3"], "the card's note");
 });
 
 /**
@@ -267,7 +267,7 @@ test("natural 1s and 20s: by default no card can be played on them", async ({ gm
     const s = game.settings.settings.get(`${moduleId}.lockNaturals`);
     return { config: s?.config, scope: s?.scope, default: s?.default, value: game.settings.get(moduleId, "lockNaturals") };
   }, MODULE_ID);
-  assertEqual(setting, { config: true, scope: "world", default: true, value: true }, "the setting");
+  assertEqual(setting, { config: false, scope: "world", default: true, value: true }, "the setting");
 
   for ( const natural of [1, 20] ) {
     await forceDice(player, [d20(natural)]);
@@ -308,7 +308,7 @@ test("luck: never offered on a natural 1 or 20, even with the lock setting off",
     await forceDice(player, [d20(natural)]);
     const id = await roll(player, "Aria", "skill");
     const offered = await cardsOffered(player, id);
-    assert(!offered.includes("Luck"), `Luck was offered on a natural ${natural}.`);
+    assert(!offered.includes("Lucky"), `Luck was offered on a natural ${natural}.`);
     assert(offered.includes("Advantage"), `Advantage was not offered on a natural ${natural}.`);
   }
 });
@@ -317,10 +317,10 @@ test("luck: rerolls every damage die", async ({ player }) => {
   await forceDice(player, [[1, 4]]);
   const id = await roll(player, "Aria", "damage");
   await forceDice(player, [[4, 4]]);
-  const offered = await cardsOffered(player, id, "Luck");
+  const offered = await cardsOffered(player, id, "Lucky");
   assert(!offered.includes("Advantage"), "Advantage was offered on damage.");
   const result = await afterCard(player, id);
-  assert(result.log[0].startsWith("Luck: rerolled damage dice:"), `the card's note: ${result.log[0]}`);
+  assert(result.log[0].startsWith("Lucky: rerolled damage dice:"), `the card's note: ${result.log[0]}`);
   assertEqual(result.total - (await player.eval(id => game.messages.get(id).rolls[0].total, id)), 0, "damage recomputed");
   const [before, after] = result.log[0].match(/(\d+) → (\d+)/).slice(1).map(Number);
   assertEqual(after - before, 3, "damage after rerolling a 1 into a 4");
@@ -392,7 +392,7 @@ test("natural 1s: nothing rerolls one, even with the lock setting off", async ({
   const save = await roll(player, "Aria", "save", { config: { target: 15 } });
   const offered = await cardsOffered(player, save);
   assert(offered.includes("Advantage"), `Advantage was not offered on a natural 1 save: ${offered.join(", ")}`);
-  for ( const card of ["Luck", "Indomitable"] ) assert(!offered.includes(card), `${card} was offered on a natural 1 save.`);
+  for ( const card of ["Lucky", "Indomitable"] ) assert(!offered.includes(card), `${card} was offered on a natural 1 save.`);
 
   await startCombat(gm, 1);
   await waitFor(player, () => !!game.combat?.combatants.size, null, "the combat to reach the player");
@@ -538,7 +538,8 @@ test("sheet: a warning when every card is spent", async ({ gm, player }) => {
   await waitFor(player, () => game.actors.getName("Aria").items.getName("Hero Cards").system.activities
     .every(a => !a.uses.value), null, "the spent cards to reach the player");
   await useFeature(player);
-  await player.page.locator("#notifications .notification", { hasText: "You have no Hero Cards left" })
+  const warning = await player.eval(() => game.i18n.localize("STT.Cards.NoneLeft"));
+  await player.page.locator("#notifications .notification", { hasText: warning })
     .waitFor({ timeout: 5000 }).catch(() => { throw new Error("No warning that every card is spent."); });
   assertEqual(await player.page.locator(".stt-card-dialog.application").count(), 0, "card windows opened");
 });
@@ -577,13 +578,13 @@ test("played cards: shown on everyone's screen, with no chat card pushing the ro
     const s = game.settings.settings.get(`${moduleId}.showPlayedCards`);
     return { config: s?.config, scope: s?.scope, default: s?.default };
   }, MODULE_ID);
-  assertEqual(setting, { config: true, scope: "world", default: true }, "the setting");
+  assertEqual(setting, { config: false, scope: "world", default: true }, "the setting");
 
   await forceDice(player, [d20(5)]);
   const id = await roll(player, "Aria", "skill");
   const before = await gm.eval(() => game.messages.size);
   await forceDice(player, [d20(14)]);
-  await cardsOffered(player, id, "Luck");
+  await cardsOffered(player, id, "Lucky");
   await afterCard(player, id);
 
   for ( const session of [gm, player] ) {
@@ -593,11 +594,11 @@ test("played cards: shown on everyone's screen, with no chat card pushing the ro
     }, null, `the played card on ${session.user}'s screen`, 3000);
     assert(shown, "No played card.");
     assertEqual(await playedCardOnScreen(session), {
-      img: "modules/sogrom-table-tools/assets/images/luckdc20.webp", by: "Aria plays", name: "Luck"
+      img: "modules/sogrom-table-tools/assets/images/lucky.webp", by: "Aria plays", name: "Lucky"
     }, `the played card (${session.user})`);
   }
   assertEqual(await gm.eval(() => game.messages.size), before, "chat messages after playing the card");
-  assertEqual(await usesLeft(player, "Luck"), 0, "Luck uses left, spent without a chat card");
+  assertEqual(await usesLeft(player, "Lucky"), 0, "Luck uses left, spent without a chat card");
 
   await waitFor(player, () => !document.getElementById("stt-played-card"), null, "the played card to go", 6000);
 });
@@ -612,7 +613,7 @@ test("played cards: clicking the card dismisses it early", async ({ player }) =>
 });
 
 test("played cards: up to three played together show side by side, and the rest wait their turn", async ({ gm, player }) => {
-  const cards = ["Luck", "Advantage", "Charger", "Relentless"];
+  const cards = ["Lucky", "Advantage", "Charger", "Relentless"];
   const ids = await gm.eval(async n => {
     const messages = await ChatMessage.create(Array.from({ length: n }, (_, i) => ({ content: `Roll ${i}` })));
     return messages.map(m => m.id);
@@ -620,7 +621,7 @@ test("played cards: up to three played together show side by side, and the rest 
   await waitFor(player, ids => ids.every(id => game.messages.has(id)), ids, "the messages to reach the player");
   // Every card is played at once, as players acting together would.
   await gm.eval(({ ids, cards, moduleId }) => Promise.all(ids.map((id, i) => game.messages.get(id).setFlag(moduleId, "log",
-    [{ text: `${cards[i]}: played`, card: cards[i], img: `modules/${moduleId}/assets/images/luckdc20.webp`, by: "Aria" }]
+    [{ text: `${cards[i]}: played`, card: cards[i], img: `modules/${moduleId}/assets/images/lucky.webp`, by: "Aria" }]
   ))), { ids, cards, moduleId: MODULE_ID });
 
   // The updates may arrive in any order, so which card waits is whichever one was not shown first.
@@ -654,16 +655,16 @@ test("played cards: the roll's note carries a thumbnail of the card, full size o
   await forceDice(player, [d20(5)]);
   const id = await roll(player, "Aria", "skill");
   await forceDice(player, [[3, 8]]);
-  await cardsOffered(player, id, "Inspiration + 1d8");
+  await cardsOffered(player, id, "Inspiration - 1d8");
   await afterCard(player, id);
   const art = player.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-card-log .stt-card-log-art`);
   await art.waitFor({ timeout: 5000 });
-  assertEqual(await art.getAttribute("src"), "modules/sogrom-table-tools/assets/images/inspiration-1d8-dc20.webp", "the thumbnail");
-  assert((await art.getAttribute("data-tooltip-html")).includes("inspiration-1d8-dc20.webp"), "The thumbnail has no full-size art.");
+  assertEqual(await art.getAttribute("src"), "modules/sogrom-table-tools/assets/images/inspiration1d8.webp", "the thumbnail");
+  assert((await art.getAttribute("data-tooltip-html")).includes("inspiration1d8.webp"), "The thumbnail has no full-size art.");
   const loaded = await art.evaluate(img => img.complete && img.naturalWidth > 0);
   assert(loaded, "The thumbnail's art did not load.");
   const note = await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-card-log`).textContent();
-  assertEqual(note.replace(/\s+/g, " ").trim(), "Inspiration + 1d8: added 1d8 (3): 5 + 3 = 8", "the note, with no Hero Cards label beside the thumbnail");
+  assertEqual(note.replace(/\s+/g, " ").trim(), "Inspiration: added 1d8 (3): 5 + 3 = 8", "the note, with no Hero Cards label beside the thumbnail");
 });
 
 test("played cards: with the setting off, nothing is shown on screen, but the note keeps its thumbnail", async ({ gm, player }) => {
@@ -672,7 +673,7 @@ test("played cards: with the setting off, nothing is shown on screen, but the no
   await forceDice(player, [d20(5)]);
   const id = await roll(player, "Aria", "skill");
   await forceDice(player, [d20(16)]);
-  await cardsOffered(player, id, "Luck");
+  await cardsOffered(player, id, "Lucky");
   await afterCard(player, id);
   await player.page.waitForTimeout(800);
   assertEqual(await playedCardOnScreen(player), null, "the played card on the player's screen");
@@ -691,7 +692,7 @@ test("played cards: a card played from the sheet is shown on screen, with a shor
     await waitFor(session, () => !!document.getElementById("stt-played-card"), null,
       `the played card on ${session.user}'s screen`, 5000);
     assertEqual(await playedCardOnScreen(session), {
-      img: "modules/sogrom-table-tools/assets/images/chargerdc20.webp", by: "Aria plays", name: "Charger"
+      img: "modules/sogrom-table-tools/assets/images/charger.webp", by: "Aria plays", name: "Charger"
     }, `the played card (${session.user})`);
   }
 
@@ -707,7 +708,7 @@ test("played cards: a card played from the sheet is shown on screen, with a shor
   }));
   assertEqual(state.collapsed, true, "the description collapsed");
   assertEqual(state.tags, "none", "the tag row");
-  assert(state.hoverArt?.includes("chargerdc20.webp"), `The header's art has no full-size hover: ${state.hoverArt}`);
+  assert(state.hoverArt?.includes("charger.webp"), `The header's art has no full-size hover: ${state.hoverArt}`);
   assert(state.height < 200, `The chat record is ${state.height}px tall.`);
 
   // Clicking the header still opens the description.
@@ -723,7 +724,7 @@ test("cards: a roll keeps its note once no card is left to play on it", async ({
   const id = await roll(player, "Aria", "skill");
   // Luck rerolls into a natural 20, which locks every other card, so the card button goes.
   await forceDice(player, [d20(20)]);
-  await cardsOffered(player, id, "Luck");
+  await cardsOffered(player, id, "Lucky");
   await afterCard(player, id);
   await waitFor(player, id => !document.querySelector(`#chat .chat-log [data-message-id="${id}"] .stt-card-button`),
     id, "the card button to go");
@@ -739,7 +740,7 @@ test("played cards: a note's art is never run as HTML, on the screen or in its t
   // Written by hand, as only a player meddling from the console could.
   await player.eval(async ({ id, moduleId }) => {
     const img = 'x" onerror="window.__sttInjected = true';
-    await game.messages.get(id).setFlag(moduleId, "log", [{ text: "Luck: rerolled", card: "<b>Luck</b>", img, by: "Aria" }]);
+    await game.messages.get(id).setFlag(moduleId, "log", [{ text: "Lucky: rerolled", card: "<b>Lucky</b>", img, by: "Aria" }]);
   }, { id, moduleId: MODULE_ID });
   await waitFor(gm, () => !!document.getElementById("stt-played-card"), null, "the played card on the GM's screen");
   await gm.page.waitForTimeout(500);
@@ -751,7 +752,7 @@ test("played cards: a note's art is never run as HTML, on the screen or in its t
   }), id);
   assertEqual(seen.injected, false, "script run from the note's art");
   assertEqual(seen.src, 'x" onerror="window.__sttInjected = true', "the played card's art, kept as plain text");
-  assertEqual(seen.name, "<b>Luck</b>", "the played card's name, kept as plain text");
+  assertEqual(seen.name, "<b>Lucky</b>", "the played card's name, kept as plain text");
   assert(seen.tooltip?.startsWith('<img src="x&quot; onerror'), `The note's tooltip wasn't escaped: ${seen.tooltip}`);
 });
 
@@ -762,8 +763,8 @@ test("played cards: a card played on a roll the player can't see isn't shown to 
   });
   await player.page.waitForTimeout(500);
   await gm.eval(async ({ id, moduleId }) => {
-    const img = `modules/${moduleId}/assets/images/luckdc20.webp`;
-    await game.messages.get(id).setFlag(moduleId, "log", [{ text: "Luck: rerolled", card: "Luck", img, by: "Goblin" }]);
+    const img = `modules/${moduleId}/assets/images/lucky.webp`;
+    await game.messages.get(id).setFlag(moduleId, "log", [{ text: "Lucky: rerolled", card: "Lucky", img, by: "Goblin" }]);
   }, { id, moduleId: MODULE_ID });
   await waitFor(gm, () => !!document.getElementById("stt-played-card"), null, "the played card on the GM's screen");
   await player.page.waitForTimeout(500);
@@ -826,7 +827,7 @@ test("natural 1s and 20s: the ring setting exists, is on by default, and turning
     const s = game.settings.settings.get(`${moduleId}.markNaturals`);
     return { config: s?.config, scope: s?.scope, default: s?.default, value: game.settings.get(moduleId, "markNaturals") };
   }, MODULE_ID);
-  assertEqual(setting, { config: true, scope: "world", default: true, value: true }, "the setting");
+  assertEqual(setting, { config: false, scope: "world", default: true, value: true }, "the setting");
 
   await forceDice(player, [d20(20)]);
   const attack = await roll(player, "Aria", "attack");

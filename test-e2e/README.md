@@ -18,7 +18,7 @@ The harness is not shipped: the release archive in `.github/workflows/main.yml` 
    prompt, or with Developer Mode on:
 
    ```
-   mklink /J "%LOCALAPPDATA%\FoundryVTT\Data\modules\sogrom-table-tools" "H:\Code\FoundryModules\RoBear-5-Foundry-VTT-Module"
+   mklink /J "%LOCALAPPDATA%\FoundryVTT\Data\modules\sogrom-table-tools" "H:\Code\FoundryModules\Sogroms-Table-Tools"
    ```
 
 3. `npm install`, then `npx playwright install chromium` if Playwright has no browser yet.
@@ -73,6 +73,12 @@ the end of both consoles.
   natural 1 takes the damage's maximum past resistance or immunity, whether it comes before the damage or after it,
   with nothing more rolled. With the setting off, damage is left to dnd5e. The canvas is
   off in the harness, so the damage tray is asked about each token rather than listing them itself.
+
+- `tests-death-saves.mjs`: death save requests at the start of a dying creature's turn: who is asked, the pop-ups,
+  once a round, stable creatures, and removing a request when the creature is healed.
+- `tests-world-scripts.mjs`: the four settings menus, each holding its own settings, and the five World Altering
+  Scripts, each checked off and then on: the Bloodied tint, faded unprepared spells, rarity tints on item rows,
+  labels on compact chat card buttons, and the one-tab activity layout.
 
 The rules themselves also have unit tests in `../test`, which `npm test` runs without Foundry.
 

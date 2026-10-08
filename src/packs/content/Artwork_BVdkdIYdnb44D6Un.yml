@@ -18,7 +18,7 @@ pages:
     video:
       controls: true
       volume: 0.5
-    src: modules/sogrom-table-tools/assets/images/advantagedc20.webp
+    src: modules/sogrom-table-tools/assets/images/advantage.webp
     category: null
     ownership:
       default: -1
@@ -49,7 +49,7 @@ pages:
     video:
       controls: true
       volume: 0.5
-    src: modules/sogrom-table-tools/assets/images/chargerdc20.webp
+    src: modules/sogrom-table-tools/assets/images/charger.webp
     category: null
     ownership:
       default: -1
@@ -84,7 +84,7 @@ pages:
     video:
       controls: true
       volume: 0.5
-    src: modules/sogrom-table-tools/assets/images/relentlessdc20.webp
+    src: modules/sogrom-table-tools/assets/images/relentless.webp
     category: null
     ownership:
       default: -1
@@ -115,7 +115,7 @@ pages:
       content: >-
         <ul><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.3UmjWskjiAhYvXmo]{Relentless}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.Lhs0clYrsIkgrpsE]{Reaction
         Surge}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.vT9f82NznQJpiQFP]{Indomitable}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.TTBtpUOLQvWTpd47]{Extra
-        Strike}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.1olSJkroTSqTWdey]{Charger}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.kUmJLCna5paHGXPb]{Advantage}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.LiLYG9ekrRw3bQph]{Luck}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.LiLYG9ekrRw3bQph]{Luck}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.gFZbWI3XhrnvwFxk]{Mind's
+        Strike}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.1olSJkroTSqTWdey]{Charger}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.kUmJLCna5paHGXPb]{Advantage}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.LiLYG9ekrRw3bQph]{Lucky}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.LiLYG9ekrRw3bQph]{Lucky}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.gFZbWI3XhrnvwFxk]{Mind's
         Eye}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.gFZbWI3XhrnvwFxk]{Mind's
         Eye}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.DTI3JvisO4gEuo8j]{Inspiration
         -
@@ -194,7 +194,7 @@ pages:
     video:
       controls: true
       volume: 0.5
-    src: modules/sogrom-table-tools/assets/images/indomitabledc20.webp
+    src: modules/sogrom-table-tools/assets/images/indomitable.webp
     category: null
     ownership:
       default: -1
@@ -226,7 +226,7 @@ pages:
     video:
       controls: true
       volume: 0.5
-    src: modules/sogrom-table-tools/assets/images/extrastrikedc20.webp
+    src: modules/sogrom-table-tools/assets/images/extrastrike.webp
     category: null
     ownership:
       default: -1
@@ -244,7 +244,7 @@ pages:
       lastModifiedBy: aIghMfAvO7zq37fB
     _key: '!journal.pages!BVdkdIYdnb44D6Un.TTBtpUOLQvWTpd47'
   - sort: 575000
-    name: Luck
+    name: Lucky
     type: image
     _id: LiLYG9ekrRw3bQph
     system: {}
@@ -260,7 +260,7 @@ pages:
     video:
       controls: true
       volume: 0.5
-    src: modules/sogrom-table-tools/assets/images/luckdc20.webp
+    src: modules/sogrom-table-tools/assets/images/lucky.webp
     category: null
     ownership:
       default: -1
@@ -326,7 +326,7 @@ pages:
     video:
       controls: true
       volume: 0.5
-    src: modules/sogrom-table-tools/assets/images/inspiration-1d6-dc20.webp
+    src: modules/sogrom-table-tools/assets/images/inspiration1d6.webp
     category: null
     ownership:
       default: -1
@@ -358,7 +358,7 @@ pages:
     video:
       controls: true
       volume: 0.5
-    src: modules/sogrom-table-tools/assets/images/inspiration-1d8-dc20.webp
+    src: modules/sogrom-table-tools/assets/images/inspiration1d8.webp
     category: null
     ownership:
       default: -1
@@ -390,7 +390,7 @@ pages:
     video:
       controls: true
       volume: 0.5
-    src: modules/sogrom-table-tools/assets/images/inspiration-1d10-dc20.webp
+    src: modules/sogrom-table-tools/assets/images/inspiration1d10.webp
     category: null
     ownership:
       default: -1

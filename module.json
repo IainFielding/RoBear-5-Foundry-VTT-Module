@@ -1,7 +1,7 @@
 {
   "id": "sogrom-table-tools",
   "title": "Sogrom's Table Tools",
-  "description": "Hero Cards, GM roll requests and extra rules for rolls in chat, for the D&D 5e system.",
+  "description": "Sogrom's Table Tools enhances D&D 5e on Foundry VTT with Hero Cards, cinematic roll improvements, and streamlined player interactions. Players can influence important outcomes, apply bonuses to existing rolls, use features like Indomitable more easily, and answer GM roll requests through intuitive interfaces, helping create faster, smoother, and more memorable adventures.",
   "version": "#{VERSION}#",
   "manifest": "#{MANIFEST}#",
   "download": "#{DOWNLOAD}#",
@@ -34,9 +34,15 @@
     "scripts/hero-cards.mjs",
     "scripts/roll-requests.mjs",
     "scripts/roll-request-popup.mjs",
+    "scripts/death-saves.mjs",
     "scripts/bonus-rolls.mjs",
     "scripts/class-features.mjs",
     "scripts/natural-saves.mjs",
+    "scripts/bloodied-tint.mjs",
+    "scripts/fade-unprepared.mjs",
+    "scripts/rarity-colours.mjs",
+    "scripts/chat-button-labels.mjs",
+    "scripts/one-tab-activities.mjs",
     "scripts/settings-menus.mjs"
   ],
   "socket": true,
@@ -50,7 +56,9 @@
   "styles": [
     "styles/fonts.css",
     "styles/hero-cards.css",
-    "styles/roll-requests.css"
+    "styles/roll-requests.css",
+    "styles/world-scripts.css",
+    "styles/settings-menus.css"
   ],
   "packs": [
     {

@@ -175,7 +175,7 @@ export default class RollRequestPopup extends ApplicationV2 {
   /** @override */
   static DEFAULT_OPTIONS = {
     classes: ["stt-card-dialog", "stt-request-popup"],
-    window: { title: "STT.Request.PopupTitle", icon: "fa-solid fa-anchor fa-rotate-90" },
+    window: { title: "STT.Request.PopupTitle", icon: "fa-solid fa-beer-mug-empty" },
     position: { width: 380, height: "auto" }
   };
 

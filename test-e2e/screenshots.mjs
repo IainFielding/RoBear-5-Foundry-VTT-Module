@@ -233,7 +233,7 @@ shot("card window from the sheet, played card, and its chat record", async ({ pl
   await player.page.waitForTimeout(1000);
   await capture(player, "card-window", dialog);
 
-  await dialog.locator(".stt-card-choice", { hasText: "Charger" }).first().click();
+  await dialog.locator(".stt-card-choice", { hasText: "Relentless" }).first().click();
   // dnd5e may ask how to use the activity: accept its defaults.
   const usage = player.page.locator(".application.activity-usage button[data-action=use]");
   if ( await usage.waitFor({ timeout: 2000 }).then(() => true, () => false) ) await usage.click();
@@ -257,7 +257,7 @@ shot("a card played on a roll already in chat", async ({ player }) => {
   await capture(player, "card-chooser", dialog);
 
   await forceDice(player, [d8(7)]);
-  await dialog.locator(".stt-card-choice", { hasText: "1d8" }).first().click();
+  await dialog.locator('.stt-card-choice[data-card="Inspiration - 1d8"]').first().click();
   await waitFor(player, id => !!document.querySelector(`#chat [data-message-id="${id}"] .stt-card-log`), id,
     "the card's note on the roll");
   await waitForPlayedCard(player);
@@ -527,6 +527,114 @@ shot("the module's settings", async ({ gm }) => {
   await capture(gm, "gm-settings", app);
 });
 
+shot("each settings menu", async ({ gm }) => {
+  const menus = {
+    heroCards: "hero-cards", diceRolling: "dice-rolling", rollRequests: "roll-requests", worldScripts: "world-scripts"
+  };
+  for ( const [key, name] of Object.entries(menus) ) {
+    await gm.eval(({ moduleId, key }) => new (game.settings.menus.get(`${moduleId}.${key}`).type)().render({ force: true }),
+      { moduleId: MODULE_ID, key });
+    const app = gm.page.locator(`#stt-settings-${name}`);
+    await app.waitFor({ timeout: 10_000 });
+    await gm.page.waitForTimeout(300);
+    await capture(gm, `gm-settings-${name}`, app);
+    // Closed from code: clicking the close button would leave its tooltip fading out over the next menu's picture.
+    await gm.eval(id => foundry.applications.instances.get(id)?.close(), `stt-settings-${name}`);
+    await app.waitFor({ state: "detached", timeout: 5000 });
+  }
+});
+
+shot("a death save request", async (ctx) => {
+  const { gm, player } = ctx;
+  await setSetting(ctx, "deathSavePrompt", true);
+  const id = await gm.eval(async moduleId => {
+    const aria = game.actors.getName("Aria");
+    globalThis.__sttHP ??= {};
+    globalThis.__sttHP[aria.id] ??= foundry.utils.deepClone(aria._source.system.attributes.hp);
+    await aria.update({ "system.attributes.hp.max": 10, "system.attributes.hp.value": 0 });
+    const combat = await Combat.create({ active: true });
+    await combat.createEmbeddedDocuments("Combatant", [
+      { actorId: aria.id, initiative: 15 }, { actorId: game.actors.getName("Goblin").id, initiative: 10 }
+    ]);
+    await combat.startCombat();
+    for ( let i = 0; i < 50; i++ ) {
+      const message = game.messages.contents.find(m => m.getFlag(moduleId, "deathSave"));
+      if ( message ) return message.id;
+      await new Promise(r => setTimeout(r, 100));
+    }
+    return null;
+  }, MODULE_ID);
+  if ( !id ) throw new Error("No death save request was posted.");
+  await message(player, id).waitFor({ timeout: 10_000 });
+  await message(player, id).scrollIntoViewIfNeeded();
+  await capture(player, "death-save-request", message(player, id));
+});
+
+shot("the World Altering Scripts", async (ctx) => {
+  const { gm, player } = ctx;
+  for ( const key of ["fadeUnprepared", "rarityColours", "chatButtonLabels", "oneTabActivities"] ) {
+    await setSetting(ctx, key, true);
+  }
+  const spell = (name, level, prepared) => ({ name, type: "spell", system: { level, method: "spell", prepared } });
+  const ids = await gm.eval(async items => {
+    const created = await game.actors.getName("Aria").createEmbeddedDocuments("Item", items);
+    return created.map(i => i.id);
+  }, [
+    { name: "Potion of Healing", type: "loot", img: "icons/consumables/potions/potion-tube-corked-red.webp",
+      system: { rarity: "common" } },
+    { name: "Cloak of Elvenkind", type: "loot", img: "icons/equipment/back/cloak-collared-feathers-green.webp",
+      system: { rarity: "uncommon" } },
+    { name: "Flame Tongue", type: "loot", img: "icons/weapons/swords/sword-flanged-lightning.webp",
+      system: { rarity: "rare" } },
+    { name: "Staff of Power", type: "loot", img: "icons/weapons/staves/staff-ornate-red.webp",
+      system: { rarity: "veryRare" } },
+    { name: "Holy Avenger", type: "loot", img: "icons/weapons/swords/sword-guard-gold-red.webp",
+      system: { rarity: "legendary" } },
+    { name: "Orb of Dragonkind", type: "loot", img: "icons/commodities/gems/gem-cut-faceted-princess-purple.webp",
+      system: { rarity: "artifact" } },
+    spell("Shield", 1, 1), spell("Sleep", 1, 0), spell("Magic Missile", 1, 1), spell("Misty Step", 2, 0),
+    spell("Hold Person", 2, 1)
+  ]);
+  try {
+    const sheet = player.page.locator(".application.actor.sheet").first();
+    for ( const [tab, name] of [["inventory", "world-scripts-rarity"], ["spells", "world-scripts-fade"]] ) {
+      await player.eval(async tab => {
+        const sheet = game.actors.getName("Aria").sheet;
+        await sheet.render({ force: true });
+        sheet.changeTab(tab, "primary");
+        sheet.setPosition({ left: 120, top: 20, height: 760 });
+      }, tab);
+      await sheet.waitFor({ timeout: 10_000 });
+      await player.page.waitForTimeout(800);
+      await capture(player, name, sheet);
+    }
+    await player.eval(() => game.actors.getName("Aria").sheet.close());
+
+    const id = await player.eval(async () => {
+      const before = new Set(game.messages.keys());
+      const attack = game.actors.getName("Aria").items.getName("Dagger").system.activities.find(a => a.type === "attack");
+      await attack.use({ consume: false }, { configure: false }, { create: true });
+      await new Promise(r => setTimeout(r, 500));
+      return game.messages.contents.find(m => !before.has(m.id))?.id ?? null;
+    });
+    if ( !id ) throw new Error("The Dagger's attack posted no chat card.");
+    await message(player, id).waitFor({ timeout: 10_000 });
+    await message(player, id).scrollIntoViewIfNeeded();
+    await capture(player, "world-scripts-chat-labels", message(player, id));
+
+    await gm.eval(() => {
+      const attack = game.actors.getName("Aria").items.getName("Dagger").system.activities.find(a => a.type === "attack");
+      return attack.sheet.render({ force: true, position: { left: 20, top: 20 } });
+    });
+    const activity = gm.page.locator(".application.activity").first();
+    await activity.waitFor({ timeout: 10_000 });
+    await gm.page.waitForTimeout(800);
+    await capture(gm, "world-scripts-one-tab", activity);
+  } finally {
+    await gm.eval(ids => game.actors.getName("Aria").deleteEmbeddedDocuments("Item", ids), ids);
+  }
+});
+
 /* -------------------------------------------- */
 /*  Run                                         */
 /* -------------------------------------------- */
@@ -555,6 +663,8 @@ try {
       _id: game.actors.getName(name).id, img, "prototypeToken.texture.src": img
     })));
   });
+  // Unpaused, so the pause logo doesn't show through the windows.
+  await gm.eval(() => game.togglePause(false, { broadcast: true }));
   player = await Session.open(PLAYER_USER, { scale: 2 });
   for ( const session of [gm, player] ) {
     await session.eval(() => { ui.sidebar.expand(); ui.sidebar.changeTab("chat", "primary"); });

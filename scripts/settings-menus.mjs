@@ -1,6 +1,6 @@
 /**
- * Settings menus: the module's settings, grouped into Hero Cards, Dice Rolling and Roll Requests, each opened from a
- * button in Configure Settings rather than listed there.
+ * Settings menus: the module's settings, grouped into Hero Cards, Dice Rolling, Roll Requests and World Altering
+ * Scripts, each opened from a button in Configure Settings rather than listed there.
  */
 
 import { MODULE_ID } from "./hero-cards.mjs";
@@ -104,11 +104,22 @@ class RollRequestSettings extends SettingsMenu {
   /** @override */
   static DEFAULT_OPTIONS = {
     id: "stt-settings-roll-requests",
-    window: { title: "STT.Settings.Menus.RollRequests.Name", icon: "fa-solid fa-anchor fa-rotate-90" }
+    window: { title: "STT.Settings.Menus.RollRequests.Name", icon: "fa-solid fa-beer-mug-empty" }
   };
 
   /** @override */
-  static SETTINGS = ["showDCDefault", "attachRolls", "popupPlayers", "popupGM"];
+  static SETTINGS = ["showDCDefault", "attachRolls", "popupPlayers", "popupGM", "deathSavePrompt"];
+}
+
+class WorldScriptSettings extends SettingsMenu {
+  /** @override */
+  static DEFAULT_OPTIONS = {
+    id: "stt-settings-world-scripts",
+    window: { title: "STT.Settings.Menus.WorldScripts.Name", icon: "fa-solid fa-earth-europe" }
+  };
+
+  /** @override */
+  static SETTINGS = ["bloodiedTint", "fadeUnprepared", "rarityColours", "chatButtonLabels", "oneTabActivities"];
 }
 
 /* -------------------------------------------- */
@@ -122,7 +133,8 @@ function registerMenus() {
   const menus = {
     heroCards: [HeroCardsSettings, "HeroCards"],
     diceRolling: [DiceRollingSettings, "DiceRolling"],
-    rollRequests: [RollRequestSettings, "RollRequests"]
+    rollRequests: [RollRequestSettings, "RollRequests"],
+    worldScripts: [WorldScriptSettings, "WorldScripts"]
   };
   for ( const [key, [type, lang]] of Object.entries(menus) ) {
     game.settings.registerMenu(MODULE_ID, key, {
