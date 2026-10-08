@@ -538,7 +538,8 @@ test("sheet: a warning when every card is spent", async ({ gm, player }) => {
   await waitFor(player, () => game.actors.getName("Aria").items.getName("Hero Cards").system.activities
     .every(a => !a.uses.value), null, "the spent cards to reach the player");
   await useFeature(player);
-  await player.page.locator("#notifications .notification", { hasText: "You have no Hero Cards left" })
+  const warning = await player.eval(() => game.i18n.localize("STT.Cards.NoneLeft"));
+  await player.page.locator("#notifications .notification", { hasText: warning })
     .waitFor({ timeout: 5000 }).catch(() => { throw new Error("No warning that every card is spent."); });
   assertEqual(await player.page.locator(".stt-card-dialog.application").count(), 0, "card windows opened");
 });

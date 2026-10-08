@@ -10,6 +10,8 @@
  */
 
 import { spawn } from "node:child_process";
+import http from "node:http";
+import https from "node:https";
 import { setTimeout as sleep } from "node:timers/promises";
 import { BASE_URL, DATA_PATH, FOUNDRY_ROOT, PORT, SERVER_TIMEOUT_MS } from "../config.mjs";
 
@@ -17,13 +19,18 @@ import { BASE_URL, DATA_PATH, FOUNDRY_ROOT, PORT, SERVER_TIMEOUT_MS } from "../c
 const SETTLE_MS = 3000;
 
 /** Whether something is already listening on our port (usually a leftover from a crashed run). */
-export async function portInUse() {
-  try {
-    await fetch(BASE_URL, { signal: AbortSignal.timeout(2000) });
-    return true;
-  } catch {
-    return false;
-  }
+export function portInUse() {
+  // Over HTTPS, Foundry's certificate may be self-signed, which `fetch` would refuse, so this asks with the
+  // certificate check off: it only needs to know whether anything answers.
+  const client = BASE_URL.startsWith("https") ? https : http;
+  return new Promise(resolve => {
+    const request = client.get(BASE_URL, { rejectUnauthorized: false, timeout: 2000 }, response => {
+      response.resume();
+      resolve(true);
+    });
+    request.on("timeout", () => request.destroy());
+    request.on("error", () => resolve(false));
+  });
 }
 
 /**
