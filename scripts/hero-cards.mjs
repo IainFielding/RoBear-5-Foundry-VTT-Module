@@ -446,10 +446,10 @@ function hasUsesLeft(activity) {
 
 /**
  * @param {Activity} activity
- * @returns {string}  Display name, with Inspiration shown as the die it adds.
+ * @returns {string}  Display name. The Inspiration cards are all "Inspiration": their art shows the die each adds.
  */
 function getCardLabel(activity) {
-  return activity.name.replace(/^Inspiration\s*-\s*/i, "Inspiration + ");
+  return activity.name.replace(/^Inspiration\s*-.*$/i, "Inspiration");
 }
 
 /* -------------------------------------------- */
@@ -765,7 +765,7 @@ async function promptCard(message, button) {
 
 /**
  * Show the card picker.
- * @param {{ label: string, img: string }[]} options
+ * @param {{ activity: Activity, label: string, img: string }[]} options
  * @param {string} hint  Instruction shown above the cards.
  * @returns {Promise<object|void>}  The chosen option.
  */
@@ -773,10 +773,10 @@ async function chooseCard(options, hint) {
   // The tooltip shows the card art at full size so its rules text is readable.
   const { escapeHTML } = foundry.utils;
   const cards = options.map((o, i) => `
-    <button type="button" class="stt-card-choice" data-index="${i}"
+    <button type="button" class="stt-card-choice" data-index="${i}" data-card="${escapeHTML(o.activity.name)}"
             data-tooltip-html="${escapeHTML(cardArtHTML(o.img, o.label))}"
             data-tooltip-class="stt-card-tooltip" data-tooltip-direction="UP">
-      <img src="${escapeHTML(o.img)}" alt="${escapeHTML(o.label)}">
+      <img src="${escapeHTML(o.img)}" alt="${escapeHTML(o.activity.name)}">
       <span>${escapeHTML(o.label)}</span>
     </button>
   `).join("");

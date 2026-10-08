@@ -220,7 +220,7 @@ test("natural saves: with the setting off, a natural 1 or 20 changes no damage",
       const s = game.settings.settings.get(`${moduleId}.naturalSaves`);
       return { config: s?.config, scope: s?.scope, default: s?.default };
     }, MODULE_ID);
-    assertEqual(setting, { config: true, scope: "world", default: true }, "the setting");
+    assertEqual(setting, { config: false, scope: "world", default: true }, "the setting");
     await gm.eval(moduleId => game.settings.set(moduleId, "naturalSaves", false), MODULE_ID);
     await waitFor(player, moduleId => game.settings.get(moduleId, "naturalSaves") === false, MODULE_ID,
       "the setting to reach the player");

@@ -27,7 +27,7 @@ test("the GM's chat controls have the request button, and the player's do not", 
   assertEqual(await count(player), 0, "player request buttons");
 });
 
-test("the token controls have the request button, rotated like the card button", async ({ gm, player }) => {
+test("the token controls have the request button, with the tankard icon", async ({ gm, player }) => {
   const tool = s => s.eval(() => ui.controls.controls.tokens?.tools.sttRequest ?? null);
   const gmTool = await tool(gm);
   assert(gmTool, "The GM has no Request Rolls tool.");
@@ -271,7 +271,7 @@ test("the Show DC to Players box starts from the GM's setting", async ({ gm }) =
     const s = game.settings.settings.get(`${moduleId}.showDCDefault`);
     return { config: s?.config, scope: s?.scope, default: s?.default };
   }, MODULE_ID);
-  assertEqual(setting, { config: true, scope: "world", default: false }, "the setting");
+  assertEqual(setting, { config: false, scope: "world", default: false }, "the setting");
   await gm.eval(moduleId => game.settings.set(moduleId, "showDCDefault", true), MODULE_ID);
   try {
     const app = await openWindow(gm);
@@ -1077,7 +1077,7 @@ test("attached rolls: on by default, the rolls are hidden from chat and shown on
     const s = game.settings.settings.get(`${moduleId}.attachRolls`);
     return { config: s?.config, scope: s?.scope, default: s?.default, value: game.settings.get(moduleId, "attachRolls") };
   }, MODULE_ID);
-  assertEqual(setting, { config: true, scope: "world", default: true, value: true }, "the setting");
+  assertEqual(setting, { config: false, scope: "world", default: true, value: true }, "the setting");
 
   const id = await postRequest(ctx, { mode: "standard", parts: [athletics(12)], actors: [ids.aria] });
   await forceDice(player, [d20(4)]);

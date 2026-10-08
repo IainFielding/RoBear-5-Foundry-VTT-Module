@@ -35,7 +35,7 @@ Each card can be played once, and comes back after a long rest.
 When anyone plays a card, its art appears in the middle of the screen for a moment, with the name of the character who
 played it. Everyone who can see the roll it was played on sees the card. Click the card to dismiss it early.
 
-<img src="docs/images/played-card.webp" alt="A played card shown large in the middle of the screen, captioned 'Aria plays Charger'" width="260">
+<img src="docs/images/played-card.webp" alt="A played card shown large in the middle of the screen, captioned 'Aria plays Relentless'" width="260">
 
 ### Playing a card from your character sheet
 
@@ -45,7 +45,7 @@ shown). Click a card to play it.
 The card is spent, and a short record of it goes to chat with the card's description folded away. Click the record's
 header to read the description, or hover over the small card art to see it full size.
 
-<img src="docs/images/card-chat-record.webp" alt="The chat record of a played card: the Hero Cards feature, with Charger's art beside it" width="320">
+<img src="docs/images/card-chat-record.webp" alt="The chat record of a played card: the Hero Cards feature, with Relentless's art beside it" width="320">
 
 Playing **Advantage** this way gives you advantage on your next attack roll, ability check or saving throw.
 
@@ -65,7 +65,7 @@ Choose a card and the roll updates in place, so it keeps its spot in chat. It sh
 miss against the target, or a save's success or failure, again. A note on the roll records which card was played and
 what it changed.
 
-<img src="docs/images/card-played-on-roll.webp" alt="The Athletics check, now 16 and a success, with a note: Inspiration + 1d8: added 1d8 (7): 9 + 7 = 16" width="320">
+<img src="docs/images/card-played-on-roll.webp" alt="The Athletics check, now 16 and a success, with a note: Inspiration: added 1d8 (7): 9 + 7 = 16" width="320">
 
 A few things to know:
 
@@ -77,7 +77,7 @@ A few things to know:
 
 | Card | What it does |
 |---|---|
-| **Inspiration + 1d6 / 1d8 / 1d10** | Adds the die to the roll. |
+| **Inspiration** (1d6, 1d8 or 1d10) | Adds the die shown on the card to the roll. |
 | **Luck** | Rerolls the dice, and you must use the new result. On a d20 roll it rerolls the d20 (or both d20s, with advantage or disadvantage); on a damage roll, all the damage dice. Can't be played on a natural 1 or 20. |
 | **Advantage** | Rolls a second d20 and keeps the higher. On a roll with disadvantage, the two cancel out and it becomes a straight roll. Played from the sheet, it gives advantage on your next roll. |
 | **Indomitable** | Rerolls a failed saving throw, and you must use the new result. Can't be played on a natural 1. |

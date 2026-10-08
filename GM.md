@@ -43,9 +43,11 @@ In **Game Settings → Configure Settings → Sogrom's Table Tools**, the settin
 **Hero Cards**, **Dice Rolling**, **Roll Requests** and **World Altering Scripts**. Each opens a window with that group's settings. Only a GM
 can open them, and each setting applies to the whole world.
 
-<img src="docs/images/gm-settings.webp" alt="The Sogrom's Table Tools tab of Foundry's settings, with the Hero Cards, Dice Rolling and Roll Requests buttons" width="640">
+<img src="docs/images/gm-settings.webp" alt="The Sogrom's Table Tools tab of Foundry's settings, with the Hero Cards, Dice Rolling, Roll Requests and World Altering Scripts buttons" width="640">
 
 ### Hero Cards
+
+<img src="docs/images/gm-settings-hero-cards.webp" alt="The Hero Card Settings window, with its two settings" width="420">
 
 | Setting | Default | What it does |
 |---|---|---|
@@ -54,12 +56,16 @@ can open them, and each setting applies to the whole world.
 
 ### Dice Rolling
 
+<img src="docs/images/gm-settings-dice-rolling.webp" alt="The Dice Rolling Settings window, with its two settings" width="420">
+
 | Setting | Default | What it does |
 |---|---|---|
 | **Ring natural 1s and 20s** | On | A roll whose d20 shows a natural 20 is ringed in gold in chat, and a natural 1 in red: checks, saving throws and attacks, a save summarised inside the card of the spell that called for it, and a result on a request card. Turn it off for plain totals. |
 | **Natural 1s and 20s on saves against damage** | On | When a spell or feature calls for a save and deals damage, a natural 20 on the save takes no damage, and a natural 1 takes the damage's maximum, every die at its highest (36 from 6d6), ignoring resistances and immunities. Each starts that way in the damage's **Apply** tray, where you can still change it. Turn it off for D&D 5e's own rules. |
 
 ### Roll Requests
+
+<img src="docs/images/gm-settings-roll-requests.webp" alt="The Roll Request Settings window, with its five settings" width="420">
 
 | Setting | Default | What it does |
 |---|---|---|
@@ -68,9 +74,12 @@ can open them, and each setting applies to the whole world.
 | **Pop up roll requests for players** | Off | Opens a window for each player with a character in a request, with a Roll button for each of their characters. |
 | **Pop up roll requests for the GM** | Off | Opens a window for you when a request includes NPCs, or any actor no player owns. |
 | **Ask for death saves** | Off | Posts a death save request at the start of a dying character's turn in combat. See [Death saves](#death-saves). |
+
 ### World Altering Scripts
 
 Optional changes to tokens and actor sheets. Each is off until you turn it on.
+
+<img src="docs/images/gm-settings-world-scripts.webp" alt="The World Altering Scripts window, with its five scripts, each unticked" width="420">
 
 | Setting | Default | What it does |
 |---|---|---|
@@ -79,6 +88,15 @@ Optional changes to tokens and actor sheets. Each is off until you turn it on.
 | **Chat Button Labels** | Off | On compact chat cards, each icon button shows its name beside its icon, so you don't have to hover over it to see what it does. |
 | **One-Tab Activities** | Off | An activity's **Identity**, **Activation** and **Effect** tabs are laid out side by side in one wide window, without their hints. Handy when you're making a lot of content. |
 | **Item Rarity Colours** | Off | Tints each item row on actor sheets by its rarity: green for uncommon, blue for rare, purple for very rare, orange for legendary and gold for artifact. |
+
+<table><tr>
+<td><img src="docs/images/world-scripts-rarity.webp" alt="Aria's inventory with Item Rarity Colours on: a cream Potion of Healing, a green Cloak of Elvenkind, a blue Flame Tongue, a purple Staff of Power, an orange Holy Avenger and a gold Orb of Dragonkind" width="400"></td>
+<td><img src="docs/images/world-scripts-fade.webp" alt="Aria's spells with Fade Unprepared Spells on: Sleep and Misty Step are faded, Magic Missile, Shield and Hold Person are not" width="400"></td>
+</tr></table>
+
+<img src="docs/images/world-scripts-chat-labels.webp" alt="A Dagger card in chat with Chat Button Labels on: its buttons read Attack and Damage" width="300">
+
+<img src="docs/images/world-scripts-one-tab.webp" alt="A Dagger's Attack activity with One-Tab Activities on: its Identity, Activation and Effect tabs side by side" width="640">
 
 ## Asking for rolls
 
@@ -249,6 +267,8 @@ With **Ask for death saves** on, a **Death Save** request is posted at the start
 at 0 hit points and dying. It's an ordinary request, for that one creature, so it opens a pop-up under the two settings
 above: the player's window for their character, and yours only for a creature no player owns. You can always roll it
 from the chat card.
+
+<img src="docs/images/death-save-request.webp" alt="A Death Save request card, Standard Roll at DC 10, with a Roll button for Aria" width="300">
 
 - **Who is asked.** Characters, and NPCs marked **Important** on their sheet, as D&D 5e shows death saves for. A
   creature that is defeated in the combat tracker, dead, or stable isn't asked.

@@ -109,7 +109,8 @@ export async function resetWorld(gm, player) {
     if ( !game.settings.get(moduleId, "markNaturals") ) await game.settings.set(moduleId, "markNaturals", true);
     if ( !game.settings.get(moduleId, "attachRolls") ) await game.settings.set(moduleId, "attachRolls", true);
     if ( !game.settings.get(moduleId, "showPlayedCards") ) await game.settings.set(moduleId, "showPlayedCards", true);
-    for ( const key of ["popupPlayers", "popupGM", "deathSavePrompt"] ) {
+    for ( const key of ["popupPlayers", "popupGM", "deathSavePrompt", "bloodiedTint", "fadeUnprepared", "rarityColours",
+      "chatButtonLabels", "oneTabActivities"] ) {
       if ( game.settings.get(moduleId, key) ) await game.settings.set(moduleId, key, false);
     }
     for ( const actor of game.actors ) {

@@ -20,6 +20,9 @@ All notable changes to Sogrom's Table Tools.
 - **A tankard replaces the anchor icon.** The roll request button, the Hero Card button, and their windows and
   settings menus now show a tankard.
 
+- **The Inspiration cards are labelled just "Inspiration".** Their new art shows the die each adds, so the label
+  under the card, the played card and the note on the roll no longer repeat it.
+
 ### New
 
 - **Death saves are asked for.** With the new **Ask for death saves** setting on, a death save request is posted at
