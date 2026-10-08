@@ -89,7 +89,7 @@ interface RollRequest {
 }
 
 interface RequestPart {
-  type: "skill" | "check" | "save" | "tool" | "d20" | "d6" | "d8" | "d10" | "d12" | "d100";
+  type: "skill" | "check" | "save" | "tool" | "death" | "d20" | "d6" | "d8" | "d10" | "d12" | "d100";
   key?: string | null;       // the skill, ability or tool ID; omitted or null for a plain die
   dc: number | null;         // null for no DC
   alternatives?: { type: string, key?: string | null, dc?: number | null }[]; // other rolls the actor may make instead
@@ -100,7 +100,7 @@ interface RequestPart {
 
 | `mode` | Window label | `parts` used | `sides` | Notes |
 |---|---|---|---|---|
-| `standard` | Standard Roll | 1 | | Each actor rolls once against the DC. Allows `alternatives`. |
+| `standard` | Standard Roll | 1 | | Each actor rolls once against the DC. Allows `alternatives`, and a `death` part with none. |
 | `team` | Team Challenge | 1 | | The average of everyone's totals, rounded down, against the DC. Each natural 1 removes the highest roll, each natural 20 the lowest. Allows `alternatives`. |
 | `challenge` | Skill Challenge | 3 | | Three rolls in turn, each with its own DC; `successes` of them needed. Allows `alternatives`. |
 | `rolloff` | Roll-Off | 2 (one per side) | Required, exactly one actor each | Higher total wins. An actor no player owns rolls as a private GM roll until the GM shows it. |
@@ -115,6 +115,7 @@ interface RequestPart {
 | `check` | A key of `CONFIG.DND5E.abilities`, e.g. `"str"` | `actor.rollAbilityCheck` |
 | `save` | A key of `CONFIG.DND5E.abilities`, e.g. `"dex"` | `actor.rollSavingThrow` |
 | `tool` | A key of `CONFIG.DND5E.tools`, e.g. `"thief"` | `actor.rollToolCheck` |
+| `death` | none | `actor.rollDeathSave`, so dnd5e records the success or failure on the actor. Only in a `standard` request, with no `alternatives`; give it `dc: 10` for the card to show pass or fail. |
 | `d20` | none | dnd5e's d20 test, so advantage, the roll window and the cards apply |
 | `d6` `d8` `d10` `d12` `d100` | none | A plain roll |
 
@@ -152,6 +153,7 @@ language), and posts nothing:
 | Fewer `parts` than the mode uses | A roll request is missing a roll. |
 | `alternatives` in a mode without choices, three or more of them, or not objects | Only a Standard Roll, Team Challenge or Skill Challenge can offer a choice of rolls, and at most 4 to choose from, given as a list of alternatives. |
 | An alternative with a `dc` in a `team` request | A Team Challenge's rolls are averaged against one DC, so its alternatives can't have DCs of their own. |
+| A `death` roll outside a `standard` request, or with alternatives, or as one | A death save can only be asked for in a Standard Roll, with no other rolls to choose from. |
 | An unknown `type` | Unknown kind of roll: {type}. |
 | A `key` that dnd5e doesn't know | Unknown {type} for a roll: {key}. Use one of: {keys}. |
 | A `dc`, on a part or an alternative, that's neither a number nor `null` | A DC must be a number, or null for none: {dc}. |
@@ -207,6 +209,12 @@ await createRequest({
 
 ```js
 await createRequest({ mode: "standard", parts: [{ type: "d20", dc: null }], actors: party });
+```
+
+**A death save, for a character at 0 hit points:**
+
+```js
+await createRequest({ mode: "standard", parts: [{ type: "death", dc: 10 }], actors: [uuid("Aria")], showDC: true });
 ```
 
 **Team Challenge, a DC 13 Stealth check:**
@@ -281,7 +289,8 @@ them out from its roll messages each time it draws.
 | Flag | Type | Written by | Meaning |
 |---|---|---|---|
 | `request` | `RollRequest` | `createRequest`, or the window | The request, with defaults filled in. Only honoured on a GM's message. Changing the DC from the card rewrites `request.parts[n].dc`, or an alternative's `dc`. |
-| `revealed` | `boolean` | The GM's **Show to players** button | Whether players see the results and summary. Unset means hidden. |
+| `revealed` | `boolean` | The GM's **Show to players** button | Whether players see the results and summary. Unset means hidden. A death save request is posted with it set. |
+| `deathSave` | `{ actor: string, combat: string, round: number }` | `death-saves.mjs` | Marks a death save request posted at the start of a turn: the actor's UUID, and the combat and round it was posted for, so a turn started again posts no second request. |
 
 ### On a roll made for a request
 
@@ -331,6 +340,7 @@ out hit, miss and save results again.
 | Flag | Type | Meaning |
 |---|---|---|
 | `advantage` | `true` | The Advantage card was played from the sheet. The next d20 test gets advantage, and the flag is cleared once that roll is confirmed. |
+| `stable` | `boolean` | Set in the same update as a death save that stabilizes the actor, while `deathSavePrompt` is on, since dnd5e clears the successes and leaves nothing else to show it. Set to `false` when the actor is healed or takes a death save failure. While `true`, no death save is asked for. |
 
 ## Settings
 
@@ -348,6 +358,7 @@ in `settings-menus.mjs`. A setting is added to a menu through its class's `SETTI
 | `attachRolls` | Boolean | `true` | Draw requested rolls on the request card and hide their own messages. Changing it redraws every request and roll. |
 | `popupPlayers` | Boolean | `false` | Open a pop-up for each player in a request. |
 | `popupGM` | Boolean | `false` | Open a pop-up for the GM, for actors no player owns. |
+| `deathSavePrompt` | Boolean | `false` | Post a death save request at the start of a dying creature's turn in combat. |
 | `bloodiedTint` | Boolean | `false` | Add a red token tint and ring background to D&D 5e's Bloodied effect as it's created. |
 | `fadeUnprepared` | Boolean | `false` | Fade unprepared, preparable spells of level 1 or higher on actor sheets. |
 | `rarityColours` | Boolean | `false` | Tint item rows on actor sheets by rarity. |
@@ -397,7 +408,7 @@ Sogrom's Table Tools fires no hooks of its own. It listens to these:
 
 | Hook | Script | Why |
 |---|---|---|
-| `init` | `hero-cards.mjs`, `roll-requests.mjs`, `roll-request-popup.mjs`, `settings-menus.mjs` | Register settings and their menus, and set the API. |
+| `init` | `hero-cards.mjs`, `roll-requests.mjs`, `roll-request-popup.mjs`, `death-saves.mjs`, `settings-menus.mjs` | Register settings and their menus, and set the API. |
 | `setup` | `hero-cards.mjs`, `natural-saves.mjs` | Wrap `Item#use` and the damage tray's target options (see below). |
 | `ready` | `bonus-rolls.mjs`, `roll-request-popup.mjs` | Start listening on the socket, and open pop-ups for recent requests. |
 | `dnd5e.renderChatMessage` | `hero-cards.mjs`, `roll-requests.mjs`, `bonus-rolls.mjs`, `class-features.mjs` | Add card buttons, natural 1/20 rings, notes, request cards, and the Indomitable button. |
@@ -406,6 +417,9 @@ Sogrom's Table Tools fires no hooks of its own. It listens to these:
 | `preDeleteChatMessage` | `roll-requests.mjs` | Stop players deleting a roll made for a request. |
 | `getChatMessageContextOptions` | `bonus-rolls.mjs`, `class-features.mjs` | Add **Add to a roll…**, **Subtract from a roll…** and **Use Indomitable** to the right-click menu. |
 | `renderChatInput` | `roll-requests.mjs` | Add the GM's anchor button to the chat controls. |
+| `combatTurnChange` | `death-saves.mjs` | On the active GM's client, post a death save request for the creature whose turn started, while `deathSavePrompt` is on. |
+| `dnd5e.rollDeathSave` | `death-saves.mjs` | Add the `stable` flag to the updates of a save that stabilizes the actor. |
+| `preUpdateActor`, `updateActor` | `death-saves.mjs` | Clear the `stable` flag when the actor is healed or takes a failure, and remove its unrolled death save requests when it is healed. |
 | `preCreateActiveEffect` | `bloodied-tint.mjs` | Add the tint to a Bloodied effect, while `bloodiedTint` is on. |
 | `renderBaseActorSheet` | `fade-unprepared.mjs`, `rarity-colours.mjs` | Fade unprepared spells, and tint items by rarity, while their settings are on. |
 | `getSceneControlButtons` | `roll-requests.mjs` | Add **Request Rolls** to the token controls. |
@@ -441,6 +455,7 @@ scripts/
   roll-requests.mjs         Roll requests: the API, validation, results, and drawing the request card.
   roll-request-config.mjs   The Request Rolls window (ApplicationV2).
   roll-request-popup.mjs    The roll request pop-ups.
+  death-saves.mjs           Death save requests at the start of a dying creature's turn.
   bonus-rolls.mjs           Adding another feature's die to a roll, and the socket messages for it.
   class-features.mjs        Fighter's Indomitable.
   natural-saves.mjs         Natural 1s and 20s on saves against an activity's damage.

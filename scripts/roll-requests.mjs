@@ -89,9 +89,9 @@ export const CHALLENGE_PARTS = 3;
 export const MAX_CHOICES = 4;
 
 /**
- * Kinds of roll a request part can ask for, besides the plain dice.
+ * Kinds of roll a request part can ask for, besides the plain dice. A death save is only asked for in a standard roll.
  */
-const PART_TYPES = ["skill", "check", "save", "tool"];
+const PART_TYPES = ["skill", "check", "save", "tool", "death"];
 
 /**
  * Requests with a roll in progress on this client, keyed by "messageId.actorUuid.part", to ignore repeat clicks.
@@ -295,7 +295,7 @@ function refreshRequest(message, changes) {
 
 /**
  * @typedef {object} RequestPart
- * @property {"skill"|"check"|"save"|"tool"|"d20"|"d100"} type
+ * @property {"skill"|"check"|"save"|"tool"|"death"|"d20"|"d100"} type
  * @property {string} [key]     Skill, ability or tool ID.
  * @property {number|null} dc
  * @property {{ type: string, key?: string, dc?: number|null }[]} [alternatives]  Other rolls the actor may make
@@ -322,6 +322,19 @@ function refreshRequest(message, changes) {
  * @throws {Error}  If the request can't be rolled: see validateRequest.
  */
 export async function createRequest(request) {
+  return postRequest(request);
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Post a roll request to chat, as createRequest does, with other flags of the module's set on its message too.
+ * @param {RollRequest} request
+ * @param {object} [flags]  Other flags under the module's scope, such as `revealed`.
+ * @returns {Promise<ChatMessage5e>}
+ * @throws {Error}  If the request can't be rolled: see validateRequest.
+ */
+export async function postRequest(request, flags={}) {
   // Only a GM's message is drawn as a request (see getRequest), so a player's would post as a plain message.
   if ( !game.user.isGM ) throw new Error(localize("STT.Request.Invalid.GMOnly"));
   request = withDefaults(request);
@@ -331,7 +344,7 @@ export async function createRequest(request) {
   return ChatMessage.create({
     speaker: { alias: "Sogrom's Table Tools" },
     content: `<p>${foundry.utils.escapeHTML(getRequestTitle(request))}</p>`,
-    flags: { [MODULE_ID]: { request } }
+    flags: { [MODULE_ID]: { ...flags, request } }
   });
 }
 
@@ -405,6 +418,8 @@ export function validateRequest(request) {
       check((type in DICE) || PART_TYPES.includes(type), "STT.Request.Invalid.Roll", { type });
       const keys = getPartKeys(type);
       if ( keys ) check(keys.includes(key), "STT.Request.Invalid.Key", { type, key, keys: keys.join(", ") });
+      // A death save counts towards dying, so it isn't pooled, made in turn, set against another, or one of a choice.
+      check((type !== "death") || ((request.mode === "standard") && !alternatives.length), "STT.Request.Invalid.DeathSave");
     }
     // A Team Challenge averages its rolls against one DC, so its alternatives can't have their own.
     check(MODES[request.mode].choiceDCs || alternatives.every(a => !("dc" in a)), "STT.Request.Invalid.ChoiceDC");
@@ -467,6 +482,7 @@ export function getPartLabel({ type, key }) {
     case "check": return check(CONFIG.DND5E.abilities[key]?.label ?? key);
     case "save": return localize("STT.Request.Labels.Save", { name: CONFIG.DND5E.abilities[key]?.label ?? key });
     case "tool": return check(dnd5e.documents.Trait.keyLabel(key, { trait: "tool" }) ?? key);
+    case "death": return localize("STT.Request.Labels.DeathSave");
   }
   return DICE[type]?.label ?? type;
 }
@@ -1642,6 +1658,7 @@ async function rollForRequest(message, actor, part, event, choice=0) {
       case "check": await actor.rollAbilityCheck({ ...config, ability: id }, {}, messageConfig); break;
       case "save": await actor.rollSavingThrow({ ...config, ability: id }, {}, messageConfig); break;
       case "tool": await actor.rollToolCheck({ ...config, tool: id }, {}, messageConfig); break;
+      case "death": await actor.rollDeathSave({ ...config, legacy: false }, {}, messageConfig); break;
       default:
         if ( type in DICE ) await rollDie(actor, request, type, config, messageConfig);
     }

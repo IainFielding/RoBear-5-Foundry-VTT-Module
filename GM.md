@@ -15,6 +15,7 @@ can do everything a player can.
   - [Who can roll, and rolling again](#who-can-roll-and-rolling-again)
   - [Private rolls and what "hidden" means](#private-rolls-and-what-hidden-means)
   - [Pop-ups](#pop-ups)
+  - [Death saves](#death-saves)
 - [Cards and dice at the table](#cards-and-dice-at-the-table)
 - [Macros](#macros)
 
@@ -66,6 +67,7 @@ can open them, and each setting applies to the whole world.
 | **Attach rolls to the request card** | On | The rolls made for a request show on its card rather than as messages of their own, as D&D 5e does for an item's saves. Click a result to see its dice. |
 | **Pop up roll requests for players** | Off | Opens a window for each player with a character in a request, with a Roll button for each of their characters. |
 | **Pop up roll requests for the GM** | Off | Opens a window for you when a request includes NPCs, or any actor no player owns. |
+| **Ask for death saves** | Off | Posts a death save request at the start of a dying character's turn in combat. See [Death saves](#death-saves). |
 ### World Altering Scripts
 
 Optional changes to tokens and actor sheets. Each is off until you turn it on.
@@ -240,6 +242,25 @@ Two settings, both off by default, open a window when a request is posted:
 <img src="docs/images/popup-gm.webp" alt="The GM's Roll Request window for a Wisdom check, DC 12, with a Roll button for the Goblin" width="380">
 
 Each window closes once everything in it is rolled. The chat card works either way.
+
+### Death saves
+
+With **Ask for death saves** on, a **Death Save** request is posted at the start of a creature's turn in combat if it's
+at 0 hit points and dying. It's an ordinary request, for that one creature, so it opens a pop-up under the two settings
+above: the player's window for their character, and yours only for a creature no player owns. You can always roll it
+from the chat card.
+
+- **Who is asked.** Characters, and NPCs marked **Important** on their sheet, as D&D 5e shows death saves for. A
+  creature that is defeated in the combat tracker, dead, or stable isn't asked.
+- **The result shows at once.** A death save's result goes onto the sheet as soon as it's rolled, so the card shows
+  pass or fail, against DC 10, without waiting for **Show to players**.
+- **Stable.** After a third success D&D 5e clears the creature's successes but leaves it at 0 hit points, so Sogrom's
+  Table Tools notes that it's stable and stops asking. It's asked again once it takes a failure (mark one on its
+  sheet when it's hurt at 0 hit points: D&D 5e doesn't) or after it's been healed and drops again. The **Stable**
+  condition stops the requests too.
+- **Healed before rolling.** If the creature is healed before its death save is rolled, the request is removed and its
+  pop-ups close.
+- **Once a round.** Going back a turn and forward again doesn't post a second request for the same round.
 
 ## Cards and dice at the table
 

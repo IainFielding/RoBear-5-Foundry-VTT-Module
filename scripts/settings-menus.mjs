@@ -108,7 +108,7 @@ class RollRequestSettings extends SettingsMenu {
   };
 
   /** @override */
-  static SETTINGS = ["showDCDefault", "attachRolls", "popupPlayers", "popupGM"];
+  static SETTINGS = ["showDCDefault", "attachRolls", "popupPlayers", "popupGM", "deathSavePrompt"];
 }
 
 class WorldScriptSettings extends SettingsMenu {

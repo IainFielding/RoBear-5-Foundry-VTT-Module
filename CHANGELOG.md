@@ -19,6 +19,12 @@ All notable changes to Sogrom's Table Tools.
 
 ### New
 
+- **Death saves are asked for.** With the new **Ask for death saves** setting on, a death save request is posted at
+  the start of a dying character's turn in combat. It's an ordinary roll request, so it opens a pop-up under the same
+  settings as any other, and its result shows straight away. A creature that is stable or dead isn't asked, NPCs only
+  if they're marked Important, and a request that hasn't been rolled is removed if the creature is healed first.
+  Macros can ask for one too, with a part of type `death` in a Standard Roll.
+
 - **World Altering Scripts.** A fourth settings menu with five optional scripts, each off until the GM turns it
   on: **Bloodied Token Tint** tints a Bloodied creature's token red, **Fade Unprepared Spells** fades spells that
   could be prepared but aren't, **Item Rarity Colours** tints item rows on actor sheets by rarity, **Chat Button

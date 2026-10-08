@@ -20,7 +20,7 @@
         "RollRequests": {
           "Name": "Roll Requests",
           "Label": "Roll Request Settings",
-          "Hint": "Showing the DC by default, attaching rolls to the request card, and pop-up windows for players and the GM."
+          "Hint": "Showing the DC by default, attaching rolls to the request card, pop-up windows for players and the GM, and asking for death saves."
         },
         "WorldScripts": {
           "Name": "World Altering Scripts",
@@ -79,6 +79,10 @@
       "PopupGM": {
         "Name": "Pop up roll requests for the GM",
         "Hint": "When a roll request includes NPCs, or any actor no player owns, a window opens for the GM with their Roll buttons. Otherwise the GM rolls for them from the chat card."
+      },
+      "DeathSavePrompt": {
+        "Name": "Ask for death saves",
+        "Hint": "At the start of a dying character's turn in combat, a death save request is posted for them, and opens a pop-up if the pop-up settings above are on. It's skipped for a creature that is stable or dead. NPCs are only asked if they're marked Important. If the creature is healed before rolling, the request is removed."
       }
     },
     "RollKind": {
@@ -188,7 +192,8 @@
       "Labels": {
         "Check": "{name} Check",
         "Save": "{name} Save",
-        "DieRoll": "{die} Roll"
+        "DieRoll": "{die} Roll",
+        "DeathSave": "Death Save"
       },
       "Subtitle": {
         "Challenge": "{count} of {total} to succeed",
@@ -286,7 +291,8 @@
         "Range": "Divine Intervention needs from {min} to {max} numbers to pick, not {range}.",
         "DivineRoll": "Divine Intervention's roll is a d100, not {type}.",
         "Choices": "Only a Standard Roll, Team Challenge or Skill Challenge can offer a choice of rolls, and at most {max} to choose from, given as a list of alternatives.",
-        "ChoiceDC": "A Team Challenge's rolls are averaged against one DC, so its alternatives can't have DCs of their own."
+        "ChoiceDC": "A Team Challenge's rolls are averaged against one DC, so its alternatives can't have DCs of their own.",
+        "DeathSave": "A death save can only be asked for in a Standard Roll, with no other rolls to choose from."
       },
       "Config": {
         "KindOfRoll": "Kind of Roll",
