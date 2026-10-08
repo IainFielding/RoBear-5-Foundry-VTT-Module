@@ -8,7 +8,7 @@ For Foundry VTT v14 and the D&D 5e system 6.x.
 
 ### Hero Cards
 
-- **Twelve one-use cards** on the **Hero Cards** feature, each back after a long rest: Advantage, Luck, Inspiration
+- **Twelve one-use cards** on the **Hero Cards** feature, each back after a long rest: Advantage, Lucky, Inspiration
   (1d6, 1d8 and 1d10), Indomitable, Relentless, Divine Intervention, Charger, Reaction Surge, Extra Strike and Mind's
   Eye.
 - **Played on a roll already in chat** from the button under it, or **from the character sheet**. Each card is offered

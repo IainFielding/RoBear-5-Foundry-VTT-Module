@@ -56,7 +56,7 @@ Many rolls in chat, including attacks, ability checks, saving throws, damage rol
 
 Clicking the button shows the cards that can legally affect that roll. Cards that wouldn't work for the situation won't be shown, making it easy to pick the right option.
 
-<img src="docs/images/card-chooser.webp" alt="The card chooser for a roll, offering Advantage, Luck and the three Inspiration cards" width="560">
+<img src="docs/images/card-chooser.webp" alt="The card chooser for a roll, offering Advantage, Lucky and the three Inspiration cards" width="560">
 
 Choose a card and the roll updates directly in chat. The message keeps its place in the log while recalculating the result, including hit or miss against a target and save success or failure where applicable.
 
@@ -75,7 +75,7 @@ A few things to keep in mind:
 | Card | What it does |
 |---|---|
 | **Inspiration** (1d6, 1d8 or 1d10) | Add the card's die to the roll. |
-| **Luck** | Reroll the relevant dice and use the new result. |
+| **Lucky** | Reroll the relevant dice and use the new result. |
 | **Advantage** | Roll an additional d20 and keep the higher result. |
 | **Indomitable** | Reroll a failed saving throw and keep the new result. |
 | **Relentless** | Reroll initiative and keep the higher result. |
@@ -181,7 +181,7 @@ numbers.
 
 <img src="docs/images/divine-picker.webp" alt="A grid of the numbers 1 to 100 with 40 to 55 picked, and the text You need 40–55" width="400">
 
-The **Advantage** card rolls a second d100 and keeps whichever lands in your numbers, and **Luck** rerolls the d100.
+The **Advantage** card rolls a second d100 and keeps whichever lands in your numbers, and **Lucky** rerolls the d100.
 
 <img src="docs/images/divine-result.webp" alt="The Divine Intervention card: Aria picked 40–55 and rolled 47. The gods answer" width="320">
 

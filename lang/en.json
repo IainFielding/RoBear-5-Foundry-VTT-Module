@@ -50,7 +50,7 @@
       },
       "LockNaturals": {
         "Name": "Natural 1s and 20s lock Hero Cards",
-        "Hint": "Prevent Hero Cards from being played on natural 1s and natural 20s. Disable this setting to allow Advantage and Inspiration to affect those rolls. Natural 1s are always final, and can't be rerolled by Luck, Indomitable, or Relentless."
+        "Hint": "Prevent Hero Cards from being played on natural 1s and natural 20s. Disable this setting to allow Advantage and Inspiration to affect those rolls. Natural 1s are always final, and can't be rerolled by Lucky, Indomitable, or Relentless."
       },
       "MarkNaturals": {
         "Name": "Ring natural 1s and 20s",

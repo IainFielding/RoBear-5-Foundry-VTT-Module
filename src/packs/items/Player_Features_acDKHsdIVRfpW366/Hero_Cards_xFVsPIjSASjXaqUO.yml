@@ -125,7 +125,7 @@ system:
         identifier: ''
     uPqHABvpmYZr0ASg:
       type: utility
-      name: Luck
+      name: Lucky
       _id: uPqHABvpmYZr0ASg
       sort: 700000
       activation:
@@ -415,7 +415,7 @@ system:
         identifier: ''
     wsXzhRxrJrqUqfnq:
       type: utility
-      name: Minds Eye
+      name: Mind's Eye
       _id: wsXzhRxrJrqUqfnq
       sort: 800000
       activation:

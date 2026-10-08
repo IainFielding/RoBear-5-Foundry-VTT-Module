@@ -13,7 +13,7 @@ Indomitable) at [contentcredentials.org/verify](https://contentcredentials.org/v
 
 | Card | File | Image | Contributor | Asset ID | Photo page |
 |---|---|---|---|---|---|
-| Luck | `lucky.webp` | Holding a lucky four-leaf clover | Leigh Prather | 325256413 | [stock.adobe.com/…/325256413](https://stock.adobe.com/images/holding-a-lucky-four-leaf-clover-good-luck-shamrock-or-lucky-charm/325256413) |
+| Lucky | `lucky.webp` | Holding a lucky four-leaf clover | Leigh Prather | 325256413 | [stock.adobe.com/…/325256413](https://stock.adobe.com/images/holding-a-lucky-four-leaf-clover-good-luck-shamrock-or-lucky-charm/325256413) |
 | Divine Intervention | `divineintervention.webp` | Silhouette of a man raising his hands | zakalinka | 352314701 | [stock.adobe.com/…/352314701](https://stock.adobe.com/images/silhouette-of-male-raising-hands-praying-for-god-s-blessings-at-sunset-or-sunrise-light-practicing-yoga-on-the-beach-religion-freedom-and-spirituality-concept/352314701) |
 | Reaction Surge | `reactionsurge.webp` | An epic battle in the forest | Николай Акатов | 575597325 | [stock.adobe.com/…/575597325](https://stock.adobe.com/images/an-epic-battle-in-the-forest-thicket-in-the-moonlight-the-archer-girl-shoots-in-flight-she-wears-a-black-hood-and-a-blue-dress-with-a-quiver-of-arrows-behind-her-back-dynamic-action-frame-2d-art/575597325) |
 | Extra Strike | `extrastrike.webp` | Viking warriors | Iobard | 528400122 | [stock.adobe.com/…/528400122](https://stock.adobe.com/images/viking-warriors-rushed-to-attack-the-defenders-on-a-red-background-2d-illustration/528400122) |

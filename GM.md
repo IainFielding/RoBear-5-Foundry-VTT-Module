@@ -51,7 +51,7 @@ can open them, and each setting applies to the whole world.
 
 | Setting | Default | What it does |
 |---|---|---|
-| **Natural 1s and 20s lock Hero Cards** | On | No card can be played on a roll whose d20 shows a natural 1 or 20. Turn it off to allow Advantage and Inspiration on them. Either way, Luck can't be played on a natural 20, and nothing rerolls a natural 1. |
+| **Natural 1s and 20s lock Hero Cards** | On | No card can be played on a roll whose d20 shows a natural 1 or 20. Turn it off to allow Advantage and Inspiration on them. Either way, Lucky can't be played on a natural 20, and nothing rerolls a natural 1. |
 | **Show played cards on screen** | On | A played card's art appears in the middle of the screen for everyone who can see the roll. Chat keeps a record either way. |
 
 ### Dice Rolling
@@ -206,7 +206,7 @@ team's rolls are pooled like a Team Challenge, natural 1s and 20s included, and 
 
 Set how many numbers each player picks, from 1 to 50 (16 by default). When a player clicks **Roll**, they pick that
 many numbers in a row from 1 to 100, then roll a d100, and must roll one of their numbers. The **Advantage** card
-rolls a second d100 and keeps whichever lands in their numbers, and **Luck** rerolls the d100.
+rolls a second d100 and keeps whichever lands in their numbers, and **Lucky** rerolls the d100.
 
 <img src="docs/images/gm-request-window-divine.webp" alt="The request window set to Divine Intervention, with Numbers to Pick set to 16" width="520">
 

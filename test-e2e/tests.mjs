@@ -863,7 +863,7 @@ test("roll-off: equal d20s tie, and a card can be played on a plain d20", async 
 
   await forceDice(player, [d20(17)]);
   const offered = await playCard(player, id, "Aria", "Advantage");
-  assert(offered.includes("Luck"), `Luck was not offered on a plain d20: ${offered.join(", ")}`);
+  assert(offered.includes("Lucky"), `Luck was not offered on a plain d20: ${offered.join(", ")}`);
   card = await waitForCard(player, id, c => c.summary?.includes("Aria wins"), "Advantage to win it");
   assertEqual(card.summary, "Aria 17 · Goblin 9 Aria wins", "summary after Advantage");
 });
@@ -960,14 +960,14 @@ test("divine intervention: Luck rerolls a miss, and only Advantage and Luck are 
   await waitForCard(player, id, c => row(c, "Aria").results[0]?.classes.includes("failure"), "the miss");
 
   await forceDice(player, [d100(45)]);
-  const offered = await playCard(player, id, "Aria", "Luck");
-  assertEqual([...offered].sort(), ["Advantage", "Luck"], "cards offered on the d100");
+  const offered = await playCard(player, id, "Aria", "Lucky");
+  assertEqual([...offered].sort(), ["Advantage", "Lucky"], "cards offered on the d100");
   const card = await waitForCard(player, id, c => c.summary?.includes("answer") && row(c, "Aria").results[0].text === "45",
     "the reroll");
   assertEqual(card.summary, "1 of 1 answered The gods answer", "summary after Luck");
   const log = await gm.eval(({ id, moduleId }) => game.messages.find(m => m.getFlag(moduleId, "requestRoll")?.request === id)
     .getFlag(moduleId, "log").map(e => e.text), { id, moduleId: MODULE_ID });
-  assertEqual(log, ["Luck: rerolled the d100: 10 → 45"], "the card's note on the roll");
+  assertEqual(log, ["Lucky: rerolled the d100: 10 → 45"], "the card's note on the roll");
 });
 
 test("divine intervention: Advantage keeps a second d100 that lands in range", async (ctx) => {
@@ -1045,7 +1045,7 @@ test("cards: Indomitable is offered on a failed requested save once the GM shows
 
   // Before the GM shows the result, offering Indomitable would tell the player they failed.
   const notYet = await cardsOnRow(player, failed, "Aria");
-  assert(notYet.includes("Luck"), `The card chooser did not open: ${notYet.join(", ")}`);
+  assert(notYet.includes("Lucky"), `The card chooser did not open: ${notYet.join(", ")}`);
   assert(!notYet.includes("Indomitable"), `Indomitable was offered before the result was shown: ${notYet.join(", ")}`);
 
   await gm.page.locator(`#chat .chat-log [data-message-id="${failed}"] .stt-request-reveal`).click();
@@ -1096,12 +1096,12 @@ test("attached rolls: on by default, the rolls are hidden from chat and shown on
 
   // A card played on the roll is noted under the row, and the open dice stay open through the redraw.
   await forceDice(player, [d20(13)]);
-  await playCard(player, id, "Aria", "Luck");
+  await playCard(player, id, "Aria", "Lucky");
   const card = await waitForCard(player, id, c => row(c, "Aria").results[0].text === "13", "Luck's reroll");
   assert(card, "The card did not update.");
   const note = await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-details .stt-card-log`)
     .textContent();
-  assertEqual(note.replace(/\s+/g, " ").trim(), "Luck: rerolled the d20 (4 → 13): 4 → 13", "the card's note, with no Hero Cards label");
+  assertEqual(note.replace(/\s+/g, " ").trim(), "Lucky: rerolled the d20 (4 → 13): 4 → 13", "the card's note, with no Hero Cards label");
   assertEqual(await detail.count(), 1, "the dice breakdown after the redraw");
 });
 
