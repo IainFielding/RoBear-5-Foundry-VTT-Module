@@ -97,7 +97,7 @@ export async function resetFixtures(gm) {
 
 /**
  * Put the world back to the fixtures' starting state: no chat, no combat, every card use restored, no
- * pending Advantage, no forced dice, no stray windows or notifications.
+ * pending Advantage, no death saves or changed hit points, no forced dice, no stray windows or notifications.
  * @param {import("./session.mjs").Session} gm
  * @param {import("./session.mjs").Session} player
  */
@@ -109,11 +109,20 @@ export async function resetWorld(gm, player) {
     if ( !game.settings.get(moduleId, "markNaturals") ) await game.settings.set(moduleId, "markNaturals", true);
     if ( !game.settings.get(moduleId, "attachRolls") ) await game.settings.set(moduleId, "attachRolls", true);
     if ( !game.settings.get(moduleId, "showPlayedCards") ) await game.settings.set(moduleId, "showPlayedCards", true);
-    for ( const key of ["popupPlayers", "popupGM"] ) {
+    for ( const key of ["popupPlayers", "popupGM", "deathSavePrompt"] ) {
       if ( game.settings.get(moduleId, key) ) await game.settings.set(moduleId, key, false);
     }
     for ( const actor of game.actors ) {
       if ( actor.getFlag(moduleId, "advantage") ) await actor.unsetFlag(moduleId, "advantage");
+      // Hit points a test changed are put back as they were, kept by the test before it changed them.
+      const changes = {};
+      const hp = globalThis.__sttHP?.[actor.id];
+      if ( hp ) changes["system.attributes.hp"] = hp;
+      const death = actor.system.attributes?.death;
+      if ( death?.success || death?.failure ) changes["system.attributes.death"] = { success: 0, failure: 0 };
+      if ( actor.system.traits?.important && (actor.type === "npc") ) changes["system.traits.important"] = false;
+      if ( Object.keys(changes).length ) await actor.update(changes);
+      if ( actor.getFlag(moduleId, "stable") !== undefined ) await actor.unsetFlag(moduleId, "stable");
       for ( const item of actor.items ) {
         const updates = {};
         for ( const activity of item.system.activities ?? [] ) {
@@ -123,6 +132,7 @@ export async function resetWorld(gm, player) {
         if ( Object.keys(updates).length ) await item.update(updates);
       }
     }
+    globalThis.__sttHP = {};
   }, MODULE_ID);
   for ( const session of [gm, player] ) {
     await session.eval(async () => {
