@@ -3,7 +3,7 @@
  * holding the same Roll buttons as the chat card. Players and the GM each have a setting, both off by default.
  */
 
-import { MODULE_ID } from "./robear-cards.mjs";
+import { MODULE_ID } from "./hero-cards.mjs";
 import {
   getChallengeState, getRequest, getResults, getRowGroup, isContest, renderActorRow, renderRequestHeader
 } from "./roll-requests.mjs";
@@ -35,16 +35,16 @@ Hooks.on("deleteChatMessage", onDeleteMessage);
  */
 function registerSettings() {
   game.settings.register(MODULE_ID, "popupPlayers", {
-    name: "ROBEAR.Settings.PopupPlayers.Name",
-    hint: "ROBEAR.Settings.PopupPlayers.Hint",
+    name: "STT.Settings.PopupPlayers.Name",
+    hint: "STT.Settings.PopupPlayers.Hint",
     scope: "world",
     config: true,
     type: Boolean,
     default: false
   });
   game.settings.register(MODULE_ID, "popupGM", {
-    name: "ROBEAR.Settings.PopupGM.Name",
-    hint: "ROBEAR.Settings.PopupGM.Hint",
+    name: "STT.Settings.PopupGM.Name",
+    hint: "STT.Settings.PopupGM.Hint",
     scope: "world",
     config: true,
     type: Boolean,
@@ -174,8 +174,8 @@ export default class RollRequestPopup extends ApplicationV2 {
 
   /** @override */
   static DEFAULT_OPTIONS = {
-    classes: ["robear-card-dialog", "robear-request-popup"],
-    window: { title: "ROBEAR.Request.PopupTitle", icon: "fa-solid fa-anchor fa-rotate-90" },
+    classes: ["stt-card-dialog", "stt-request-popup"],
+    window: { title: "STT.Request.PopupTitle", icon: "fa-solid fa-anchor fa-rotate-90" },
     position: { width: 380, height: "auto" }
   };
 
@@ -184,7 +184,7 @@ export default class RollRequestPopup extends ApplicationV2 {
    * @returns {string}  The pop-up's application ID.
    */
   static idFor(messageId) {
-    return `robear-request-popup-${messageId}`;
+    return `stt-request-popup-${messageId}`;
   }
 
   /**
@@ -200,10 +200,10 @@ export default class RollRequestPopup extends ApplicationV2 {
     const request = this.message.getFlag(MODULE_ID, "request");
     const results = getResults(this.message);
     const card = document.createElement("div");
-    card.className = `robear-request mode-${request.mode}`;
+    card.className = `stt-request mode-${request.mode}`;
     card.append(renderRequestHeader(this.message, request));
     const list = document.createElement("ul");
-    list.className = "robear-request-actors";
+    list.className = "stt-request-actors";
     for ( const uuid of getPopupActors(request) ) {
       // In a contest an actor rolls for their own side.
       const side = isContest(request) ? request.sides.findIndex(s => s.includes(uuid)) : undefined;

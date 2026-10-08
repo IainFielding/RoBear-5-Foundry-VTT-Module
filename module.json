@@ -1,6 +1,7 @@
 {
-  "id": "sogrom-robear-e",
-  "title": "RoBear-E",
+  "id": "sogrom-table-tools",
+  "title": "Sogrom's Table Tools",
+  "description": "Hero Cards, GM roll requests and extra rules for rolls in chat, for the D&D 5e system.",
   "version": "#{VERSION}#",
   "manifest": "#{MANIFEST}#",
   "download": "#{DOWNLOAD}#",
@@ -30,7 +31,7 @@
     }
   ],
   "esmodules": [
-    "scripts/robear-cards.mjs",
+    "scripts/hero-cards.mjs",
     "scripts/roll-requests.mjs",
     "scripts/roll-request-popup.mjs",
     "scripts/bonus-rolls.mjs",
@@ -47,13 +48,13 @@
   ],
   "styles": [
     "styles/fonts.css",
-    "styles/robear-cards.css",
+    "styles/hero-cards.css",
     "styles/roll-requests.css"
   ],
   "packs": [
     {
       "name": "content",
-      "label": "Journal (RoBear-E)",
+      "label": "Journal (Sogrom's Table Tools)",
       "path": "packs/content",
       "type": "JournalEntry",
       "ownership": {
@@ -65,7 +66,7 @@
     },
     {
       "name": "spells",
-      "label": "Spells (RoBear-E)",
+      "label": "Spells (Sogrom's Table Tools)",
       "path": "packs/spells",
       "type": "Item",
       "system": "dnd5e",
@@ -76,7 +77,7 @@
     },
     {
       "name": "items",
-      "label": "Items (RoBear-E)",
+      "label": "Items (Sogrom's Table Tools)",
       "path": "packs/items",
       "type": "Item",
       "ownership": {
@@ -89,7 +90,7 @@
   ],
   "packFolders": [
     {
-      "name": "RoBear-E",
+      "name": "Sogrom's Table Tools",
       "color": "#392046",
       "sorting": "m",
       "packs": [
@@ -103,18 +104,18 @@
     "canUpload": true,
     "dnd5e": {
       "sourceBooks": {
-        "RoBear-E": "RoBear-E"
+        "Sogrom's Table Tools": "Sogrom's Table Tools"
       },
       "spellLists": [
-        "Compendium.sogrom-robear-e.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.bImL7vkD6p05UE9X",
-        "Compendium.sogrom-robear-e.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.XlIOhDZWq3po3hT5",
-        "Compendium.sogrom-robear-e.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.M78U0z79t54vzSdy",
-        "Compendium.sogrom-robear-e.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.X0YM0cUzKInXaa7i",
-        "Compendium.sogrom-robear-e.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.00hMjSUA251pU50q",
-        "Compendium.sogrom-robear-e.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.og5rxvDeGCRDA8KX",
-        "Compendium.sogrom-robear-e.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.XYN1xJTgMwu4GnKi",
-        "Compendium.sogrom-robear-e.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.8HiOb6JiMZk2YRtY",
-        "Compendium.sogrom-robear-e.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.IdRSkW0OTFd7xi8P"
+        "Compendium.sogrom-table-tools.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.bImL7vkD6p05UE9X",
+        "Compendium.sogrom-table-tools.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.XlIOhDZWq3po3hT5",
+        "Compendium.sogrom-table-tools.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.M78U0z79t54vzSdy",
+        "Compendium.sogrom-table-tools.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.X0YM0cUzKInXaa7i",
+        "Compendium.sogrom-table-tools.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.00hMjSUA251pU50q",
+        "Compendium.sogrom-table-tools.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.og5rxvDeGCRDA8KX",
+        "Compendium.sogrom-table-tools.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.XYN1xJTgMwu4GnKi",
+        "Compendium.sogrom-table-tools.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.8HiOb6JiMZk2YRtY",
+        "Compendium.sogrom-table-tools.content.JournalEntry.mNCD3QK8qZtAbjiG.JournalEntryPage.IdRSkW0OTFd7xi8P"
       ]
     }
   }

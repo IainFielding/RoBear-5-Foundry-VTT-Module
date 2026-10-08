@@ -1,5 +1,5 @@
 /**
- * End-to-end tests for playing RoBear-E Cards on rolls already in chat, and from the character sheet.
+ * End-to-end tests for playing Hero Cards on rolls already in chat, and from the character sheet.
  *
  * Rolls are made in the player's browser through dnd5e's own roll methods, fast-forwarded, so the player is
  * the author as they would be at the table. Cards are then played through the real chat button and chooser.
@@ -49,7 +49,7 @@ async function roll(session, actor, kind, { config = {} } = {}) {
  * @param {string} id
  */
 function cardButton(session, id) {
-  return session.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-card-button:visible`);
+  return session.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-card-button:visible`);
 }
 
 /**
@@ -64,11 +64,11 @@ async function cardsOffered(session, id, card) {
   await session.page.waitForTimeout(300);
   if ( !(await button.count()) ) return [];
   await button.first().click();
-  const dialog = session.page.locator(".robear-card-dialog.application").last();
-  await dialog.locator(".robear-card-choice").first().waitFor({ timeout: 10_000 });
-  const offered = (await dialog.locator(".robear-card-choice span").allTextContents()).map(t => t.trim());
+  const dialog = session.page.locator(".stt-card-dialog.application").last();
+  await dialog.locator(".stt-card-choice").first().waitFor({ timeout: 10_000 });
+  const offered = (await dialog.locator(".stt-card-choice span").allTextContents()).map(t => t.trim());
   if ( card ) {
-    const choice = dialog.locator(".robear-card-choice", { hasText: card });
+    const choice = dialog.locator(".stt-card-choice", { hasText: card });
     assert(await choice.count(), `${card} was not offered. Offered: ${offered.join(", ")}`);
     await choice.first().click();
   } else {
@@ -102,7 +102,7 @@ function afterCard(session, id, notes = 1) {
  * @returns {Promise<number>}  Uses of the card left.
  */
 function usesLeft(session, card) {
-  return session.eval(card => game.actors.getName("Aria").items.getName("RoBear-E Cards").system.activities
+  return session.eval(card => game.actors.getName("Aria").items.getName("Hero Cards").system.activities
     .getName(card).uses.value, card);
 }
 
@@ -135,11 +135,11 @@ test("cards: a double click opens one card chooser, so only one card is spent", 
     button.click();
   });
   await player.page.waitForTimeout(500);
-  const choosers = player.page.locator(".robear-card-dialog.application:has(.robear-card-choice)");
+  const choosers = player.page.locator(".stt-card-dialog.application:has(.stt-card-choice)");
   assertEqual(await choosers.count(), 1, "card choosers open");
 
   await forceDice(player, [d20(14)]);
-  await choosers.locator(".robear-card-choice", { hasText: "Luck" }).first().click();
+  await choosers.locator(".stt-card-choice", { hasText: "Luck" }).first().click();
   const after = await afterCard(player, id);
   assertEqual(after.log.length, 1, "cards noted on the roll");
   assertEqual(await usesLeft(player, "Luck"), before - 1, "Luck uses left");
@@ -240,7 +240,7 @@ test("luck: rerolls the d20 of a check, and the new result stands", async ({ pla
 });
 
 /**
- * Turn the "Natural 1s and 20s lock RoBear-E Cards" setting on or off, and wait for the player to see it.
+ * Turn the "Natural 1s and 20s lock Hero Cards" setting on or off, and wait for the player to see it.
  * @param {import("./lib/session.mjs").Session} gm
  * @param {import("./lib/session.mjs").Session} player
  * @param {boolean} value
@@ -296,7 +296,7 @@ test("natural 1s and 20s: the total is ringed, in red or gold, and no other roll
     const id = await roll(player, "Aria", kind);
     const dice = player.page.locator(`#chat .chat-log [data-message-id="${id}"] .message-content .dice-roll`);
     await dice.waitFor({ timeout: 5000 });
-    const marks = await dice.evaluate(el => [1, 20].filter(n => el.matches(`.robear-natural-${n}, :has(.robear-natural-${n})`)));
+    const marks = await dice.evaluate(el => [1, 20].filter(n => el.matches(`.stt-natural-${n}, :has(.stt-natural-${n})`)));
     assertEqual(marks, [1, 20].includes(natural) ? [natural] : [], `ring on a ${kind} showing a natural ${natural}`);
   }
 });
@@ -473,29 +473,29 @@ test("relentless: not offered after the first round", async ({ gm, player }) => 
 /* -------------------------------------------- */
 
 /**
- * Use the RoBear-E Cards feature as the player, as clicking it on the sheet does.
+ * Use the Hero Cards feature as the player, as clicking it on the sheet does.
  * @param {import("./lib/session.mjs").Session} player
  * @param {object} [event]  Modifier keys held.
  */
 function useFeature(player, event = {}) {
   return player.eval(event => {
-    game.actors.getName("Aria").items.getName("RoBear-E Cards").use({ event });
+    game.actors.getName("Aria").items.getName("Hero Cards").use({ event });
   }, event);
 }
 
 test("sheet: the card window shows every card left, with its art", async ({ player }) => {
   await useFeature(player);
-  const dialog = player.page.locator(".robear-card-dialog.application").last();
-  await dialog.locator(".robear-card-choice").first().waitFor({ timeout: 10_000 });
-  const cards = await dialog.locator(".robear-card-choice").evaluateAll(els => els.map(el => ({
+  const dialog = player.page.locator(".stt-card-dialog.application").last();
+  await dialog.locator(".stt-card-choice").first().waitFor({ timeout: 10_000 });
+  const cards = await dialog.locator(".stt-card-choice").evaluateAll(els => els.map(el => ({
     label: el.querySelector("span").textContent.trim(), img: el.querySelector("img").getAttribute("src")
   })));
   assertEqual(cards.length, 12, "cards shown");
   for ( const { label, img } of cards ) {
-    assert(img.startsWith("modules/sogrom-robear-e/assets/images/"), `${label} shows ${img} rather than its card art.`);
+    assert(img.startsWith("modules/sogrom-table-tools/assets/images/"), `${label} shows ${img} rather than its card art.`);
   }
   // The art may still be loading as the window opens, so each image is waited for until it loads or fails.
-  const broken = await dialog.locator(".robear-card-choice img").evaluateAll(async imgs => {
+  const broken = await dialog.locator(".stt-card-choice img").evaluateAll(async imgs => {
     await Promise.all(imgs.map(i => i.complete || new Promise(resolve => {
       i.addEventListener("load", resolve, { once: true });
       i.addEventListener("error", resolve, { once: true });
@@ -508,11 +508,11 @@ test("sheet: the card window shows every card left, with its art", async ({ play
 
 test("sheet: Advantage gives advantage on the next d20 roll, once", async ({ player }) => {
   await useFeature(player);
-  const dialog = player.page.locator(".robear-card-dialog.application").last();
-  await dialog.locator(".robear-card-choice", { hasText: "Advantage" }).click();
+  const dialog = player.page.locator(".stt-card-dialog.application").last();
+  await dialog.locator(".stt-card-choice", { hasText: "Advantage" }).click();
   // dnd5e then asks to confirm spending the card's use, as it does for any activity used from the sheet.
   await player.page.locator(".application.activity-usage button", { hasText: "Use Ability" }).click();
-  await waitFor(player, () => game.actors.getName("Aria").getFlag("sogrom-robear-e", "advantage"), null,
+  await waitFor(player, () => game.actors.getName("Aria").getFlag("sogrom-table-tools", "advantage"), null,
     "the pending Advantage flag");
   assertEqual(await usesLeft(player, "Advantage"), 0, "Advantage uses left");
 
@@ -522,7 +522,7 @@ test("sheet: Advantage gives advantage on the next d20 roll, once", async ({ pla
     const r = game.messages.get(id).rolls[0];
     return [r.hasAdvantage, r.total];
   }, first), [true, 17], "the next check");
-  await waitFor(player, () => !game.actors.getName("Aria").getFlag("sogrom-robear-e", "advantage"), null,
+  await waitFor(player, () => !game.actors.getName("Aria").getFlag("sogrom-table-tools", "advantage"), null,
     "the pending Advantage to clear");
 
   await forceDice(player, [d20(4)]);
@@ -532,21 +532,21 @@ test("sheet: Advantage gives advantage on the next d20 roll, once", async ({ pla
 
 test("sheet: a warning when every card is spent", async ({ gm, player }) => {
   await gm.eval(async () => {
-    const item = game.actors.getName("Aria").items.getName("RoBear-E Cards");
+    const item = game.actors.getName("Aria").items.getName("Hero Cards");
     await item.update(Object.fromEntries(item.system.activities.map(a => [`system.activities.${a.id}.uses.spent`, 1])));
   });
-  await waitFor(player, () => game.actors.getName("Aria").items.getName("RoBear-E Cards").system.activities
+  await waitFor(player, () => game.actors.getName("Aria").items.getName("Hero Cards").system.activities
     .every(a => !a.uses.value), null, "the spent cards to reach the player");
   await useFeature(player);
-  await player.page.locator("#notifications .notification", { hasText: "You have no RoBear-E Cards left" })
+  await player.page.locator("#notifications .notification", { hasText: "You have no Hero Cards left" })
     .waitFor({ timeout: 5000 }).catch(() => { throw new Error("No warning that every card is spent."); });
-  assertEqual(await player.page.locator(".robear-card-dialog.application").count(), 0, "card windows opened");
+  assertEqual(await player.page.locator(".stt-card-dialog.application").count(), 0, "card windows opened");
 });
 
 test("sheet: shift-click uses dnd5e's own activity list instead", async ({ player }) => {
   await useFeature(player, { shiftKey: true });
   await player.page.waitForTimeout(1500);
-  assertEqual(await player.page.locator(".robear-card-dialog.application").count(), 0, "RoBear-E card windows");
+  assertEqual(await player.page.locator(".stt-card-dialog.application").count(), 0, "Hero Card windows");
   const apps = await player.eval(() => [...foundry.applications.instances.values()].filter(a => a.rendered)
     .map(a => a.constructor.name));
   assert(apps.some(n => /Activit/i.test(n)), `dnd5e's activity list did not open. Open: ${apps.join(", ")}`);
@@ -562,12 +562,12 @@ test("sheet: shift-click uses dnd5e's own activity list instead", async ({ playe
  */
 function playedCardOnScreen(session) {
   return session.eval(() => {
-    const el = document.getElementById("robear-played-card");
+    const el = document.getElementById("stt-played-card");
     if ( !el ) return null;
     return {
       img: el.querySelector("img")?.getAttribute("src"),
-      by: el.querySelector(".robear-played-card-by")?.textContent.trim(),
-      name: el.querySelector(".robear-played-card-name")?.textContent.trim()
+      by: el.querySelector(".stt-played-card-by")?.textContent.trim(),
+      name: el.querySelector(".stt-played-card-name")?.textContent.trim()
     };
   });
 }
@@ -588,18 +588,18 @@ test("played cards: shown on everyone's screen, with no chat card pushing the ro
 
   for ( const session of [gm, player] ) {
     const shown = await waitFor(session, () => {
-      const el = document.getElementById("robear-played-card");
+      const el = document.getElementById("stt-played-card");
       return el ? true : null;
     }, null, `the played card on ${session.user}'s screen`, 3000);
     assert(shown, "No played card.");
     assertEqual(await playedCardOnScreen(session), {
-      img: "modules/sogrom-robear-e/assets/images/luckdc20.webp", by: "Aria plays", name: "Luck"
+      img: "modules/sogrom-table-tools/assets/images/luckdc20.webp", by: "Aria plays", name: "Luck"
     }, `the played card (${session.user})`);
   }
   assertEqual(await gm.eval(() => game.messages.size), before, "chat messages after playing the card");
   assertEqual(await usesLeft(player, "Luck"), 0, "Luck uses left, spent without a chat card");
 
-  await waitFor(player, () => !document.getElementById("robear-played-card"), null, "the played card to go", 6000);
+  await waitFor(player, () => !document.getElementById("stt-played-card"), null, "the played card to go", 6000);
 });
 
 test("played cards: clicking the card dismisses it early", async ({ player }) => {
@@ -607,8 +607,8 @@ test("played cards: clicking the card dismisses it early", async ({ player }) =>
   const id = await roll(player, "Aria", "skill");
   await forceDice(player, [d20(14)]);
   await cardsOffered(player, id, "Advantage");
-  await player.page.locator("#robear-played-card img").click({ timeout: 3000 });
-  await waitFor(player, () => !document.getElementById("robear-played-card"), null, "the played card to go", 1500);
+  await player.page.locator("#stt-played-card img").click({ timeout: 3000 });
+  await waitFor(player, () => !document.getElementById("stt-played-card"), null, "the played card to go", 1500);
 });
 
 test("played cards: up to three played together show side by side, and the rest wait their turn", async ({ gm, player }) => {
@@ -626,12 +626,12 @@ test("played cards: up to three played together show side by side, and the rest 
   // The updates may arrive in any order, so which card waits is whichever one was not shown first.
   let first;
   for ( const session of [gm, player] ) {
-    await waitFor(session, () => document.querySelectorAll("#robear-played-card .robear-played-card-entry").length === 3,
+    await waitFor(session, () => document.querySelectorAll("#stt-played-card .stt-played-card-entry").length === 3,
       null, `three cards on ${session.user}'s screen`, 3000);
     await session.page.waitForTimeout(300);
-    const shown = await session.eval(() => [...document.querySelectorAll("#robear-played-card .robear-played-card-entry")]
+    const shown = await session.eval(() => [...document.querySelectorAll("#stt-played-card .stt-played-card-entry")]
       .map(el => ({
-        name: el.querySelector(".robear-played-card-name").textContent,
+        name: el.querySelector(".stt-played-card-name").textContent,
         top: Math.round(el.querySelector("img").getBoundingClientRect().top)
       })));
     assertEqual(shown.length, 3, `cards on ${session.user}'s screen, with one waiting`);
@@ -643,11 +643,11 @@ test("played cards: up to three played together show side by side, and the rest 
   // Once the first three go, the fourth gets its turn.
   const waiting = cards.find(c => !first.includes(c));
   await waitFor(player, waiting => {
-    const names = [...document.querySelectorAll("#robear-played-card .robear-played-card-entry:not(.leaving)")]
-      .map(el => el.querySelector(".robear-played-card-name").textContent);
+    const names = [...document.querySelectorAll("#stt-played-card .stt-played-card-entry:not(.leaving)")]
+      .map(el => el.querySelector(".stt-played-card-name").textContent);
     return (names.length === 1) && (names[0] === waiting);
   }, waiting, "the waiting card to be shown", 5000);
-  await waitFor(player, () => !document.getElementById("robear-played-card"), null, "every played card to go", 5000);
+  await waitFor(player, () => !document.getElementById("stt-played-card"), null, "every played card to go", 5000);
 });
 
 test("played cards: the roll's note carries a thumbnail of the card, full size on hover", async ({ player }) => {
@@ -656,14 +656,14 @@ test("played cards: the roll's note carries a thumbnail of the card, full size o
   await forceDice(player, [[3, 8]]);
   await cardsOffered(player, id, "Inspiration + 1d8");
   await afterCard(player, id);
-  const art = player.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-card-log .robear-card-log-art`);
+  const art = player.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-card-log .stt-card-log-art`);
   await art.waitFor({ timeout: 5000 });
-  assertEqual(await art.getAttribute("src"), "modules/sogrom-robear-e/assets/images/inspiration-1d8-dc20.webp", "the thumbnail");
+  assertEqual(await art.getAttribute("src"), "modules/sogrom-table-tools/assets/images/inspiration-1d8-dc20.webp", "the thumbnail");
   assert((await art.getAttribute("data-tooltip-html")).includes("inspiration-1d8-dc20.webp"), "The thumbnail has no full-size art.");
   const loaded = await art.evaluate(img => img.complete && img.naturalWidth > 0);
   assert(loaded, "The thumbnail's art did not load.");
-  const note = await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-card-log`).textContent();
-  assertEqual(note.replace(/\s+/g, " ").trim(), "Inspiration + 1d8: added 1d8 (3): 5 + 3 = 8", "the note, with no RoBear-E label beside the thumbnail");
+  const note = await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-card-log`).textContent();
+  assertEqual(note.replace(/\s+/g, " ").trim(), "Inspiration + 1d8: added 1d8 (3): 5 + 3 = 8", "the note, with no Hero Cards label beside the thumbnail");
 });
 
 test("played cards: with the setting off, nothing is shown on screen, but the note keeps its thumbnail", async ({ gm, player }) => {
@@ -677,26 +677,26 @@ test("played cards: with the setting off, nothing is shown on screen, but the no
   await player.page.waitForTimeout(800);
   assertEqual(await playedCardOnScreen(player), null, "the played card on the player's screen");
   assertEqual(await playedCardOnScreen(gm), null, "the played card on the GM's screen");
-  assertEqual(await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-card-log-art`).count(), 1,
+  assertEqual(await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-card-log-art`).count(), 1,
     "the note's thumbnail");
 });
 
 test("played cards: a card played from the sheet is shown on screen, with a short record in chat", async ({ gm, player }) => {
   await useFeature(player);
-  const dialog = player.page.locator(".robear-card-dialog.application").last();
-  await dialog.locator(".robear-card-choice", { hasText: "Charger" }).click();
+  const dialog = player.page.locator(".stt-card-dialog.application").last();
+  await dialog.locator(".stt-card-choice", { hasText: "Charger" }).click();
   await player.page.locator(".application.activity-usage button", { hasText: "Use Ability" }).click();
 
   for ( const session of [gm, player] ) {
-    await waitFor(session, () => !!document.getElementById("robear-played-card"), null,
+    await waitFor(session, () => !!document.getElementById("stt-played-card"), null,
       `the played card on ${session.user}'s screen`, 5000);
     assertEqual(await playedCardOnScreen(session), {
-      img: "modules/sogrom-robear-e/assets/images/chargerdc20.webp", by: "Aria plays", name: "Charger"
+      img: "modules/sogrom-table-tools/assets/images/chargerdc20.webp", by: "Aria plays", name: "Charger"
     }, `the played card (${session.user})`);
   }
 
   // The chat record: the description, which holds the full card art, starts collapsed.
-  const record = player.page.locator("#chat .chat-log li.chat-message.robear-card-usage").last();
+  const record = player.page.locator("#chat .chat-log li.chat-message.stt-card-usage").last();
   await record.waitFor({ timeout: 5000 });
   const state = await record.evaluate(li => ({
     collapsed: li.querySelector(".card-description")?.classList.contains("collapsed"),
@@ -713,7 +713,7 @@ test("played cards: a card played from the sheet is shown on screen, with a shor
   // Clicking the header still opens the description.
   await record.locator(".card-header").click();
   await waitFor(player, () => {
-    const li = [...document.querySelectorAll("#chat .chat-log li.chat-message.robear-card-usage")].at(-1);
+    const li = [...document.querySelectorAll("#chat .chat-log li.chat-message.stt-card-usage")].at(-1);
     return !li.querySelector(".card-description").classList.contains("collapsed");
   }, null, "the description to open");
 });
@@ -725,9 +725,9 @@ test("cards: a roll keeps its note once no card is left to play on it", async ({
   await forceDice(player, [d20(20)]);
   await cardsOffered(player, id, "Luck");
   await afterCard(player, id);
-  await waitFor(player, id => !document.querySelector(`#chat .chat-log [data-message-id="${id}"] .robear-card-button`),
+  await waitFor(player, id => !document.querySelector(`#chat .chat-log [data-message-id="${id}"] .stt-card-button`),
     id, "the card button to go");
-  const note = await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .robear-card-log`).count();
+  const note = await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-card-log`).count();
   assertEqual(note, 1, "notes on the roll");
 });
 
@@ -738,19 +738,19 @@ test("played cards: a note's art is never run as HTML, on the screen or in its t
   await waitFor(gm, id => game.messages.has(id), id, "the message to reach the GM");
   // Written by hand, as only a player meddling from the console could.
   await player.eval(async ({ id, moduleId }) => {
-    const img = 'x" onerror="window.__robearInjected = true';
+    const img = 'x" onerror="window.__sttInjected = true';
     await game.messages.get(id).setFlag(moduleId, "log", [{ text: "Luck: rerolled", card: "<b>Luck</b>", img, by: "Aria" }]);
   }, { id, moduleId: MODULE_ID });
-  await waitFor(gm, () => !!document.getElementById("robear-played-card"), null, "the played card on the GM's screen");
+  await waitFor(gm, () => !!document.getElementById("stt-played-card"), null, "the played card on the GM's screen");
   await gm.page.waitForTimeout(500);
   const seen = await gm.eval(id => ({
-    injected: !!window.__robearInjected,
-    src: document.querySelector("#robear-played-card img")?.getAttribute("src"),
-    name: document.querySelector("#robear-played-card .robear-played-card-name")?.textContent,
-    tooltip: document.querySelector(`#chat .chat-log li[data-message-id="${id}"] .robear-card-log-art`)?.dataset.tooltipHtml
+    injected: !!window.__sttInjected,
+    src: document.querySelector("#stt-played-card img")?.getAttribute("src"),
+    name: document.querySelector("#stt-played-card .stt-played-card-name")?.textContent,
+    tooltip: document.querySelector(`#chat .chat-log li[data-message-id="${id}"] .stt-card-log-art`)?.dataset.tooltipHtml
   }), id);
   assertEqual(seen.injected, false, "script run from the note's art");
-  assertEqual(seen.src, 'x" onerror="window.__robearInjected = true', "the played card's art, kept as plain text");
+  assertEqual(seen.src, 'x" onerror="window.__sttInjected = true', "the played card's art, kept as plain text");
   assertEqual(seen.name, "<b>Luck</b>", "the played card's name, kept as plain text");
   assert(seen.tooltip?.startsWith('<img src="x&quot; onerror'), `The note's tooltip wasn't escaped: ${seen.tooltip}`);
 });
@@ -765,9 +765,9 @@ test("played cards: a card played on a roll the player can't see isn't shown to 
     const img = `modules/${moduleId}/assets/images/luckdc20.webp`;
     await game.messages.get(id).setFlag(moduleId, "log", [{ text: "Luck: rerolled", card: "Luck", img, by: "Goblin" }]);
   }, { id, moduleId: MODULE_ID });
-  await waitFor(gm, () => !!document.getElementById("robear-played-card"), null, "the played card on the GM's screen");
+  await waitFor(gm, () => !!document.getElementById("stt-played-card"), null, "the played card on the GM's screen");
   await player.page.waitForTimeout(500);
-  assertEqual(await player.eval(() => !!document.getElementById("robear-played-card")), false, "the card on the player's screen");
+  assertEqual(await player.eval(() => !!document.getElementById("stt-played-card")), false, "the card on the player's screen");
 });
 
 /**
@@ -806,7 +806,7 @@ async function summaryMarks(session, { usage, save }) {
   const dice = session.page.locator(
     `#chat .chat-log [data-message-id="${usage}"] .card-summary[data-message-id="${save}"] .dice-roll`);
   await dice.waitFor({ timeout: 5000 });
-  return dice.evaluate(el => [1, 20].filter(n => el.matches(`.robear-natural-${n}, :has(.robear-natural-${n})`)));
+  return dice.evaluate(el => [1, 20].filter(n => el.matches(`.stt-natural-${n}, :has(.stt-natural-${n})`)));
 }
 
 test("natural 1s and 20s: a save summarised inside a spell's card is ringed too", async ({ gm, player }) => {
@@ -830,17 +830,17 @@ test("natural 1s and 20s: the ring setting exists, is on by default, and turning
 
   await forceDice(player, [d20(20)]);
   const attack = await roll(player, "Aria", "attack");
-  await waitFor(player, id => !!document.querySelector(`#chat .chat-log [data-message-id="${id}"] .robear-natural-20`),
+  await waitFor(player, id => !!document.querySelector(`#chat .chat-log [data-message-id="${id}"] .stt-natural-20`),
     attack, "the attack's ring");
 
   await setSetting(gm, player, "markNaturals", false);
-  await waitFor(player, id => !document.querySelector(`#chat .chat-log [data-message-id="${id}"] .robear-natural-20`),
+  await waitFor(player, id => !document.querySelector(`#chat .chat-log [data-message-id="${id}"] .stt-natural-20`),
     attack, "the attack's ring to go once the setting is off");
 
   for ( const kind of ["save", "attack"] ) {
     await forceDice(player, [d20(20)]);
     const id = await roll(player, "Aria", kind);
-    const marked = player.page.locator(`#chat .chat-log [data-message-id="${id}"] :is(.robear-natural-1, .robear-natural-20)`);
+    const marked = player.page.locator(`#chat .chat-log [data-message-id="${id}"] :is(.stt-natural-1, .stt-natural-20)`);
     await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .dice-roll`).first().waitFor({ timeout: 5000 });
     assertEqual(await marked.count(), 0, `rings on a ${kind} with the setting off`);
   }

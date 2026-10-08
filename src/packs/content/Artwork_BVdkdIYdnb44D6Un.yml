@@ -18,7 +18,7 @@ pages:
     video:
       controls: true
       volume: 0.5
-    src: modules/sogrom-robear-e/assets/images/advantagedc20.webp
+    src: modules/sogrom-table-tools/assets/images/advantagedc20.webp
     category: null
     ownership:
       default: -1
@@ -49,7 +49,7 @@ pages:
     video:
       controls: true
       volume: 0.5
-    src: modules/sogrom-robear-e/assets/images/chargerdc20.webp
+    src: modules/sogrom-table-tools/assets/images/chargerdc20.webp
     category: null
     ownership:
       default: -1
@@ -57,7 +57,7 @@ pages:
     flags: {}
     _stats:
       compendiumSource: null
-      duplicateSource: Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.kUmJLCna5paHGXPb
+      duplicateSource: Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.kUmJLCna5paHGXPb
       exportSource: null
       coreVersion: '13.344'
       systemId: dnd5e
@@ -84,7 +84,7 @@ pages:
     video:
       controls: true
       volume: 0.5
-    src: modules/sogrom-robear-e/assets/images/relentlessdc20.webp
+    src: modules/sogrom-table-tools/assets/images/relentlessdc20.webp
     category: null
     ownership:
       default: -1
@@ -113,17 +113,17 @@ pages:
     text:
       format: 1
       content: >-
-        <ul><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.3UmjWskjiAhYvXmo]{Relentless}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.Lhs0clYrsIkgrpsE]{Reaction
-        Surge}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.vT9f82NznQJpiQFP]{Indomitable}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.TTBtpUOLQvWTpd47]{Extra
-        Strike}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.1olSJkroTSqTWdey]{Charger}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.kUmJLCna5paHGXPb]{Advantage}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.LiLYG9ekrRw3bQph]{Luck}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.LiLYG9ekrRw3bQph]{Luck}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.gFZbWI3XhrnvwFxk]{Mind's
-        Eye}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.gFZbWI3XhrnvwFxk]{Mind's
-        Eye}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.DTI3JvisO4gEuo8j]{Inspiration
+        <ul><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.3UmjWskjiAhYvXmo]{Relentless}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.Lhs0clYrsIkgrpsE]{Reaction
+        Surge}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.vT9f82NznQJpiQFP]{Indomitable}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.TTBtpUOLQvWTpd47]{Extra
+        Strike}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.1olSJkroTSqTWdey]{Charger}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.kUmJLCna5paHGXPb]{Advantage}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.LiLYG9ekrRw3bQph]{Luck}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.LiLYG9ekrRw3bQph]{Luck}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.gFZbWI3XhrnvwFxk]{Mind's
+        Eye}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.gFZbWI3XhrnvwFxk]{Mind's
+        Eye}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.DTI3JvisO4gEuo8j]{Inspiration
         -
-        1d6}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.5xzTWpbOHtp9sFos]{Inspiration
+        1d6}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.5xzTWpbOHtp9sFos]{Inspiration
         -
-        1d8}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.SMKq7WxgtybcFQv7]{Inspiration
+        1d8}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.SMKq7WxgtybcFQv7]{Inspiration
         -
-        1d10}</p></li><li><p>@UUID[Compendium.sogrom-robear-e.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.1dKe60pvTreDPlyu]{Divine
+        1d10}</p></li><li><p>@UUID[Compendium.sogrom-table-tools.content.JournalEntry.BVdkdIYdnb44D6Un.JournalEntryPage.1dKe60pvTreDPlyu]{Divine
         Intervention}</p></li></ul>
     video:
       controls: true
@@ -160,7 +160,7 @@ pages:
     video:
       controls: true
       volume: 0.5
-    src: modules/sogrom-robear-e/assets/images/reactionsurge.webp
+    src: modules/sogrom-table-tools/assets/images/reactionsurge.webp
     category: null
     ownership:
       default: -1
@@ -194,7 +194,7 @@ pages:
     video:
       controls: true
       volume: 0.5
-    src: modules/sogrom-robear-e/assets/images/indomitabledc20.webp
+    src: modules/sogrom-table-tools/assets/images/indomitabledc20.webp
     category: null
     ownership:
       default: -1
@@ -226,7 +226,7 @@ pages:
     video:
       controls: true
       volume: 0.5
-    src: modules/sogrom-robear-e/assets/images/extrastrikedc20.webp
+    src: modules/sogrom-table-tools/assets/images/extrastrikedc20.webp
     category: null
     ownership:
       default: -1
@@ -260,7 +260,7 @@ pages:
     video:
       controls: true
       volume: 0.5
-    src: modules/sogrom-robear-e/assets/images/luckdc20.webp
+    src: modules/sogrom-table-tools/assets/images/luckdc20.webp
     category: null
     ownership:
       default: -1
@@ -294,7 +294,7 @@ pages:
     video:
       controls: true
       volume: 0.5
-    src: modules/sogrom-robear-e/assets/images/mindseye.webp
+    src: modules/sogrom-table-tools/assets/images/mindseye.webp
     category: null
     ownership:
       default: -1
@@ -326,7 +326,7 @@ pages:
     video:
       controls: true
       volume: 0.5
-    src: modules/sogrom-robear-e/assets/images/inspiration-1d6-dc20.webp
+    src: modules/sogrom-table-tools/assets/images/inspiration-1d6-dc20.webp
     category: null
     ownership:
       default: -1
@@ -358,7 +358,7 @@ pages:
     video:
       controls: true
       volume: 0.5
-    src: modules/sogrom-robear-e/assets/images/inspiration-1d8-dc20.webp
+    src: modules/sogrom-table-tools/assets/images/inspiration-1d8-dc20.webp
     category: null
     ownership:
       default: -1
@@ -390,7 +390,7 @@ pages:
     video:
       controls: true
       volume: 0.5
-    src: modules/sogrom-robear-e/assets/images/inspiration-1d10-dc20.webp
+    src: modules/sogrom-table-tools/assets/images/inspiration-1d10-dc20.webp
     category: null
     ownership:
       default: -1
@@ -422,7 +422,7 @@ pages:
     video:
       controls: true
       volume: 0.5
-    src: modules/sogrom-robear-e/assets/images/divineintervention.webp
+    src: modules/sogrom-table-tools/assets/images/divineintervention.webp
     category: null
     ownership:
       default: -1

@@ -1,11 +1,11 @@
 /**
- * RoBear-E Roll Requests: the GM asks for rolls from a chat card, and players roll from it.
- * Every roll is an ordinary dnd5e roll message tagged with the request, so RoBear-E Cards can be played on it and the
+ * Sogrom's Table Tools Roll Requests: the GM asks for rolls from a chat card, and players roll from it.
+ * Every roll is an ordinary dnd5e roll message tagged with the request, so Hero Cards can be played on it and the
  * request card reflects the changed total. Results are never stored on the request: they are worked out from the
  * tagged roll messages each time the card renders, so deleting a roll message lets that actor roll again.
  */
 
-import { MODULE_ID, createCardButton, getCardOptions, localize, renderLog, reportError } from "./robear-cards.mjs";
+import { MODULE_ID, createCardButton, getCardOptions, localize, renderLog, reportError } from "./hero-cards.mjs";
 import { createIndomitableButton } from "./class-features.mjs";
 import RollRequestConfig from "./roll-request-config.mjs";
 
@@ -18,46 +18,46 @@ import RollRequestConfig from "./roll-request-config.mjs";
  */
 export const MODES = {
   standard: {
-    label: "ROBEAR.Request.Modes.Standard.Label",
+    label: "STT.Request.Modes.Standard.Label",
     icon: "fa-solid fa-dice-d20",
-    hint: "ROBEAR.Request.Modes.Standard.Hint",
+    hint: "STT.Request.Modes.Standard.Hint",
     dice: ["d20", "d6", "d8", "d10", "d12", "d100"],
     choices: true,
     choiceDCs: true
   },
   team: {
-    label: "ROBEAR.Request.Modes.Team.Label",
+    label: "STT.Request.Modes.Team.Label",
     icon: "fa-solid fa-people-group",
-    hint: "ROBEAR.Request.Modes.Team.Hint",
+    hint: "STT.Request.Modes.Team.Hint",
     choices: true
   },
   challenge: {
-    label: "ROBEAR.Request.Modes.Challenge.Label",
+    label: "STT.Request.Modes.Challenge.Label",
     icon: "fa-solid fa-layer-group",
-    hint: "ROBEAR.Request.Modes.Challenge.Hint",
+    hint: "STT.Request.Modes.Challenge.Hint",
     choices: true,
     choiceDCs: true
   },
   rolloff: {
-    label: "ROBEAR.Request.Modes.RollOff.Label",
+    label: "STT.Request.Modes.RollOff.Label",
     icon: "fa-solid fa-scale-balanced",
-    hint: "ROBEAR.Request.Modes.RollOff.Hint",
+    hint: "STT.Request.Modes.RollOff.Hint",
     contest: true,
-    sides: ["ROBEAR.Request.Sides.Challenger", "ROBEAR.Request.Sides.Opponent"],
+    sides: ["STT.Request.Sides.Challenger", "STT.Request.Sides.Opponent"],
     dice: ["d20", "d6", "d8", "d10", "d12", "d100"]
   },
   versus: {
-    label: "ROBEAR.Request.Modes.Versus.Label",
+    label: "STT.Request.Modes.Versus.Label",
     icon: "fa-solid fa-people-arrows",
-    hint: "ROBEAR.Request.Modes.Versus.Hint",
+    hint: "STT.Request.Modes.Versus.Hint",
     contest: true,
-    sides: ["ROBEAR.Request.Sides.Players", "ROBEAR.Request.Sides.NPCs"],
+    sides: ["STT.Request.Sides.Players", "STT.Request.Sides.NPCs"],
     dice: ["d20"]
   },
   divine: {
-    label: "ROBEAR.Request.Modes.Divine.Label",
+    label: "STT.Request.Modes.Divine.Label",
     icon: "fa-solid fa-hands-praying",
-    hint: "ROBEAR.Request.Modes.Divine.Hint"
+    hint: "STT.Request.Modes.Divine.Hint"
   }
 };
 
@@ -136,16 +136,16 @@ Hooks.on("deleteChatMessage", onDeleteChatMessage);
  */
 function registerSettings() {
   game.settings.register(MODULE_ID, "showDCDefault", {
-    name: "ROBEAR.Settings.ShowDCDefault.Name",
-    hint: "ROBEAR.Settings.ShowDCDefault.Hint",
+    name: "STT.Settings.ShowDCDefault.Name",
+    hint: "STT.Settings.ShowDCDefault.Hint",
     scope: "world",
     config: true,
     type: Boolean,
     default: false
   });
   game.settings.register(MODULE_ID, "attachRolls", {
-    name: "ROBEAR.Settings.AttachRolls.Name",
-    hint: "ROBEAR.Settings.AttachRolls.Hint",
+    name: "STT.Settings.AttachRolls.Name",
+    hint: "STT.Settings.AttachRolls.Hint",
     scope: "world",
     config: true,
     type: Boolean,
@@ -189,12 +189,12 @@ export function openRollRequest() {
  */
 function onRenderChatInput(_app, elements) {
   const controls = elements["#chat-controls"]?.querySelector(".control-buttons");
-  if ( !game.user.isGM || !controls || controls.querySelector(".robear-request-control") ) return;
+  if ( !game.user.isGM || !controls || controls.querySelector(".stt-request-control") ) return;
   const button = document.createElement("button");
   button.type = "button";
-  button.className = "ui-control icon fa-solid fa-anchor fa-rotate-90 robear-request-control";
-  button.dataset.tooltipText = localize("ROBEAR.Request.WindowTitle");
-  button.setAttribute("aria-label", localize("ROBEAR.Request.WindowTitle"));
+  button.className = "ui-control icon fa-solid fa-anchor fa-rotate-90 stt-request-control";
+  button.dataset.tooltipText = localize("STT.Request.WindowTitle");
+  button.setAttribute("aria-label", localize("STT.Request.WindowTitle"));
   button.addEventListener("click", openRollRequest);
   controls.prepend(button);
 }
@@ -207,10 +207,10 @@ function onRenderChatInput(_app, elements) {
  */
 function onGetSceneControlButtons(controls) {
   if ( !game.user.isGM || !controls.tokens ) return;
-  controls.tokens.tools.robearRequest = {
-    name: "robearRequest",
+  controls.tokens.tools.sttRequest = {
+    name: "sttRequest",
     order: Object.keys(controls.tokens.tools).length + 1,
-    title: "ROBEAR.Request.WindowTitle",
+    title: "STT.Request.WindowTitle",
     icon: "fa-solid fa-anchor fa-rotate-90",
     button: true,
     onChange: openRollRequest
@@ -229,7 +229,7 @@ function onPreDeleteChatMessage(message) {
   if ( game.user.isGM ) return;
   const requestId = message.getFlag(MODULE_ID, "requestRoll")?.request;
   if ( !requestId || !game.messages.has(requestId) ) return;
-  ui.notifications.warn(localize("ROBEAR.Request.DeleteGMOnly"));
+  ui.notifications.warn(localize("STT.Request.DeleteGMOnly"));
   return false;
 }
 
@@ -323,13 +323,13 @@ function refreshRequest(message, changes) {
  */
 export async function createRequest(request) {
   // Only a GM's message is drawn as a request (see getRequest), so a player's would post as a plain message.
-  if ( !game.user.isGM ) throw new Error(localize("ROBEAR.Request.Invalid.GMOnly"));
+  if ( !game.user.isGM ) throw new Error(localize("STT.Request.Invalid.GMOnly"));
   request = withDefaults(request);
   validateRequest(request);
   // Only the rolls the mode uses are kept: the card would otherwise offer a Roll button for each extra one.
   request.parts = request.parts.slice(0, getPartCount(request));
   return ChatMessage.create({
-    speaker: { alias: "RoBear-E" },
+    speaker: { alias: "Sogrom's Table Tools" },
     content: `<p>${foundry.utils.escapeHTML(getRequestTitle(request))}</p>`,
     flags: { [MODULE_ID]: { request } }
   });
@@ -375,55 +375,55 @@ export function validateRequest(request) {
   const check = (ok, key, data) => {
     if ( !ok ) throw new Error(localize(key, data));
   };
-  check(request?.mode in MODES, "ROBEAR.Request.Invalid.Mode", { mode: request?.mode });
+  check(request?.mode in MODES, "STT.Request.Invalid.Mode", { mode: request?.mode });
   const { actors } = request;
   check(Array.isArray(actors) && actors.every(uuid => uuid && (typeof uuid === "string"))
-    && (new Set(actors).size === actors.length), "ROBEAR.Request.Invalid.Actors");
-  check(actors.length, "ROBEAR.Request.Invalid.NoActors");
-  check(["public", "gm"].includes(request.rollMode), "ROBEAR.Request.Invalid.RollMode", { rollMode: request.rollMode });
+    && (new Set(actors).size === actors.length), "STT.Request.Invalid.Actors");
+  check(actors.length, "STT.Request.Invalid.NoActors");
+  check(["public", "gm"].includes(request.rollMode), "STT.Request.Invalid.RollMode", { rollMode: request.rollMode });
 
   const contest = isContest(request);
   if ( contest ) {
     const { sides } = request;
     check(Array.isArray(sides) && (sides.length === 2) && sides.every(s => Array.isArray(s) && s.length),
-      "ROBEAR.Request.Invalid.EmptySide");
+      "STT.Request.Invalid.EmptySide");
     // A roll-off is scored by each side's one roll, so a second actor on a side would never count.
-    check((request.mode !== "rolloff") || sides.every(s => s.length === 1), "ROBEAR.Request.Invalid.RollOffSide");
+    check((request.mode !== "rolloff") || sides.every(s => s.length === 1), "STT.Request.Invalid.RollOffSide");
     // Results are only worked out for the request's actors, so anyone on a side must be one of them.
-    check(sides.flat().every(uuid => request.actors.includes(uuid)), "ROBEAR.Request.Invalid.SideNotActor");
+    check(sides.flat().every(uuid => request.actors.includes(uuid)), "STT.Request.Invalid.SideNotActor");
   }
 
   const count = getPartCount(request);
   const parts = Array.isArray(request.parts) ? request.parts.slice(0, count) : [];
-  check(parts.length >= count, "ROBEAR.Request.Invalid.MissingRoll");
+  check(parts.length >= count, "STT.Request.Invalid.MissingRoll");
   for ( const part of parts ) {
     const alternatives = part?.alternatives ?? [];
     check(Array.isArray(alternatives) && (!alternatives.length || MODES[request.mode].choices)
       && (alternatives.length < MAX_CHOICES) && alternatives.every(a => a && (typeof a === "object")),
-    "ROBEAR.Request.Invalid.Choices", { max: MAX_CHOICES });
+    "STT.Request.Invalid.Choices", { max: MAX_CHOICES });
     for ( const { type, key } of getChoices(part ?? {}) ) {
-      check((type in DICE) || PART_TYPES.includes(type), "ROBEAR.Request.Invalid.Roll", { type });
+      check((type in DICE) || PART_TYPES.includes(type), "STT.Request.Invalid.Roll", { type });
       const keys = getPartKeys(type);
-      if ( keys ) check(keys.includes(key), "ROBEAR.Request.Invalid.Key", { type, key, keys: keys.join(", ") });
+      if ( keys ) check(keys.includes(key), "STT.Request.Invalid.Key", { type, key, keys: keys.join(", ") });
     }
     // A Team Challenge averages its rolls against one DC, so its alternatives can't have their own.
-    check(MODES[request.mode].choiceDCs || alternatives.every(a => !("dc" in a)), "ROBEAR.Request.Invalid.ChoiceDC");
+    check(MODES[request.mode].choiceDCs || alternatives.every(a => !("dc" in a)), "STT.Request.Invalid.ChoiceDC");
     for ( const dc of [part.dc, ...alternatives.map(a => a.dc)] ) {
-      check((dc ?? null) === null || Number.isNumeric(dc), "ROBEAR.Request.Invalid.DC", { dc });
+      check((dc ?? null) === null || Number.isNumeric(dc), "STT.Request.Invalid.DC", { dc });
     }
   }
 
   const between = (n, min, max) => Number.isInteger(n) && (n >= min) && (n <= max);
   if ( request.mode === "challenge" ) {
     const { successes } = request;
-    check(between(successes, 1, CHALLENGE_PARTS), "ROBEAR.Request.Invalid.Successes", { successes, total: CHALLENGE_PARTS });
+    check(between(successes, 1, CHALLENGE_PARTS), "STT.Request.Invalid.Successes", { successes, total: CHALLENGE_PARTS });
   }
   if ( request.mode === "divine" ) {
     const { range } = request;
     const { min, max } = DIVINE_RANGE;
-    check(between(range, min, max), "ROBEAR.Request.Invalid.Range", { range, min, max });
+    check(between(range, min, max), "STT.Request.Invalid.Range", { range, min, max });
     // The picked numbers are 1 to 100, so only a d100 can land in them.
-    check(parts[0].type === "d100", "ROBEAR.Request.Invalid.DivineRoll", { type: parts[0].type });
+    check(parts[0].type === "d100", "STT.Request.Invalid.DivineRoll", { type: parts[0].type });
   }
 }
 
@@ -461,11 +461,11 @@ function getPartKeys(type) {
  * @returns {string}  Name of the roll, e.g. "Athletics Check", "Dexterity Save" or "d100".
  */
 export function getPartLabel({ type, key }) {
-  const check = name => localize("ROBEAR.Request.Labels.Check", { name });
+  const check = name => localize("STT.Request.Labels.Check", { name });
   switch ( type ) {
     case "skill": return check(CONFIG.DND5E.skills[key]?.label ?? key);
     case "check": return check(CONFIG.DND5E.abilities[key]?.label ?? key);
-    case "save": return localize("ROBEAR.Request.Labels.Save", { name: CONFIG.DND5E.abilities[key]?.label ?? key });
+    case "save": return localize("STT.Request.Labels.Save", { name: CONFIG.DND5E.abilities[key]?.label ?? key });
     case "tool": return check(dnd5e.documents.Trait.keyLabel(key, { trait: "tool" }) ?? key);
   }
   return DICE[type]?.label ?? type;
@@ -540,7 +540,7 @@ export function getRequestTitle(request) {
   const part = request.parts[0];
   if ( part.alternatives?.length ) return getChoiceLabel(part);
   const label = getPartLabel(part);
-  return part.type in DICE ? localize("ROBEAR.Request.Labels.DieRoll", { die: label }) : label;
+  return part.type in DICE ? localize("STT.Request.Labels.DieRoll", { die: label }) : label;
 }
 
 /* -------------------------------------------- */
@@ -553,12 +553,12 @@ export function getRequestTitle(request) {
  */
 export function getRequestSubtitle(request, dc=null) {
   if ( request.mode === "challenge" ) {
-    return localize("ROBEAR.Request.Subtitle.Challenge", { count: request.successes, total: request.parts.length });
+    return localize("STT.Request.Subtitle.Challenge", { count: request.successes, total: request.parts.length });
   }
-  if ( isContest(request) ) return request.parts.map(getPartLabel).join(` ${localize("ROBEAR.Request.Versus")} `);
+  if ( isContest(request) ) return request.parts.map(getPartLabel).join(` ${localize("STT.Request.Versus")} `);
   if ( request.mode === "divine" ) {
-    if ( request.range === 1 ) return localize("ROBEAR.Request.Subtitle.DivineOne");
-    return localize("ROBEAR.Request.Subtitle.Divine", { count: request.range });
+    if ( request.range === 1 ) return localize("STT.Request.Subtitle.DivineOne");
+    return localize("STT.Request.Subtitle.Divine", { count: request.range });
   }
   const label = localize(MODES[request.mode].label);
   // Each choice's DC is listed with it, under the header.
@@ -576,7 +576,7 @@ export function getRequestSubtitle(request, dc=null) {
  */
 export function getDCText(request, dc) {
   if ( !Number.isNumeric(dc) ) return "";
-  return localize("ROBEAR.Request.DC", { dc: request.showDC || game.user.isGM ? dc : "?" });
+  return localize("STT.Request.DC", { dc: request.showDC || game.user.isGM ? dc : "?" });
 }
 
 /* -------------------------------------------- */
@@ -757,12 +757,12 @@ export function poolTeamRolls(entries) {
   lows = Math.min(lows, sorted.length - 1 - highs);
 
   const removed = new Map();
-  const byName = e => fromUuidSync(e.uuid)?.name ?? localize("ROBEAR.Common.Someone");
+  const byName = e => fromUuidSync(e.uuid)?.name ?? localize("STT.Common.Someone");
   sorted.slice(sorted.length - highs).reverse().forEach((e, i) => {
-    removed.set(e.uuid, localize("ROBEAR.Request.Team.RemovedHighest", { name: byName(fumbles[i]) }));
+    removed.set(e.uuid, localize("STT.Request.Team.RemovedHighest", { name: byName(fumbles[i]) }));
   });
   sorted.slice(0, lows).forEach((e, i) => {
-    removed.set(e.uuid, localize("ROBEAR.Request.Team.RemovedLowest", { name: byName(crits[i]) }));
+    removed.set(e.uuid, localize("STT.Request.Team.RemovedLowest", { name: byName(crits[i]) }));
   });
 
   const pool = sorted.filter(e => !removed.has(e.uuid));
@@ -844,13 +844,13 @@ function onRenderChatMessage(message, html) {
   // message's hidden attribute when redrawing it, so it would stay hidden once its request is deleted.
   const requestRoll = message.getFlag(MODULE_ID, "requestRoll");
   if ( getRequest(game.messages.get(requestRoll?.request)) && game.settings.get(MODULE_ID, "attachRolls") ) {
-    html.classList.add("robear-attached-roll");
+    html.classList.add("stt-attached-roll");
     return;
   }
   const request = getRequest(message);
   const content = html.querySelector(".message-content");
   if ( !request || !content ) return;
-  html.classList.add("robear-request-message");
+  html.classList.add("stt-request-message");
   content.replaceChildren(renderRequest(message, request));
 }
 
@@ -864,7 +864,7 @@ function onRenderChatMessage(message, html) {
 function renderRequest(message, request) {
   const results = getResults(message);
   const card = document.createElement("div");
-  card.className = `robear-request mode-${request.mode}`;
+  card.className = `stt-request mode-${request.mode}`;
   card.append(renderRequestHeader(message, request));
 
   if ( isContest(request) ) {
@@ -875,7 +875,7 @@ function renderRequest(message, request) {
   // A skill challenge lists its rolls, and a standard roll whose choices have DCs of their own lists those.
   if ( (request.mode === "challenge") || hasChoiceDCs(request, request.parts[0]) ) {
     const steps = document.createElement(request.mode === "challenge" ? "ol" : "ul");
-    steps.className = "robear-request-steps";
+    steps.className = "stt-request-steps";
     request.parts.forEach((_part, index) => {
       const step = document.createElement("li");
       step.append(...renderPartDCs(message, request, index));
@@ -887,7 +887,7 @@ function renderRequest(message, request) {
   // Players are only shown which rolls were removed from the pool once they can see the summary too.
   const team = getRowGroup(message, request, results);
   const list = document.createElement("ul");
-  list.className = "robear-request-actors";
+  list.className = "stt-request-actors";
   for ( const uuid of request.actors ) {
     list.append(renderActorRow(message, request, uuid, results.get(uuid), { team }));
   }
@@ -909,15 +909,15 @@ function renderRequest(message, request) {
 export function renderHeader(icon, title, subtitle) {
   const { escapeHTML } = foundry.utils;
   const header = document.createElement("header");
-  header.className = "robear-request-header";
+  header.className = "stt-request-header";
   header.innerHTML = `
     <i class="${escapeHTML(icon)}" inert></i>
     <div>
       <h3>${escapeHTML(title)}</h3>
-      <span class="robear-request-subtitle"></span>
+      <span class="stt-request-subtitle"></span>
     </div>
   `;
-  header.querySelector(".robear-request-subtitle").append(...[subtitle].flat());
+  header.querySelector(".stt-request-subtitle").append(...[subtitle].flat());
   return header;
 }
 
@@ -951,7 +951,7 @@ function renderPartDCs(message, request, index) {
   const dc = choice => (game.user.isGM ? renderDCButton(message, request, index, choice)
     : textElement("span", getDCText(request, getChoiceDC(part, choice))));
   if ( !hasChoiceDCs(request, part) ) return [getChoiceLabel(part), " ", dc(0)];
-  const or = ` ${localize("ROBEAR.Request.Config.Or")} `;
+  const or = ` ${localize("STT.Request.Config.Or")} `;
   return getChoices(part).flatMap((roll, choice) => [...(choice ? [or] : []), getPartLabel(roll), " ", dc(choice)]);
 }
 
@@ -967,10 +967,10 @@ function renderPartDCs(message, request, index) {
 function renderDCButton(message, request, part, choice=0) {
   const button = document.createElement("button");
   button.type = "button";
-  button.className = "robear-request-dc-edit";
+  button.className = "stt-request-dc-edit";
   button.textContent = getDCText(request, getChoiceDC(request.parts[part], choice))
-    || localize("ROBEAR.Request.EditDC.None");
-  button.dataset.tooltipText = localize("ROBEAR.Request.EditDC.Tooltip");
+    || localize("STT.Request.EditDC.None");
+  button.dataset.tooltipText = localize("STT.Request.EditDC.Tooltip");
   onAsyncClick(button, () => changeDC(message, part, choice));
   return button;
 }
@@ -990,27 +990,27 @@ export async function changeDC(message, part, choice=0) {
   const required = request.mode === "challenge";
   const { escapeHTML } = foundry.utils;
   const data = await foundry.applications.api.DialogV2.input({
-    classes: ["robear-card-dialog", "robear-dc-dialog"],
-    window: { title: localize("ROBEAR.Request.EditDC.Title"), icon: "fa-solid fa-bullseye" },
+    classes: ["stt-card-dialog", "stt-dc-dialog"],
+    window: { title: localize("STT.Request.EditDC.Title"), icon: "fa-solid fa-bullseye" },
     position: { width: 320 },
     content: `
-      <p class="robear-card-hint">${escapeHTML(localize(required
-        ? "ROBEAR.Request.EditDC.HintRequired" : "ROBEAR.Request.EditDC.Hint"))}</p>
+      <p class="stt-card-hint">${escapeHTML(localize(required
+        ? "STT.Request.EditDC.HintRequired" : "STT.Request.EditDC.Hint"))}</p>
       <div class="form-group">
-        <label>${escapeHTML(localize("ROBEAR.Request.Config.DC"))}</label>
+        <label>${escapeHTML(localize("STT.Request.Config.DC"))}</label>
         <div class="form-fields">
           <input type="number" name="dc" value="${current ?? ""}" min="0" step="1" ${required ? "required" : ""} autofocus>
         </div>
       </div>
     `,
-    ok: { label: "ROBEAR.Request.EditDC.Save", icon: "fa-solid fa-check" },
+    ok: { label: "STT.Request.EditDC.Save", icon: "fa-solid fa-check" },
     rejectClose: false
   });
   // The request may have been deleted while the dialog was open.
   if ( !data || !game.messages.has(message.id) ) return;
   const dc = Number.isNumeric(data.dc) ? Number(data.dc) : null;
   if ( (dc === null) && required ) {
-    ui.notifications.warn(localize("ROBEAR.Request.Config.ChallengeDC"));
+    ui.notifications.warn(localize("STT.Request.Config.ChallengeDC"));
     return;
   }
   // Read the request again, in case it changed while the dialog was open.
@@ -1040,22 +1040,22 @@ function renderContest(card, message, request, results) {
   const names = MODES[request.mode].sides.map(side => localize(side));
 
   const sides = document.createElement("div");
-  sides.className = "robear-request-sides";
+  sides.className = "stt-request-sides";
   request.sides.forEach((uuids, side) => {
     const group = groups[side];
     const block = document.createElement("section");
-    block.className = "robear-request-side";
+    block.className = "stt-request-side";
     if ( winner !== undefined ) block.classList.add(winner === side ? "success" : (winner === null ? "tie" : "failure"));
     const header = document.createElement("header");
     header.append(textElement("h4", names[side]), textElement("span", getPartLabel(request.parts[side])));
     if ( pooled && isSettled(group) ) {
       const score = textElement("span", group.score);
-      score.className = "robear-request-score";
+      score.className = "stt-request-score";
       setExactTooltip(score, group);
       header.append(score);
     }
     const list = document.createElement("ul");
-    list.className = "robear-request-actors";
+    list.className = "stt-request-actors";
     block.append(header, list);
     for ( const uuid of uuids ) {
       list.append(renderActorRow(message, request, uuid, results.get(uuid), { team: pooled ? group : null, side }));
@@ -1063,24 +1063,24 @@ function renderContest(card, message, request, results) {
     sides.append(block);
     if ( side === 0 ) {
       const divider = document.createElement("div");
-      divider.className = "robear-request-versus";
-      divider.textContent = localize("ROBEAR.Request.Versus");
+      divider.className = "stt-request-versus";
+      divider.textContent = localize("STT.Request.Versus");
       sides.append(divider);
     }
   });
   card.append(sides);
 
   const summary = document.createElement("footer");
-  summary.className = "robear-request-summary";
+  summary.className = "stt-request-summary";
   if ( winner !== undefined ) {
     const label = side => (pooled ? names[side] : fromUuidSync(request.sides[side][0])?.name) ?? names[side];
     const scores = `${label(0)} ${a} · ${label(1)} ${b}`;
-    const verdict = winner === null ? localize("ROBEAR.Request.Contest.Tie")
-      : localize(pooled ? "ROBEAR.Request.Contest.TeamWins" : "ROBEAR.Request.Contest.Wins", { name: label(winner) });
+    const verdict = winner === null ? localize("STT.Request.Contest.Tie")
+      : localize(pooled ? "STT.Request.Contest.TeamWins" : "STT.Request.Contest.Wins", { name: label(winner) });
     summary.classList.add(winner === null ? "tie" : "success");
     summary.append(textElement("span", scores), textElement("strong", verdict));
   } else if ( groups.every(g => g.complete) ) {
-    summary.append(textElement("span", localize("ROBEAR.Request.Contest.Hidden")));
+    summary.append(textElement("span", localize("STT.Request.Contest.Hidden")));
   }
   const reveal = game.user.isGM ? renderRivalRevealButton(request, results) : null;
   if ( reveal ) summary.append(reveal);
@@ -1096,7 +1096,7 @@ function renderContest(card, message, request, results) {
  */
 function setExactTooltip(element, group) {
   if ( group.exact === group.score ) return;
-  element.dataset.tooltipText = localize("ROBEAR.Request.Team.ExactAverage", { average: group.exact.toFixed(2) });
+  element.dataset.tooltipText = localize("STT.Request.Team.ExactAverage", { average: group.exact.toFixed(2) });
 }
 
 /* -------------------------------------------- */
@@ -1115,14 +1115,14 @@ export function renderActorRow(message, request, uuid, results, { team=null, sid
   const actor = fromUuidSync(uuid);
   const challenge = request.mode === "challenge";
   const row = document.createElement("li");
-  row.className = "robear-request-actor";
+  row.className = "stt-request-actor";
   const { escapeHTML } = foundry.utils;
   row.innerHTML = `
     <img src="${escapeHTML(actor?.img ?? CONST.DEFAULT_TOKEN)}" alt="">
-    <span class="robear-request-name">${escapeHTML(actor?.name ?? localize("ROBEAR.Common.Unknown"))}</span>
-    <span class="robear-request-rolls"></span>
+    <span class="stt-request-name">${escapeHTML(actor?.name ?? localize("STT.Common.Unknown"))}</span>
+    <span class="stt-request-rolls"></span>
   `;
-  const slots = row.querySelector(".robear-request-rolls");
+  const slots = row.querySelector(".stt-request-rolls");
 
   // Passes and failures are part of a standard roll's or a skill challenge's result, which players see once the GM
   // shows it.
@@ -1150,8 +1150,8 @@ export function renderActorRow(message, request, uuid, results, { team=null, sid
   results.forEach((result, slot) => {
     if ( result?.range && result.visible ) {
       const range = document.createElement("span");
-      range.className = "robear-request-range";
-      range.dataset.tooltipText = localize("ROBEAR.Request.Divine.Picked");
+      range.className = "stt-request-range";
+      range.dataset.tooltipText = localize("STT.Request.Divine.Picked");
       range.textContent = formatRun(result.range.start, result.range.end);
       slots.append(range);
     }
@@ -1164,7 +1164,7 @@ export function renderActorRow(message, request, uuid, results, { team=null, sid
       const pill = renderResult(shown, challenge ? slot : null, row, chosen);
       if ( uncounted ) {
         pill.classList.add("uncounted");
-        pill.dataset.tooltipText = localize("ROBEAR.Request.Result.Uncounted", { result: pill.dataset.tooltipText });
+        pill.dataset.tooltipText = localize("STT.Request.Result.Uncounted", { result: pill.dataset.tooltipText });
       }
       slots.append(pill);
     }
@@ -1182,18 +1182,18 @@ export function renderActorRow(message, request, uuid, results, { team=null, sid
   if ( challenge ) {
     const { passed, success } = getChallengeState(results, request.successes);
     const badge = document.createElement("span");
-    badge.className = "robear-request-badge";
+    badge.className = "stt-request-badge";
     const hidden = results.some(r => r && !r.visible);
     if ( hideOutcome ) {
       // Players see only that the actor is finished, not how it went.
       if ( success !== null ) {
-        badge.textContent = localize("ROBEAR.Request.Challenge.Done");
-        badge.dataset.tooltipText = localize("ROBEAR.Request.Challenge.DoneTooltip");
+        badge.textContent = localize("STT.Request.Challenge.Done");
+        badge.dataset.tooltipText = localize("STT.Request.Challenge.DoneTooltip");
       }
     } else {
       badge.textContent = hidden ? "?" : `${passed}/${request.successes}`;
       if ( !hidden && (success !== null) ) {
-        badge.dataset.tooltipText = localize(success ? "ROBEAR.Request.Challenge.Passed" : "ROBEAR.Request.Challenge.Failed");
+        badge.dataset.tooltipText = localize(success ? "STT.Request.Challenge.Passed" : "STT.Request.Challenge.Failed");
       }
     }
     row.append(badge);
@@ -1212,7 +1212,7 @@ export function renderActorRow(message, request, uuid, results, { team=null, sid
  */
 function renderNotes(row, results) {
   const details = document.createElement("div");
-  details.className = "robear-request-details";
+  details.className = "stt-request-details";
   for ( const result of results ) {
     if ( !result?.visible ) continue;
     details.append(...renderLog(result.message));
@@ -1229,15 +1229,15 @@ function renderNotes(row, results) {
  */
 function renderRollDetail(message) {
   const detail = document.createElement("div");
-  detail.className = "robear-request-roll-detail";
+  detail.className = "stt-request-roll-detail";
   detail.dataset.messageId = message.id;
   const flavor = document.createElement("div");
-  flavor.className = "robear-request-roll-flavor";
+  flavor.className = "stt-request-roll-flavor";
   flavor.textContent = message.flavor ?? "";
   detail.append(flavor);
   for ( const roll of message.rolls ) {
     const formula = document.createElement("div");
-    formula.className = "robear-request-roll-formula";
+    formula.className = "stt-request-roll-formula";
     formula.textContent = `${roll.formula} = ${roll.total}`;
     // Each roll's dice go in a slot under its own formula, since they are drawn after the formulas are.
     const dice = document.createElement("div");
@@ -1267,14 +1267,14 @@ function renderRollAgainButton(message) {
   const name = fromUuidSync(message.getFlag(MODULE_ID, "requestRoll")?.actor)?.name ?? message.speaker.alias ?? "";
   const button = document.createElement("button");
   button.type = "button";
-  button.className = "robear-request-roll-again";
-  button.dataset.tooltipText = localize("ROBEAR.Request.RollAgain.Tooltip", { name });
+  button.className = "stt-request-roll-again";
+  button.dataset.tooltipText = localize("STT.Request.RollAgain.Tooltip", { name });
   button.innerHTML = '<i class="fa-solid fa-rotate-left" inert></i>';
-  button.append(` ${localize("ROBEAR.Request.RollAgain.Label")}`);
+  button.append(` ${localize("STT.Request.RollAgain.Label")}`);
   onAsyncClick(button, async () => {
     const confirmed = await foundry.applications.api.DialogV2.confirm({
-      window: { title: "ROBEAR.Request.RollAgain.Title", icon: "fa-solid fa-rotate-left" },
-      content: `<p>${foundry.utils.escapeHTML(localize("ROBEAR.Request.RollAgain.Confirm", { name }))}</p>`,
+      window: { title: "STT.Request.RollAgain.Title", icon: "fa-solid fa-rotate-left" },
+      content: `<p>${foundry.utils.escapeHTML(localize("STT.Request.RollAgain.Confirm", { name }))}</p>`,
       rejectClose: false
     });
     if ( confirmed ) await message.delete();
@@ -1290,17 +1290,17 @@ function renderRollAgainButton(message) {
  * @param {ChatMessage5e} message  The roll message.
  */
 function toggleRollDetail(row, message) {
-  const open = row.querySelector(`.robear-request-roll-detail[data-message-id="${message.id}"]`);
+  const open = row.querySelector(`.stt-request-roll-detail[data-message-id="${message.id}"]`);
   if ( open ) {
     open.remove();
     expandedRolls.delete(message.id);
     return;
   }
   expandedRolls.add(message.id);
-  let details = row.querySelector(".robear-request-details");
+  let details = row.querySelector(".stt-request-details");
   if ( !details ) {
     details = document.createElement("div");
-    details.className = "robear-request-details";
+    details.className = "stt-request-details";
     row.append(details);
   }
   details.append(renderRollDetail(message));
@@ -1317,10 +1317,10 @@ function toggleRollDetail(row, message) {
  */
 function renderResult(result, part, row, chosen=null) {
   const pill = document.createElement("span");
-  pill.className = "robear-request-result";
+  pill.className = "stt-request-result";
   if ( !result.visible ) {
     pill.textContent = "?";
-    pill.dataset.tooltipText = localize("ROBEAR.Request.Result.Hidden");
+    pill.dataset.tooltipText = localize("STT.Request.Result.Hidden");
     return pill;
   }
   pill.textContent = result.total;
@@ -1330,15 +1330,15 @@ function renderResult(result, part, row, chosen=null) {
   }
   if ( result.success !== null ) pill.classList.add(result.success ? "success" : "failure");
   let tooltip = result.natural
-    ? localize("ROBEAR.Request.Result.TotalWithD20", { total: result.total, natural: result.natural })
+    ? localize("STT.Request.Result.TotalWithD20", { total: result.total, natural: result.natural })
     : String(result.total);
-  if ( chosen ) tooltip = localize("ROBEAR.Request.Result.Chosen", { roll: chosen, result: tooltip });
-  if ( part !== null ) tooltip = localize("ROBEAR.Request.Result.Numbered", { number: part + 1, result: tooltip });
+  if ( chosen ) tooltip = localize("STT.Request.Result.Chosen", { roll: chosen, result: tooltip });
+  if ( part !== null ) tooltip = localize("STT.Request.Result.Numbered", { number: part + 1, result: tooltip });
   if ( game.settings.get(MODULE_ID, "attachRolls") ) {
     pill.classList.add("expandable");
     pill.role = "button";
     pill.tabIndex = 0;
-    tooltip = localize("ROBEAR.Request.Result.ClickForDice", { result: tooltip });
+    tooltip = localize("STT.Request.Result.ClickForDice", { result: tooltip });
     const toggle = event => {
       if ( (event.type === "keydown") && !["Enter", " "].includes(event.key) ) return;
       event.preventDefault();
@@ -1359,8 +1359,8 @@ function renderResult(result, part, row, chosen=null) {
  */
 function renderPending() {
   const pending = document.createElement("span");
-  pending.className = "robear-request-pending";
-  pending.dataset.tooltipText = localize("ROBEAR.Request.Waiting");
+  pending.className = "stt-request-pending";
+  pending.dataset.tooltipText = localize("STT.Request.Waiting");
   return pending;
 }
 
@@ -1377,11 +1377,11 @@ function renderRollButton(message, request, actor, part) {
   if ( !actor?.isOwner ) return renderPending();
   const button = document.createElement("button");
   button.type = "button";
-  button.className = "robear-request-roll";
+  button.className = "stt-request-roll";
   const choices = getChoices(request.parts[part]);
-  button.dataset.tooltipText = localize("ROBEAR.Request.RollTooltip", { roll: getChoiceLabel(request.parts[part]) });
+  button.dataset.tooltipText = localize("STT.Request.RollTooltip", { roll: getChoiceLabel(request.parts[part]) });
   button.innerHTML = `<i class="fa-solid ${choices.length > 1 ? "fa-list-ul" : "fa-dice-d20"}" inert></i>`;
-  button.append(` ${request.mode === "challenge" ? part + 1 : localize("ROBEAR.Request.Roll")}`);
+  button.append(` ${request.mode === "challenge" ? part + 1 : localize("STT.Request.Roll")}`);
   button.addEventListener("click", async event => {
     event.preventDefault();
     event.stopPropagation();
@@ -1410,30 +1410,30 @@ function renderRollButton(message, request, actor, part) {
  */
 function renderSummary(message, request, results, team) {
   const summary = document.createElement("footer");
-  summary.className = "robear-request-summary";
+  summary.className = "stt-request-summary";
 
   if ( team ) {
     if ( !team.complete ) return;
     if ( team.hidden ) {
-      summary.textContent = localize("ROBEAR.Request.Team.Hidden");
+      summary.textContent = localize("STT.Request.Team.Hidden");
       return summary;
     }
     // The GM decides when players see the team's result.
     const revealed = !!message.getFlag(MODULE_ID, "revealed");
     if ( !revealed && !game.user.isGM ) return;
     const dc = request.parts[0].dc;
-    const removed = team.removed.size ? localize("ROBEAR.Request.Team.Removed", { count: team.removed.size }) : "";
+    const removed = team.removed.size ? localize("STT.Request.Team.Removed", { count: team.removed.size }) : "";
     const score = document.createElement("strong");
     score.textContent = team.score;
     const average = document.createElement("span");
-    average.append(...formatNodes("ROBEAR.Request.Team.Average", { average: score, removed }));
+    average.append(...formatNodes("STT.Request.Team.Average", { average: score, removed }));
     setExactTooltip(average, team);
     summary.append(average);
     if ( Number.isNumeric(dc) ) {
       const success = team.score >= dc;
       summary.classList.add(success ? "success" : "failure");
       const verdict = document.createElement("strong");
-      verdict.textContent = localize(success ? "ROBEAR.Request.Success" : "ROBEAR.Request.Failure");
+      verdict.textContent = localize(success ? "STT.Request.Success" : "STT.Request.Failure");
       summary.append(verdict);
     }
     if ( game.user.isGM ) summary.append(renderRevealButton(message, revealed));
@@ -1448,7 +1448,7 @@ function renderSummary(message, request, results, team) {
     const revealed = !!message.getFlag(MODULE_ID, "revealed");
     if ( !revealed && !game.user.isGM ) return;
     const count = states.filter(s => s.success).length;
-    summary.append(textElement("span", localize("ROBEAR.Request.Summary.Challenge", { count, total: rows.length })));
+    summary.append(textElement("span", localize("STT.Request.Summary.Challenge", { count, total: rows.length })));
     if ( game.user.isGM ) summary.append(renderRevealButton(message, revealed));
     return summary;
   }
@@ -1458,8 +1458,8 @@ function renderSummary(message, request, results, team) {
     const answered = rows.filter(r => r[0].success).length;
     summary.classList.add(answered ? "success" : "failure");
     summary.append(
-      textElement("span", localize("ROBEAR.Request.Summary.Divine", { count: answered, total: rows.length })),
-      textElement("strong", localize(answered ? "ROBEAR.Request.Divine.Answered" : "ROBEAR.Request.Divine.NoAnswer"))
+      textElement("span", localize("STT.Request.Summary.Divine", { count: answered, total: rows.length })),
+      textElement("strong", localize(answered ? "STT.Request.Divine.Answered" : "STT.Request.Divine.NoAnswer"))
     );
     return summary;
   }
@@ -1469,7 +1469,7 @@ function renderSummary(message, request, results, team) {
   const revealed = !!message.getFlag(MODULE_ID, "revealed");
   if ( !revealed && !game.user.isGM ) return;
   const count = rows.filter(r => r[0].success).length;
-  summary.append(textElement("span", localize("ROBEAR.Request.Summary.Standard", { count, total: rows.length })));
+  summary.append(textElement("span", localize("STT.Request.Summary.Standard", { count, total: rows.length })));
   if ( game.user.isGM ) summary.append(renderRevealButton(message, revealed));
   return summary;
 }
@@ -1513,7 +1513,7 @@ export function formatNodes(key, data) {
  * @returns {HTMLButtonElement}    A GM button to show the summary to players, or hide it again.
  */
 function renderRevealButton(message, revealed) {
-  return renderToggleButton(revealed, { hidden: "ROBEAR.Request.Reveal.Show", shown: "ROBEAR.Request.Reveal.Shown" },
+  return renderToggleButton(revealed, { hidden: "STT.Request.Reveal.Show", shown: "STT.Request.Reveal.Shown" },
     () => message.setFlag(MODULE_ID, "revealed", !revealed));
 }
 
@@ -1528,8 +1528,8 @@ function renderRevealButton(message, revealed) {
 function renderToggleButton(revealed, labels, toggle) {
   const button = document.createElement("button");
   button.type = "button";
-  button.className = `robear-request-reveal${revealed ? " revealed" : ""}`;
-  button.dataset.tooltipText = localize(revealed ? "ROBEAR.Request.Reveal.ShownTooltip" : "ROBEAR.Request.Reveal.HiddenTooltip");
+  button.className = `stt-request-reveal${revealed ? " revealed" : ""}`;
+  button.dataset.tooltipText = localize(revealed ? "STT.Request.Reveal.ShownTooltip" : "STT.Request.Reveal.HiddenTooltip");
   button.innerHTML = `<i class="fa-solid ${revealed ? "fa-eye" : "fa-eye-slash"}" inert></i>`;
   button.append(` ${localize(revealed ? labels.shown : labels.hidden)}`);
   onAsyncClick(button, toggle);
@@ -1595,7 +1595,7 @@ function renderRivalRevealButton(request, results) {
   }
   const revealed = rolls.every(m => !m.whisper.length || m.whisper.some(id => !gms.includes(id)));
   const whisper = revealed ? gms : shownTo;
-  return renderToggleButton(revealed, { hidden: "ROBEAR.Request.Reveal.ShowNPC", shown: "ROBEAR.Request.Reveal.NPCShown" },
+  return renderToggleButton(revealed, { hidden: "STT.Request.Reveal.ShowNPC", shown: "STT.Request.Reveal.NPCShown" },
     () => ChatMessage.updateDocuments(rolls.map(m => ({ _id: m.id, whisper }))));
 }
 
@@ -1654,7 +1654,7 @@ async function rollForRequest(message, actor, part, event, choice=0) {
 
 /**
  * Roll a plain die for an actor. A d20 goes through dnd5e's d20 test, so advantage, the dnd5e roll window and
- * RoBear-E Cards apply; other dice just roll.
+ * Hero Cards apply; other dice just roll.
  * @param {Actor5e} actor
  * @param {RollRequest} request
  * @param {string} die  Key in DICE.
@@ -1664,7 +1664,7 @@ async function rollForRequest(message, actor, part, event, choice=0) {
 async function rollDie(actor, request, die, config, messageConfig) {
   const range = messageConfig.data.flags[MODULE_ID].requestRoll.range;
   Object.assign(messageConfig.data, {
-    flavor: localize(range ? "ROBEAR.Request.Flavor.Range" : "ROBEAR.Request.Flavor.Die", {
+    flavor: localize(range ? "STT.Request.Flavor.Range" : "STT.Request.Flavor.Die", {
       mode: localize(MODES[request.mode].label), die: DICE[die].label, numbers: range && formatRun(range.start, range.end)
     }),
     speaker: ChatMessage.getSpeaker({ actor })
@@ -1695,13 +1695,13 @@ async function chooseRoll(actor, request, part) {
   const choices = getChoices(part);
   const ownDCs = hasChoiceDCs(request, part);
   return foundry.applications.api.DialogV2.wait({
-    classes: ["robear-card-dialog", "robear-choice-dialog"],
+    classes: ["stt-card-dialog", "stt-choice-dialog"],
     window: {
-      title: localize("ROBEAR.Request.Choose.Title", { name: actor.name }),
+      title: localize("STT.Request.Choose.Title", { name: actor.name }),
       icon: "fa-solid fa-list-ul"
     },
     position: { width: 320 },
-    content: `<p class="robear-card-hint">${escapeHTML(localize("ROBEAR.Request.Choose.Hint", { name: actor.name }))}</p>`,
+    content: `<p class="stt-card-hint">${escapeHTML(localize("STT.Request.Choose.Hint", { name: actor.name }))}</p>`,
     buttons: choices.map((roll, choice) => ({
       action: `choice${choice}`,
       label: [getPartLabel(roll), ownDCs ? getDCText(request, roll.dc) : ""].filterJoin(" · "),
@@ -1725,38 +1725,38 @@ async function chooseRoll(actor, request, part) {
 async function chooseRange(actor, size) {
   const last = 101 - size;
   const cells = Array.from({ length: 100 }, (_, i) => `
-    <button type="button" class="robear-divine-number" data-number="${i + 1}">${i + 1}</button>
+    <button type="button" class="stt-divine-number" data-number="${i + 1}">${i + 1}</button>
   `).join("");
 
   const { escapeHTML } = foundry.utils;
   let start;
   const result = await foundry.applications.api.DialogV2.wait({
-    classes: ["robear-card-dialog", "robear-divine-dialog"],
+    classes: ["stt-card-dialog", "stt-divine-dialog"],
     window: {
-      title: localize("ROBEAR.Request.Divine.DialogTitle", { name: actor.name }),
+      title: localize("STT.Request.Divine.DialogTitle", { name: actor.name }),
       icon: "fa-solid fa-hands-praying"
     },
     position: { width: 460 },
     content: `
-      <p class="robear-card-hint">${escapeHTML(size === 1 ? localize("ROBEAR.Request.Divine.DialogHintOne")
-        : localize("ROBEAR.Request.Divine.DialogHint", { count: size }))}</p>
-      <div class="robear-divine-grid">${cells}</div>
-      <p class="robear-divine-choice">${escapeHTML(localize("ROBEAR.Request.Divine.NonePicked"))}</p>
+      <p class="stt-card-hint">${escapeHTML(size === 1 ? localize("STT.Request.Divine.DialogHintOne")
+        : localize("STT.Request.Divine.DialogHint", { count: size }))}</p>
+      <div class="stt-divine-grid">${cells}</div>
+      <p class="stt-divine-choice">${escapeHTML(localize("STT.Request.Divine.NonePicked"))}</p>
     `,
     buttons: [
       {
         action: "roll",
-        label: "ROBEAR.Request.Divine.Roll",
+        label: "STT.Request.Divine.Roll",
         icon: "fa-solid fa-hands-praying",
         default: true,
         callback: () => start
       },
-      { action: "cancel", label: "ROBEAR.Common.Cancel", icon: "fa-solid fa-xmark" }
+      { action: "cancel", label: "STT.Common.Cancel", icon: "fa-solid fa-xmark" }
     ],
     render: (_event, dialog) => {
-      const numbers = [...dialog.element.querySelectorAll(".robear-divine-number")];
+      const numbers = [...dialog.element.querySelectorAll(".stt-divine-number")];
       const roll = dialog.element.querySelector('[data-action="roll"]');
-      const choice = dialog.element.querySelector(".robear-divine-choice");
+      const choice = dialog.element.querySelector(".stt-divine-choice");
       roll.disabled = true;
       const mark = (from, cls) => numbers.forEach((el, i) => el.classList.toggle(cls, (from !== undefined)
         && (i + 1 >= from) && (i + 1 < from + size)));
@@ -1767,11 +1767,11 @@ async function chooseRange(actor, size) {
         el.addEventListener("click", () => {
           start = from;
           mark(start, "picked");
-          choice.textContent = localize("ROBEAR.Request.Divine.Need", { numbers: formatRun(start, start + size - 1) });
+          choice.textContent = localize("STT.Request.Divine.Need", { numbers: formatRun(start, start + size - 1) });
           roll.disabled = false;
         });
       }
-      dialog.element.querySelector(".robear-divine-grid").addEventListener("pointerleave", () => mark(undefined, "preview"));
+      dialog.element.querySelector(".stt-divine-grid").addEventListener("pointerleave", () => mark(undefined, "preview"));
     },
     rejectClose: false
   });

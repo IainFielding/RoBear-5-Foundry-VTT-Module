@@ -1,5 +1,5 @@
 {{!-- The roll picker, for a roll and each of its alternatives. --}}
-{{#*inline "robearRollSelect"}}
+{{#*inline "sttRollSelect"}}
 <select name="{{name}}" aria-label="{{label}}">
     {{#each @root.rollOptions as |group|}}
     <optgroup label="{{group.label}}">
@@ -11,58 +11,58 @@
 </select>
 {{/inline}}
 
-<div class="robear-request-form">
+<div class="stt-request-form">
 
     {{!-- Mode --}}
-    <fieldset class="robear-request-modes">
-        <legend>{{localize "ROBEAR.Request.Config.KindOfRoll"}}</legend>
+    <fieldset class="stt-request-modes">
+        <legend>{{localize "STT.Request.Config.KindOfRoll"}}</legend>
         {{#each modes as |mode|}}
-        <label class="robear-request-mode">
+        <label class="stt-request-mode">
             <input type="radio" name="mode" value="{{mode.value}}" {{checked mode.checked}}>
             <i class="{{mode.icon}}" inert></i>
-            <span class="robear-request-mode-label">{{mode.label}}</span>
-            <span class="robear-request-mode-hint">{{mode.hint}}</span>
+            <span class="stt-request-mode-label">{{mode.label}}</span>
+            <span class="stt-request-mode-hint">{{mode.hint}}</span>
         </label>
         {{/each}}
     </fieldset>
 
     {{!-- Rolls --}}
-    <fieldset class="robear-request-parts">
-        <legend>{{localize "ROBEAR.Request.Config.Rolls"}}</legend>
+    <fieldset class="stt-request-parts">
+        <legend>{{localize "STT.Request.Config.Rolls"}}</legend>
         {{#each rows as |row|}}
         <div class="form-group">
             <label>{{row.label}}</label>
             <div class="form-fields">
-                {{> robearRollSelect name=(concat row.field ".roll") selected=row.roll label=row.label}}
+                {{> sttRollSelect name=(concat row.field ".roll") selected=row.roll label=row.label}}
                 {{#if row.canChoose}}
-                <button type="button" class="robear-request-choice-button" data-action="addChoice" data-field="{{row.field}}"
-                        data-tooltip aria-label="{{localize 'ROBEAR.Request.Config.AddChoice'}}" {{disabled row.full}}>
+                <button type="button" class="stt-request-choice-button" data-action="addChoice" data-field="{{row.field}}"
+                        data-tooltip aria-label="{{localize 'STT.Request.Config.AddChoice'}}" {{disabled row.full}}>
                     <i class="fa-solid fa-plus" inert></i>
                 </button>
                 {{/if}}
                 {{#if row.hasDC}}
-                <label class="robear-request-dc">
-                    {{localize "ROBEAR.Request.Config.DC"}} <input type="number" name="{{row.field}}.dc" value="{{row.dc}}" min="0" step="1" placeholder="—">
+                <label class="stt-request-dc">
+                    {{localize "STT.Request.Config.DC"}} <input type="number" name="{{row.field}}.dc" value="{{row.dc}}" min="0" step="1" placeholder="—">
                 </label>
                 {{/if}}
             </div>
         </div>
         {{#each row.alternatives as |choice|}}
-        <div class="form-group robear-request-choice">
-            <label>{{localize "ROBEAR.Request.Config.Or"}}</label>
+        <div class="form-group stt-request-choice">
+            <label>{{localize "STT.Request.Config.Or"}}</label>
             <div class="form-fields">
-                {{> robearRollSelect name=(concat row.field ".alternatives." choice.index ".roll") selected=choice.roll label=(localize "ROBEAR.Request.Config.Or")}}
-                <button type="button" class="robear-request-choice-button" data-action="removeChoice"
+                {{> sttRollSelect name=(concat row.field ".alternatives." choice.index ".roll") selected=choice.roll label=(localize "STT.Request.Config.Or")}}
+                <button type="button" class="stt-request-choice-button" data-action="removeChoice"
                         data-field="{{row.field}}" data-index="{{choice.index}}"
-                        data-tooltip aria-label="{{localize 'ROBEAR.Request.Config.RemoveChoice'}}">
+                        data-tooltip aria-label="{{localize 'STT.Request.Config.RemoveChoice'}}">
                     <i class="fa-solid fa-xmark" inert></i>
                 </button>
                 {{#if row.choiceDCs}}
-                <label class="robear-request-dc">
-                    {{localize "ROBEAR.Request.Config.DC"}} <input type="number" name="{{row.field}}.alternatives.{{choice.index}}.dc" value="{{choice.dc}}" min="0" step="1" placeholder="—">
+                <label class="stt-request-dc">
+                    {{localize "STT.Request.Config.DC"}} <input type="number" name="{{row.field}}.alternatives.{{choice.index}}.dc" value="{{choice.dc}}" min="0" step="1" placeholder="—">
                 </label>
                 {{else}}
-                <span class="robear-request-dc" aria-hidden="true"></span>
+                <span class="stt-request-dc" aria-hidden="true"></span>
                 {{/if}}
             </div>
         </div>
@@ -70,7 +70,7 @@
         {{/each}}
         {{#if challenge}}
         <div class="form-group">
-            <label>{{localize "ROBEAR.Request.Config.SuccessesNeeded"}}</label>
+            <label>{{localize "STT.Request.Config.SuccessesNeeded"}}</label>
             <div class="form-fields">
                 <select name="successes">
                     {{#each successOptions as |option|}}
@@ -78,41 +78,41 @@
                     {{/each}}
                 </select>
             </div>
-            <p class="hint">{{localize "ROBEAR.Request.Config.ChallengeHint"}}</p>
+            <p class="hint">{{localize "STT.Request.Config.ChallengeHint"}}</p>
         </div>
         {{/if}}
         {{#if contest}}
-        <p class="hint">{{localize "ROBEAR.Request.Config.ContestHint"}}</p>
+        <p class="hint">{{localize "STT.Request.Config.ContestHint"}}</p>
         {{/if}}
         {{#if divine}}
         <div class="form-group">
-            <label>{{localize "ROBEAR.Request.Config.NumbersToPick"}}</label>
+            <label>{{localize "STT.Request.Config.NumbersToPick"}}</label>
             <div class="form-fields">
                 <range-picker name="range" value="{{range}}" min="{{rangeLimits.min}}" max="{{rangeLimits.max}}" step="1"></range-picker>
             </div>
-            <p class="hint">{{localize "ROBEAR.Request.Config.DivineHint"}}</p>
+            <p class="hint">{{localize "STT.Request.Config.DivineHint"}}</p>
         </div>
         {{/if}}
     </fieldset>
 
     {{!-- Actors --}}
     {{#if contest}}
-    <div class="robear-request-sides">
+    <div class="stt-request-sides">
         {{#each sides as |side|}}
-        {{#if side.side}}<div class="robear-request-versus" aria-hidden="true">{{localize "ROBEAR.Request.Versus"}}</div>{{/if}}
-        <fieldset class="robear-request-side">
+        {{#if side.side}}<div class="stt-request-versus" aria-hidden="true">{{localize "STT.Request.Versus"}}</div>{{/if}}
+        <fieldset class="stt-request-side">
             <legend>
                 {{side.label}}
                 {{#unless side.single}}
-                <button type="button" class="robear-request-select-all" data-action="selectAll"
-                        data-tooltip aria-label="{{localize 'ROBEAR.Request.Config.SelectAll'}}">
+                <button type="button" class="stt-request-select-all" data-action="selectAll"
+                        data-tooltip aria-label="{{localize 'STT.Request.Config.SelectAll'}}">
                     <i class="fa-solid fa-check-double" inert></i>
                 </button>
                 {{/unless}}
             </legend>
-            <div class="robear-request-actor-list">
+            <div class="stt-request-actor-list">
                 {{#each side.actors as |actor|}}
-                <label class="robear-request-actor-choice">
+                <label class="stt-request-actor-choice">
                     {{#if side.single}}
                     <input type="radio" name="rivals.{{side.side}}" value="{{actor.index}}" {{checked actor.checked}}>
                     {{else}}
@@ -129,21 +129,21 @@
     {{else}}
     <fieldset>
         <legend>
-            {{localize "ROBEAR.Request.Config.WhoRolls"}}
-            <button type="button" class="robear-request-select-all" data-action="selectAll"
-                    data-tooltip aria-label="{{localize 'ROBEAR.Request.Config.SelectAll'}}">
+            {{localize "STT.Request.Config.WhoRolls"}}
+            <button type="button" class="stt-request-select-all" data-action="selectAll"
+                    data-tooltip aria-label="{{localize 'STT.Request.Config.SelectAll'}}">
                 <i class="fa-solid fa-check-double" inert></i>
             </button>
         </legend>
-        <div class="robear-request-actor-list">
+        <div class="stt-request-actor-list">
             {{#each actors as |actor|}}
-            <label class="robear-request-actor-choice">
+            <label class="stt-request-actor-choice">
                 <input type="checkbox" name="actors.{{actor.index}}" {{checked actor.checked}}>
                 <img src="{{actor.img}}" alt="">
                 <span>{{actor.name}}</span>
             </label>
             {{else}}
-            <p class="hint">{{localize "ROBEAR.Request.Config.NoActors"}}</p>
+            <p class="hint">{{localize "STT.Request.Config.NoActors"}}</p>
             {{/each}}
         </div>
     </fieldset>
@@ -151,25 +151,25 @@
 
     {{!-- Options --}}
     <fieldset>
-        <legend>{{localize "ROBEAR.Request.Config.Options"}}</legend>
+        <legend>{{localize "STT.Request.Config.Options"}}</legend>
         {{#unless (or contest divine)}}
         <div class="form-group">
-            <label>{{localize "ROBEAR.Request.Config.ShowDC"}}</label>
+            <label>{{localize "STT.Request.Config.ShowDC"}}</label>
             <div class="form-fields">
                 <input type="checkbox" name="showDC" {{checked showDC}}>
             </div>
-            <p class="hint">{{localize "ROBEAR.Request.Config.ShowDCHint"}}</p>
+            <p class="hint">{{localize "STT.Request.Config.ShowDCHint"}}</p>
         </div>
         {{/unless}}
         <div class="form-group">
-            <label>{{localize "ROBEAR.Request.Config.Visibility"}}</label>
+            <label>{{localize "STT.Request.Config.Visibility"}}</label>
             <div class="form-fields">
                 <select name="rollMode">
-                    <option value="public" {{#if (eq rollMode "public")}}selected{{/if}}>{{localize "ROBEAR.Request.Config.Public"}}</option>
-                    <option value="gm" {{#if (eq rollMode "gm")}}selected{{/if}}>{{localize "ROBEAR.Request.Config.Private"}}</option>
+                    <option value="public" {{#if (eq rollMode "public")}}selected{{/if}}>{{localize "STT.Request.Config.Public"}}</option>
+                    <option value="gm" {{#if (eq rollMode "gm")}}selected{{/if}}>{{localize "STT.Request.Config.Private"}}</option>
                 </select>
             </div>
-            <p class="hint">{{localize "ROBEAR.Request.Config.PrivateHint"}}</p>
+            <p class="hint">{{localize "STT.Request.Config.PrivateHint"}}</p>
         </div>
     </fieldset>
 

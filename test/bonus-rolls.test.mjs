@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MODULE_ID, cardArtHTML } from "../scripts/robear-cards.mjs";
+import { MODULE_ID, cardArtHTML } from "../scripts/hero-cards.mjs";
 import { canSee, canSpend, isValidTarget } from "../scripts/bonus-rolls.mjs";
 
 const gm = { id: "gm", isGM: true };

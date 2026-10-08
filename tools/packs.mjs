@@ -53,7 +53,7 @@ for ( const { name, path } of manifest.packs ?? [] ) {
  */
 async function extract(db, src) {
   // A clean extraction lists the files the pack makes now; omitVolatile needs the old files left in place to compare.
-  const fresh = await mkdtemp(join(tmpdir(), "robear-packs-"));
+  const fresh = await mkdtemp(join(tmpdir(), "stt-packs-"));
   try {
     await extractPack(db, fresh, { yaml: true, folders: true });
     const keep = new Set(await listFiles(fresh));

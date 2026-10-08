@@ -1,15 +1,15 @@
 /**
  * Class features that change a roll already in chat. dnd5e tracks their uses but leaves the roll to the player, so they
- * are applied here as a RoBear-E Card would be: the roll is rewritten in place and noted.
+ * are applied here as a Hero Card would be: the roll is rewritten in place and noted.
  *
  * Fighter's Indomitable rerolls a failed saving throw, and the new roll must be used. Under the 2024 rules the reroll
- * also adds the Fighter's level. A natural 1 is fixed in RoBear-E, so Indomitable can't reroll one.
+ * also adds the Fighter's level. A natural 1 is fixed in Sogrom's Table Tools, so Indomitable can't reroll one.
  */
 
 import {
   MODULE_ID, describeD20s, finalize, getNatural, getRollKind, getRollTarget, isKnownFailure, localize, rerollD20,
   reportError
-} from "./robear-cards.mjs";
+} from "./hero-cards.mjs";
 
 /**
  * Rolls Indomitable is being used on from this client, so a second click cannot spend another use on the same roll.
@@ -32,7 +32,7 @@ Hooks.on("dnd5e.renderChatMessage", onRenderChatMessage);
  */
 function onGetContextOptions(_app, options) {
   options.push({
-    label: localize("ROBEAR.Indomitable.MenuLabel"),
+    label: localize("STT.Indomitable.MenuLabel"),
     icon: "fa-solid fa-shield-halved",
     visible: li => !!getIndomitable(game.messages.get(li.dataset.messageId)),
     onClick: (_event, li) => useIndomitable(game.messages.get(li.dataset.messageId)).catch(reportError)
@@ -58,7 +58,7 @@ function onRenderChatMessage(message, html) {
 /**
  * @param {Actor5e} actor
  * @returns {Item5e|void}  The actor's Indomitable class feature, as dnd5e builds it under either set of rules. The
- *   RoBear-E Card of the same name is an activity of the RoBear-E Cards feature, not this.
+ *   Hero Card of the same name is an activity of the Hero Cards feature, not this.
  */
 function findIndomitable(actor) {
   return actor?.items.find(i => (i.type === "feat") && (i.system.identifier === "indomitable"));
@@ -74,7 +74,7 @@ function findIndomitable(actor) {
  */
 export function getIndomitable(message) {
   if ( !message || (getRollKind(message) !== "save") || !message.isContentVisible ) return;
-  // A natural 1 is fixed in RoBear-E: nothing rerolls it.
+  // A natural 1 is fixed in Sogrom's Table Tools: nothing rerolls it.
   if ( getNatural(message.rolls[0]) === 1 ) return;
   if ( !message.canUserModify(game.user, "update") ) return;
   const actor = message.getAssociatedActor();
@@ -124,7 +124,7 @@ export async function useIndomitable(message) {
 async function confirmIndomitable(item) {
   return foundry.applications.api.DialogV2.confirm({
     window: { title: item.name, icon: "fa-solid fa-shield-halved" },
-    content: `<p>${foundry.utils.escapeHTML(localize("ROBEAR.Indomitable.ConfirmNoDC", {
+    content: `<p>${foundry.utils.escapeHTML(localize("STT.Indomitable.ConfirmNoDC", {
       name: item.name, uses: item.system.uses.value
     }))}</p>`,
     rejectClose: false
@@ -153,19 +153,19 @@ async function rerollWithIndomitable(message, item) {
     rolls[0].terms.push(
       OperatorTerm.fromData({ class: "OperatorTerm", operator: "+", evaluated: true }),
       NumericTerm.fromData({
-        class: "NumericTerm", number: bonus, options: { flavor: localize("ROBEAR.Indomitable.FighterLevel") }, evaluated: true
+        class: "NumericTerm", number: bonus, options: { flavor: localize("STT.Indomitable.FighterLevel") }, evaluated: true
       })
     );
     finalize(rolls[0]);
-    bonusText = localize("ROBEAR.Indomitable.LevelBonus", { bonus });
+    bonusText = localize("STT.Indomitable.LevelBonus", { bonus });
   }
 
-  const detail = localize("ROBEAR.Indomitable.Log", {
+  const detail = localize("STT.Indomitable.Log", {
     dice: describeD20s(values), old: old.join(", "), new: values.join(", "), bonus: bonusText, before,
     after: rolls[0].total
   });
   const entry = {
-    text: localize("ROBEAR.Cards.Log.Entry", { card: item.name, detail }),
+    text: localize("STT.Cards.Log.Entry", { card: item.name, detail }),
     card: item.name,
     icon: "fa-solid fa-shield-halved",
     by: item.actor.name
@@ -194,9 +194,9 @@ export function createIndomitableButton(message, { compact=false }={}) {
   if ( !item ) return;
   const button = document.createElement("button");
   button.type = "button";
-  button.className = compact ? "robear-feature-button icon" : "robear-feature-button";
-  const label = localize("ROBEAR.Indomitable.Button", { name: item.name });
-  button.dataset.tooltipText = localize("ROBEAR.Indomitable.ButtonTooltip", { name: item.name, uses: item.system.uses.value });
+  button.className = compact ? "stt-feature-button icon" : "stt-feature-button";
+  const label = localize("STT.Indomitable.Button", { name: item.name });
+  button.dataset.tooltipText = localize("STT.Indomitable.ButtonTooltip", { name: item.name, uses: item.system.uses.value });
   button.setAttribute("aria-label", label);
   button.innerHTML = '<i class="fa-solid fa-shield-halved" inert></i>';
   if ( !compact ) button.append(` ${label}`);

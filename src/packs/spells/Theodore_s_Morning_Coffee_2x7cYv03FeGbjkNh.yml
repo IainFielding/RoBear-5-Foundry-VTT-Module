@@ -106,7 +106,7 @@ system:
 effects:
   - name: Theodore's Morning Coffee
     img: icons/containers/kitchenware/mug-stein-grey.webp
-    origin: Compendium.sogrom-robear-e.spells.Item.2x7cYv03FeGbjkNh
+    origin: Compendium.sogrom-table-tools.spells.Item.2x7cYv03FeGbjkNh
     transfer: false
     _id: VXUFAlfdmBJev31p
     type: base

@@ -2,81 +2,81 @@
 /*  Chat Card Button                            */
 /* -------------------------------------------- */
 
-:is(.chat-message, .robear-request-popup) .robear-card-button {
+:is(.chat-message, .stt-request-popup) .stt-card-button {
   display: block;
   width: 100%;
   margin-top: 6px;
   border-color: #a428e6;
 }
 
-:is(.chat-message, .robear-request-popup) .robear-card-button.icon {
+:is(.chat-message, .stt-request-popup) .stt-card-button.icon {
   display: inline-flex;
   width: auto;
   margin-top: 0;
   flex: none;
 }
 
-.chat-message .robear-card-log {
+.chat-message .stt-card-log {
   margin-top: 4px;
 }
 
 /* A natural 20, ringed in gold as the Character Creator's Level Up button is once the XP is there: a gold ring that
    turns and a glow that breathes. The ring is a masked conic gradient on ::before, so it follows the element's own
    rounding. */
-@property --robear-nat20-angle {
+@property --stt-nat20-angle {
   syntax: "<angle>";
   initial-value: 0deg;
   inherits: false;
 }
 
-.chat-message .robear-natural-20,
-:is(.chat-message, .robear-request-popup) .robear-request-result.critical {
+.chat-message .stt-natural-20,
+:is(.chat-message, .stt-request-popup) .stt-request-result.critical {
   position: relative;
   overflow: visible;
   color: #f5c542;
-  animation: robear-nat20-glow 1.8s ease-in-out infinite;
+  animation: stt-nat20-glow 1.8s ease-in-out infinite;
 }
 
-.chat-message .robear-natural-20::before,
-:is(.chat-message, .robear-request-popup) .robear-request-result.critical::before {
+.chat-message .stt-natural-20::before,
+:is(.chat-message, .stt-request-popup) .stt-request-result.critical::before {
   content: "";
   position: absolute;
   inset: -3px;
   border-radius: inherit;
   padding: 2px;
-  background: conic-gradient(from var(--robear-nat20-angle),
+  background: conic-gradient(from var(--stt-nat20-angle),
     #fff4c2, #f5c542 20%, #a8741a 40%, #f5c542 60%, #fff4c2 80%, #f5c542);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask-composite: exclude;
   pointer-events: none;
-  animation: robear-nat20-spin 2.4s linear infinite;
+  animation: stt-nat20-spin 2.4s linear infinite;
 }
 
-@keyframes robear-nat20-spin { to { --robear-nat20-angle: 360deg; } }
-@keyframes robear-nat20-glow {
+@keyframes stt-nat20-spin { to { --stt-nat20-angle: 360deg; } }
+@keyframes stt-nat20-glow {
   0%, 100% { box-shadow: 0 0 4px 1px rgba(245, 197, 66, 0.55); }
   50% { box-shadow: 0 0 12px 4px rgba(255, 214, 92, 0.95); }
 }
 
 /* No motion: a steady gold ring and glow, still unmistakable. */
 @media (prefers-reduced-motion: reduce) {
-  .chat-message .robear-natural-20,
-  .chat-message .robear-natural-20::before,
-  :is(.chat-message, .robear-request-popup) .robear-request-result.critical,
-  :is(.chat-message, .robear-request-popup) .robear-request-result.critical::before {
+  .chat-message .stt-natural-20,
+  .chat-message .stt-natural-20::before,
+  :is(.chat-message, .stt-request-popup) .stt-request-result.critical,
+  :is(.chat-message, .stt-request-popup) .stt-request-result.critical::before {
     animation: none;
   }
-  .chat-message .robear-natural-20,
-  :is(.chat-message, .robear-request-popup) .robear-request-result.critical {
+  .chat-message .stt-natural-20,
+  :is(.chat-message, .stt-request-popup) .stt-request-result.critical {
     box-shadow: 0 0 8px 2px rgba(245, 197, 66, 0.8);
   }
 }
 
 /* A natural 1: a dull red ring and a faint red wash, held still. It marks the roll without celebrating it. */
-.chat-message .robear-natural-1,
-:is(.chat-message, .robear-request-popup) .robear-request-result.fumble {
+.chat-message .stt-natural-1,
+:is(.chat-message, .stt-request-popup) .stt-request-result.fumble {
   position: relative;
   overflow: visible;
   color: #c96a5a;
@@ -84,8 +84,8 @@
   box-shadow: 0 0 6px 1px rgba(201, 106, 90, 0.45);
 }
 
-.chat-message .robear-natural-1::before,
-:is(.chat-message, .robear-request-popup) .robear-request-result.fumble::before {
+.chat-message .stt-natural-1::before,
+:is(.chat-message, .stt-request-popup) .stt-request-result.fumble::before {
   content: "";
   position: absolute;
   inset: -3px;
@@ -100,10 +100,10 @@
 /*  windowed mode. Teal asks, brass is chosen.  */
 /* -------------------------------------------- */
 
-.robear-card-dialog,
-.chat-message .robear-request,
-.chat-message .robear-card-log,
-.robear-played-card {
+.stt-card-dialog,
+.chat-message .stt-request,
+.chat-message .stt-card-log,
+.stt-played-card {
   --cc-settled:        #c9a227;
   --cc-settled-bright: #e3bf4b;
   --cc-settled-glow:   rgba(201, 162, 39, 0.30);
@@ -127,7 +127,7 @@
   --cc-fail-soft:      rgba(201, 106, 90, 0.16);
 }
 
-.robear-card-dialog {
+.stt-card-dialog {
   background: var(--cc-bg);
   border: 1px solid var(--cc-line-2);
   border-radius: 0;
@@ -135,26 +135,26 @@
   font-family: var(--cc-font-body);
 }
 
-.robear-card-dialog .window-header {
+.stt-card-dialog .window-header {
   background: var(--cc-chrome-grad);
   border-bottom: 1px solid var(--cc-line);
   color: var(--cc-text);
 }
 
-.robear-card-dialog .window-title {
+.stt-card-dialog .window-title {
   color: var(--cc-text);
   font-family: var(--cc-font-heading);
   letter-spacing: 0.02em;
 }
 
-.robear-card-dialog .window-content {
+.stt-card-dialog .window-content {
   position: relative;
   background: var(--cc-bg);
   color: var(--cc-text);
 }
 
 /* Ambience — soft teal auras top and bottom over a faint brass core. */
-.robear-card-dialog .window-content::before {
+.stt-card-dialog .window-content::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -165,11 +165,11 @@
     radial-gradient(60% 40% at 50% 50%,   rgba(201, 162, 39, 0.035), transparent 70%);
 }
 
-.robear-card-dialog .window-content > * {
+.stt-card-dialog .window-content > * {
   position: relative;
 }
 
-.robear-card-dialog .robear-card-hint {
+.stt-card-dialog .stt-card-hint {
   margin: 0 0 12px;
   color: var(--cc-muted);
   font-style: italic;
@@ -177,14 +177,14 @@
 }
 
 /* Card choices */
-.robear-card-dialog .robear-card-grid {
+.stt-card-dialog .stt-card-grid {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 14px;
 }
 
-.robear-card-dialog .robear-card-choice {
+.stt-card-dialog .stt-card-choice {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -202,7 +202,7 @@
   transition: border-color 0.25s var(--cc-ease), box-shadow 0.25s var(--cc-ease), transform 0.25s var(--cc-ease);
 }
 
-.robear-card-dialog .robear-card-choice img {
+.stt-card-dialog .stt-card-choice img {
   width: 96px;
   aspect-ratio: 240 / 365;
   object-fit: cover;
@@ -210,7 +210,7 @@
   border-radius: 0;
 }
 
-.robear-card-dialog .robear-card-choice span {
+.stt-card-dialog .stt-card-choice span {
   font-family: var(--cc-font-heading);
   font-size: 11px;
   font-weight: 600;
@@ -221,27 +221,27 @@
   text-align: center;
 }
 
-.robear-card-dialog .robear-card-choice:hover {
+.stt-card-dialog .stt-card-choice:hover {
   border-color: var(--cc-open);
   box-shadow: var(--cc-sheen), 0 0 0 1px var(--cc-open-soft), 0 4px 14px var(--cc-open-glow);
   transform: translateY(-2px);
 }
 
-.robear-card-dialog .robear-card-choice:hover span {
+.stt-card-dialog .stt-card-choice:hover span {
   color: var(--cc-settled-bright);
 }
 
-.robear-card-dialog .robear-card-choice:active {
+.stt-card-dialog .stt-card-choice:active {
   transform: scale(0.98);
 }
 
-.robear-card-dialog .robear-card-choice:focus-visible {
+.stt-card-dialog .stt-card-choice:focus-visible {
   outline: 2px solid var(--cc-open);
   outline-offset: 2px;
 }
 
 /* Footer — the creator's base .creator-btn look */
-.robear-card-dialog .form-footer button {
+.stt-card-dialog .form-footer button {
   border: 1px solid var(--cc-line);
   border-radius: 0;
   background: var(--cc-panel-2);
@@ -251,18 +251,18 @@
   transition: filter 0.25s var(--cc-ease), border-color 0.25s var(--cc-ease);
 }
 
-.robear-card-dialog .form-footer button:hover {
+.stt-card-dialog .form-footer button:hover {
   filter: brightness(1.15);
   border-color: var(--cc-line-2);
 }
 
 /* Full-size card art shown when hovering a card in the picker. */
-#tooltip.robear-card-tooltip {
+#tooltip.stt-card-tooltip {
   max-width: none;
   padding: 4px;
 }
 
-#tooltip.robear-card-tooltip img {
+#tooltip.stt-card-tooltip img {
   display: block;
   width: 240px;
   max-height: 70vh;
@@ -274,14 +274,14 @@
 /*  Card Notes on Rolls                         */
 /* -------------------------------------------- */
 
-.robear-card-log {
+.stt-card-log {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
 /* A thumbnail of the card played; hovering shows it full size. */
-.robear-card-log .robear-card-log-art {
+.stt-card-log .stt-card-log-art {
   flex: none;
   width: 22px;
   aspect-ratio: 240 / 365;
@@ -297,7 +297,7 @@
 
 /* The overlay lets clicks through to the table; only the cards themselves can be clicked, to dismiss them.
    Up to three cards played together sit side by side. */
-.robear-played-card {
+.stt-played-card {
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -308,21 +308,21 @@
   padding: 0 16px;
   pointer-events: none;
   background: radial-gradient(40% 50% at 50% 50%, rgba(201, 162, 39, 0.10), transparent 70%);
-  animation: robear-played-fade 0.45s var(--cc-ease) both;
+  animation: stt-played-fade 0.45s var(--cc-ease) both;
 }
 
-.robear-played-card-entry {
+.stt-played-card-entry {
   display: grid;
   grid-template-rows: auto auto;
   place-items: center;
   gap: 12px;
 }
 
-.robear-played-card-entry > * {
+.stt-played-card-entry > * {
   pointer-events: auto;
 }
 
-.robear-played-card img {
+.stt-played-card img {
   width: min(260px, calc(55vh * 240 / 365), calc((100vw - 96px) / 3));
   aspect-ratio: 240 / 365;
   object-fit: cover;
@@ -333,10 +333,10 @@
     0 18px 48px rgba(0, 0, 0, 0.7),
     0 0 90px var(--cc-open-glow);
   cursor: pointer;
-  animation: robear-played-in 0.5s var(--cc-ease) both;
+  animation: stt-played-in 0.5s var(--cc-ease) both;
 }
 
-.robear-played-card-caption {
+.stt-played-card-caption {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -344,16 +344,16 @@
   padding: 6px 16px;
   background: var(--cc-chrome-grad);
   border: 1px solid var(--cc-line);
-  animation: robear-played-in 0.5s 0.08s var(--cc-ease) both;
+  animation: stt-played-in 0.5s 0.08s var(--cc-ease) both;
 }
 
-.robear-played-card-by {
+.stt-played-card-by {
   color: var(--cc-muted);
   font-family: var(--cc-font-body);
   font-style: italic;
 }
 
-.robear-played-card-name {
+.stt-played-card-name {
   color: var(--cc-settled-bright);
   font-family: var(--cc-font-heading);
   font-size: 18px;
@@ -363,52 +363,52 @@
 }
 
 /* Leaving runs its own animations: the entrance animations hold their end state, which a plain style can't override. */
-.robear-played-card.leaving,
-.robear-played-card-entry.leaving {
-  animation: robear-played-out 0.4s var(--cc-ease) both;
+.stt-played-card.leaving,
+.stt-played-card-entry.leaving {
+  animation: stt-played-out 0.4s var(--cc-ease) both;
 }
 
-.robear-played-card-entry.leaving img,
-.robear-played-card-entry.leaving .robear-played-card-caption {
-  animation: robear-played-lift 0.4s var(--cc-ease) both;
+.stt-played-card-entry.leaving img,
+.stt-played-card-entry.leaving .stt-played-card-caption {
+  animation: stt-played-lift 0.4s var(--cc-ease) both;
 }
 
-@keyframes robear-played-fade {
+@keyframes stt-played-fade {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-@keyframes robear-played-out {
+@keyframes stt-played-out {
   to { opacity: 0; }
 }
 
-@keyframes robear-played-lift {
+@keyframes stt-played-lift {
   to { transform: translateY(-10px) scale(0.97); }
 }
 
-@keyframes robear-played-in {
+@keyframes stt-played-in {
   from { opacity: 0; transform: translateY(28px) scale(0.92) rotate(-2deg); }
   to { opacity: 1; transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .robear-played-card img,
-  .robear-played-card-caption {
-    animation-name: robear-played-fade;
+  .stt-played-card img,
+  .stt-played-card-caption {
+    animation-name: stt-played-fade;
   }
   /* The card still fades as it leaves, but without the lift. */
-  .robear-played-card-entry.leaving img,
-  .robear-played-card-entry.leaving .robear-played-card-caption {
+  .stt-played-card-entry.leaving img,
+  .stt-played-card-entry.leaving .stt-played-card-caption {
     animation: none;
   }
 }
 
 /* A card played from the sheet: its record in chat stays short, as its art is shown on screen. */
-.chat-message.robear-card-usage .icon-row:has(.fa-tag) {
+.chat-message.stt-card-usage .icon-row:has(.fa-tag) {
   display: none;
 }
 
-.chat-message.robear-card-usage .activity-icon img {
+.chat-message.stt-card-usage .activity-icon img {
   cursor: zoom-in;
 }
 
@@ -416,26 +416,26 @@
 /*  Bonus Rolls                                 */
 /* -------------------------------------------- */
 
-.robear-card-log .robear-card-log-icon {
+.stt-card-log .stt-card-log-icon {
   flex: none;
   width: 22px;
   text-align: center;
   color: var(--cc-open, #4fb3a8);
 }
 
-.chat-message .robear-bonus-used {
+.chat-message .stt-bonus-used {
   margin-top: 4px;
   color: var(--cc-muted, #9a978f);
   font-style: italic;
 }
 
-.chat-message .robear-bonus-used i {
+.chat-message .stt-bonus-used i {
   margin-right: 6px;
   color: #4fb3a8;
 }
 
 /* The roll chooser: one row per roll, teal on hover as in the card picker. */
-.robear-bonus-dialog .robear-bonus-list {
+.stt-bonus-dialog .stt-bonus-list {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -443,7 +443,7 @@
   overflow-y: auto;
 }
 
-.robear-bonus-dialog .robear-bonus-choice {
+.stt-bonus-dialog .stt-bonus-choice {
   justify-content: flex-start;
   height: auto;
   margin: 0;
@@ -459,8 +459,8 @@
   transition: border-color 0.25s var(--cc-ease), box-shadow 0.25s var(--cc-ease);
 }
 
-.robear-bonus-dialog .robear-bonus-choice:hover,
-.robear-bonus-dialog .robear-bonus-choice:focus-visible {
+.stt-bonus-dialog .stt-bonus-choice:hover,
+.stt-bonus-dialog .stt-bonus-choice:focus-visible {
   border-color: var(--cc-open);
   box-shadow: var(--cc-sheen), 0 0 0 1px var(--cc-open-soft), 0 4px 14px var(--cc-open-glow);
   outline: none;
@@ -471,14 +471,14 @@
 /* -------------------------------------------- */
 
 /* Use Indomitable on a failed save: in teal, as an action the roll invites, where the card button is purple. */
-:is(.chat-message, .robear-request-popup) .robear-feature-button {
+:is(.chat-message, .stt-request-popup) .stt-feature-button {
   display: block;
   width: 100%;
   margin-top: 6px;
   border-color: #4fb3a8;
 }
 
-:is(.chat-message, .robear-request-popup) .robear-feature-button.icon {
+:is(.chat-message, .stt-request-popup) .stt-feature-button.icon {
   display: inline-flex;
   width: auto;
   height: 24px;

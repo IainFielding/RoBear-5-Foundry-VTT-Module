@@ -53,7 +53,7 @@ export async function enableModules(gm) {
 /**
  * Clear out the last run and create the documents every test starts from:
  * - a Player user, who owns Aria and Borin;
- * - Aria, a character holding the RoBear-E Cards from this module's compendium, and a Dagger from dnd5e's;
+ * - Aria, a character holding the Hero Cards from this module's compendium, and a Dagger from dnd5e's;
  * - Borin, a character with no cards;
  * - a Goblin NPC, owned by no player, with a linked token on the active scene.
  * @param {import("./session.mjs").Session} gm
@@ -77,8 +77,8 @@ export async function resetFixtures(gm) {
     const [aria, borin, goblin] = ["Aria", "Borin", "Goblin"].map(name => created.find(a => a.name === name));
 
     const pack = game.packs.get(`${moduleId}.items`);
-    const cards = (await pack.getDocuments()).find(i => i.system.identifier === "robear-e" || i.name === "RoBear-E Cards");
-    if ( !cards ) throw new Error("The RoBear-E Cards item is missing from the items compendium.");
+    const cards = (await pack.getDocuments()).find(i => i.system.identifier === "hero-cards" || i.name === "Hero Cards");
+    if ( !cards ) throw new Error("The Hero Cards item is missing from the items compendium.");
     const dagger = (await game.packs.get("dnd5e.items").getDocuments({ name: "Dagger" }))[0];
     if ( !dagger ) throw new Error("dnd5e's Dagger is missing from its items compendium.");
     await aria.createEmbeddedDocuments("Item", [game.items.fromCompendium(cards), game.items.fromCompendium(dagger)]);
@@ -126,8 +126,8 @@ export async function resetWorld(gm, player) {
   }, MODULE_ID);
   for ( const session of [gm, player] ) {
     await session.eval(async () => {
-      if ( globalThis.__robearDice ) globalThis.__robearDice.length = 0;
-      document.getElementById("robear-played-card")?.remove();
+      if ( globalThis.__sttDice ) globalThis.__sttDice.length = 0;
+      document.getElementById("stt-played-card")?.remove();
       if ( ui.menu?.rendered ) await ui.menu.close();
       ui.context?.close?.();
       for ( const app of foundry.applications.instances.values() ) {

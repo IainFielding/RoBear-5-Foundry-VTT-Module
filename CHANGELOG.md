@@ -1,8 +1,16 @@
 # Changelog
 
-All notable changes to RoBear-E.
+All notable changes to Sogrom's Table Tools.
 
 ## Unreleased
+
+### Renamed
+
+- **The module is now Sogrom's Table Tools, and the cards are Hero Cards.** The module ID is now
+  `sogrom-table-tools`, so Foundry treats it as a new module: install it from the new manifest, add the **Hero Cards**
+  feature from **Items (Sogrom's Table Tools)** to each character, and set the module's settings again. Macros use
+  `game.modules.get("sogrom-table-tools").api`. Chat notes and request cards made before the rename no longer show
+  their extras.
 
 ### New
 
@@ -57,15 +65,15 @@ All notable changes to RoBear-E.
 - **A card is given back if it can't be played.** A card was spent before its roll was changed,
   so if changing the roll failed, the card was lost with nothing to show for it. It is now given
   back, as a use of Indomitable already was.
-- **A double click spends one card.** Clicking the RoBear-E Card button twice quickly opened two
+- **A double click spends one card.** Clicking the Hero Card button twice quickly opened two
   card choosers, and picking in both spent two cards, of which only one took effect.
-- **A failed action says why.** The Roll button, the RoBear-E Card button, Use Indomitable, and
+- **A failed action says why.** The Roll button, the Hero Card button, Use Indomitable, and
   Add to or Subtract from a roll did nothing visible when something went wrong. They now show
   the error.
 - **A bonus on initiative is spent once.** If the combat tracker couldn't be updated after a bonus
   was added to an initiative roll, the bonus could be spent again, and the player was told
   nothing had been spent.
-- **Card dice use the actor's Dice So Nice appearance.** Dice rolled by a RoBear-E Card, or by
+- **Card dice use the actor's Dice So Nice appearance.** Dice rolled by a Hero Card, or by
   the Fighter's Indomitable, were shown in the player's own dice, not the ones set for that
   actor. They now look like the dice of the roll they change.
 - **Divine Intervention reads right with one number to pick.** The card said "1 numbers in a row",
@@ -88,7 +96,7 @@ All notable changes to RoBear-E.
   anything but a d100, as the README already said.
 - **The token controls' request button is grey.** It had the orange border Foundry gives button
   tools, unlike the tools beside it.
-- **The fonts come with the module.** RoBear-E's windows and cards use Cinzel and Spectral, which
+- **The fonts come with the module.** The module's windows and cards use Cinzel and Spectral, which
   were loaded from Google Fonts, so every player's browser contacted Google, and a table with no
   internet fell back to other fonts. They are now part of the module, under their own licence.
 
@@ -98,7 +106,7 @@ All notable changes to RoBear-E.
 
 - **The GM can ask for rolls.** A new window, opened from the chat controls or the token
   controls, posts a roll request to chat. Players roll from it with a **Roll** button for each
-  of their characters, and the request fills in as the rolls come in. RoBear-E Cards can be
+  of their characters, and the request fills in as the rolls come in. Hero Cards can be
   played on these rolls, and the request updates when they are.
   - **Standard Roll**: each actor rolls once against the DC, with a d20 by default, a d6, d8,
     d10, d12 or d100, or any check, save or tool.
@@ -115,7 +123,7 @@ All notable changes to RoBear-E.
     chooses how many), then rolls a d100 and must roll one of them. The Advantage and Luck
     cards can be played on the d100.
 
-  A macro can post a request with `game.modules.get("sogrom-robear-e").api.createRequest()`.
+  A macro can post a request with `game.modules.get("sogrom-table-tools").api.createRequest()`.
   Anything it leaves out is filled in as the window would, and a request that can't be rolled,
   such as one naming a skill D&D 5e doesn't know, is refused with a message saying why.
 - **Fighter's Indomitable on a failed save.** A Use Indomitable button on a failed saving throw
@@ -147,12 +155,12 @@ All notable changes to RoBear-E.
 
 ### Changed
 
-- **Natural 1s and 20s lock RoBear-E Cards.** A new setting, **on by default**, so existing worlds
+- **Natural 1s and 20s lock Hero Cards.** A new setting, **on by default**, so existing worlds
   change when they update: no card can be played on a roll whose d20 shows a natural 1 or 20.
   Turn the setting off to allow Advantage and Inspiration on them. Either way, Luck can't be
   played on a natural 20, and a natural 1 is fixed: nothing rerolls it, so Luck, Indomitable and
   Relentless can't be played on one.
-- **The RoBear-E Card button has a new icon**, the anchor also used for roll requests.
+- **The Hero Card button has a new icon**, the anchor also used for roll requests.
 - **Corn Liquor uses Foundry's own jug icon.** The item and its effect now use an icon that ships
   with Foundry VTT, in place of the art added in 1.0.0, which is no longer included.
 
@@ -160,8 +168,8 @@ All notable changes to RoBear-E.
 
 ### New
 
-- **Play a RoBear-E Card on a roll you've already made.** Your attack, damage, ability check,
-  saving throw and initiative rolls get a **RoBear-E Card** button in chat, which offers only the
+- **Play a Hero Card on a roll you've already made.** Your attack, damage, ability check,
+  saving throw and initiative rolls get a **Hero Card** button in chat, which offers only the
   cards that can be played on that roll. The chat card updates to show the new total, hit or miss
   against the target and a save's success or failure are worked out again, and a note records which
   card was played and what it changed.
@@ -172,7 +180,7 @@ All notable changes to RoBear-E.
   - **Indomitable** rerolls a failed saving throw.
   - **Relentless** rerolls initiative at the start of combat, keeps the higher total, and updates
     the combat tracker.
-- **A card window.** Clicking the RoBear-E Cards feature on a character sheet opens a window showing
+- **A card window.** Clicking the Hero Cards feature on a character sheet opens a window showing
   the art of every card you still have, and clicking one plays it. Cards with no uses left aren't
   shown. Shift-click the feature for the standard D&D 5e list instead.
 - **Advantage on your next roll.** Playing Advantage from the sheet gives advantage on your next
@@ -189,7 +197,7 @@ All notable changes to RoBear-E.
 
 ### New
 
-- **RoBear-E compendiums**, gathered in a RoBear-E folder: a journal with the RoBear-E Cards, the
+- **Sogrom's Table Tools compendiums**, gathered in a Sogrom's Table Tools folder: a journal with the Hero Cards, the
   campaign, and class spell lists; custom spells, including Theodore's Morning Coffee; custom
-  items, including the RoBear-E Cards feature, the Belts of Phoenix Dexterity and Corn Liquor;
+  items, including the Hero Cards feature, the Belts of Phoenix Dexterity and Corn Liquor;
   classes and subclasses; and macros.

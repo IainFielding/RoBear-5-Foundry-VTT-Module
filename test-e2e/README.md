@@ -1,8 +1,8 @@
 # End-to-end tests
 
-These tests run RoBear-E in a real Foundry, with one browser joined as the GM and another as a player. They
+These tests run Sogrom's Table Tools in a real Foundry, with one browser joined as the GM and another as a player. They
 click the real buttons: the Roll buttons on a request card, dnd5e's roll window, the Divine Intervention
-number picker, the RoBear-E Card chooser and the request window. Then they check what each user sees.
+number picker, the Hero Card chooser and the request window. Then they check what each user sees.
 
 Dice are forced, so each rule is tested exactly: natural 1s and 20s, ranges, ties and winners. Foundry turns
 `CONFIG.Dice.randomUniform()` into a face with `ceil((1 - u) * faces)`, and `forceDice` feeds back the `u`
@@ -18,7 +18,7 @@ The harness is not shipped: the release archive in `.github/workflows/main.yml` 
    prompt, or with Developer Mode on:
 
    ```
-   mklink /J "%LOCALAPPDATA%\FoundryVTT\Data\modules\sogrom-robear-e" "H:\Code\FoundryModules\RoBear-5-Foundry-VTT-Module"
+   mklink /J "%LOCALAPPDATA%\FoundryVTT\Data\modules\sogrom-table-tools" "H:\Code\FoundryModules\RoBear-5-Foundry-VTT-Module"
    ```
 
 3. `npm install`, then `npx playwright install chromium` if Playwright has no browser yet.
@@ -35,11 +35,11 @@ npm run test:e2e -- divine       # only tests whose name contains "divine"
 HEADED=1 npm run test:e2e        # watch the browsers
 ```
 
-Foundry is started on port 30099 with the `robear-e2e` world, which is created on the first run. Every run
+Foundry is started on port 30099 with the `stt-e2e` world, which is created on the first run. Every run
 deletes the world's actors, chat, combats and scenes, then recreates the fixtures in `lib/world.mjs`:
 
 - **Player**, a player user;
-- **Aria**, the player's character, holding the RoBear-E Cards and a Dagger;
+- **Aria**, the player's character, holding the Hero Cards and a Dagger;
 - **Borin**, another of the player's characters, with no cards;
 - **Goblin**, an NPC with a token on the active scene.
 
@@ -63,7 +63,7 @@ the end of both consoles.
   forged requests, and a die can't be spent twice.
 - `tests-features.mjs`: Fighter's Indomitable from dnd5e's compendiums under both sets of rules: rerolling a
   failed save, the 2024 Fighter-level bonus, and when it is offered.
-- `tests-cards.mjs`: RoBear-E Cards on rolls already in chat, and from the sheet. This covers who can play
+- `tests-cards.mjs`: Hero Cards on rolls already in chat, and from the sheet. This covers who can play
   them, and Inspiration, Luck, Advantage, Indomitable and Relentless, including when each is offered.
   It also covers spent uses, death saves, the card window's art, Advantage on the next roll, the "no cards
   left" warning and shift-click. Played cards are shown only to those who can see the roll, and a note's art

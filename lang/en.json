@@ -1,5 +1,5 @@
 {
-  "ROBEAR": {
+  "STT": {
     "Common": {
       "Cancel": "Cancel",
       "Someone": "Someone",
@@ -7,8 +7,8 @@
     },
     "Settings": {
       "LockNaturals": {
-        "Name": "Natural 1s and 20s lock RoBear-E Cards",
-        "Hint": "No RoBear-E Card can be played on a roll whose d20 shows a natural 1 or 20. Turn this off to allow Advantage and Inspiration on them. A natural 1 is fixed either way: Luck, Indomitable and Relentless never reroll one, and Luck can't be played on a natural 20."
+        "Name": "Natural 1s and 20s lock Hero Cards",
+        "Hint": "No Hero Card can be played on a roll whose d20 shows a natural 1 or 20. Turn this off to allow Advantage and Inspiration on them. A natural 1 is fixed either way: Luck, Indomitable and Relentless never reroll one, and Luck can't be played on a natural 20."
       },
       "MarkNaturals": {
         "Name": "Ring natural 1s and 20s",
@@ -20,7 +20,7 @@
       },
       "ShowPlayedCards": {
         "Name": "Show played cards on screen",
-        "Hint": "When a RoBear-E Card is played, its art appears in the middle of the screen for a moment, for everyone who can see the roll. Either way, chat keeps a record of it, with a thumbnail of the card."
+        "Hint": "When a Hero Card is played, its art appears in the middle of the screen for a moment, for everyone who can see the roll. Either way, chat keeps a record of it, with a thumbnail of the card."
       },
       "ShowDCDefault": {
         "Name": "Show the DC to players by default",
@@ -48,14 +48,14 @@
       "Divine": "Divine Intervention"
     },
     "Cards": {
-      "NoneLeft": "You have no RoBear-E Cards left until your next long rest.",
+      "NoneLeft": "You have no Hero Cards left until your next long rest.",
       "ChooseFromSheet": "Choose a card to play. It will be spent until your next long rest.",
       "ChooseOnRoll": "Choose a card to play on this roll. It will be spent until your next long rest.",
       "NextRollAdvantage": "{name}'s next attack roll, ability check, or saving throw will be made with advantage.",
-      "ButtonTooltip": "Use a RoBear-E Card on this roll",
-      "Button": "RoBear-E Card",
-      "DialogTitle": "Use a RoBear-E Card",
-      "LegacyLabel": "RoBear-E:",
+      "ButtonTooltip": "Use a Hero Card on this roll",
+      "Button": "Hero Card",
+      "DialogTitle": "Use a Hero Card",
+      "LegacyLabel": "Hero Cards:",
       "Plays": "{name} plays",
       "Log": {
         "Entry": "{card}: {detail}",
@@ -101,7 +101,7 @@
       }
     },
     "Request": {
-      "WindowTitle": "Request RoBear-E Rolls",
+      "WindowTitle": "Request Rolls",
       "PopupTitle": "Roll Request",
       "DeleteGMOnly": "Only the GM can delete a roll made for a roll request.",
       "DC": "DC {dc}",

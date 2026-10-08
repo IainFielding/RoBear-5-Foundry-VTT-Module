@@ -1,18 +1,18 @@
-# RoBear-E
+# Sogrom's Table Tools
 
-A [Foundry VTT](https://foundryvtt.com/) module for the **D&D 5e** system, made for the RoBear-E campaign. It adds
-the **RoBear-E Cards**, a deck of one-use boons you can play on your rolls. It also adds a way for the GM to ask
+A [Foundry VTT](https://foundryvtt.com/) module for the **D&D 5e** system. It adds
+the **Hero Cards**, a deck of one-use boons you can play on your rolls. It also adds a way for the GM to ask
 the table for rolls, and some extra rules for rolls in chat.
 
 This guide is for players. If you run the game, read the **[GM Guide](GM.md)** too. If you write macros or work on the
 module, see the **[Developer Guide](DEVELOPER.md)**.
 
-<img src="docs/images/card-window.webp" alt="The RoBear-E Cards window, showing the art of every card a character still has" width="640">
+<img src="docs/images/card-window.webp" alt="The Hero Cards window, showing the art of every card a character still has" width="640">
 
 ## Contents
 
 - [Getting started](#getting-started)
-- [The RoBear-E Cards](#the-robear-e-cards)
+- [The Hero Cards](#the-hero-cards)
   - [Playing a card from your character sheet](#playing-a-card-from-your-character-sheet)
   - [Playing a card on a roll you've already made](#playing-a-card-on-a-roll-youve-already-made)
   - [What each card does](#what-each-card-does)
@@ -23,13 +23,13 @@ module, see the **[Developer Guide](DEVELOPER.md)**.
 
 ## Getting started
 
-RoBear-E needs **Foundry VTT v14** and the **D&D 5e system 6.x** (tested on 6.0.5). Your GM installs and enables it, so
+Sogrom's Table Tools needs **Foundry VTT v14** and the **D&D 5e system 6.x** (tested on 6.0.5). Your GM installs and enables it, so
 you don't have to do anything.
 
-To have cards, your character needs the **RoBear-E Cards** feature. Your GM adds it from the **Items (RoBear-E)**
+To have cards, your character needs the **Hero Cards** feature. Your GM adds it from the **Items (Sogrom's Table Tools)**
 compendium. If you can't find it on your sheet, ask them.
 
-## The RoBear-E Cards
+## The Hero Cards
 
 Each card can be played once, and comes back after a long rest.
 
@@ -40,13 +40,13 @@ played it. Everyone who can see the roll it was played on sees the card. Click t
 
 ### Playing a card from your character sheet
 
-Click the **RoBear-E Cards** feature on your sheet. A window opens with every card you still have (spent cards aren't
+Click the **Hero Cards** feature on your sheet. A window opens with every card you still have (spent cards aren't
 shown). Click a card to play it.
 
 The card is spent, and a short record of it goes to chat with the card's description folded away. Click the record's
 header to read the description, or hover over the small card art to see it full size.
 
-<img src="docs/images/card-chat-record.webp" alt="The chat record of a played card: the RoBear-E Cards feature, with Charger's art beside it" width="320">
+<img src="docs/images/card-chat-record.webp" alt="The chat record of a played card: the Hero Cards feature, with Charger's art beside it" width="320">
 
 Playing **Advantage** this way gives you advantage on your next attack roll, ability check or saving throw.
 
@@ -54,9 +54,9 @@ Playing **Advantage** this way gives you advantage on your next attack roll, abi
 
 ### Playing a card on a roll you've already made
 
-Your attack, damage, ability check, saving throw and initiative rolls get a **RoBear-E Card** button in chat.
+Your attack, damage, ability check, saving throw and initiative rolls get a **Hero Card** button in chat.
 
-<img src="docs/images/roll-card-button.webp" alt="An Athletics check of 9 in chat, with a RoBear-E Card button under it" width="320">
+<img src="docs/images/roll-card-button.webp" alt="An Athletics check of 9 in chat, with a Hero Card button under it" width="320">
 
 Click it to see the cards you can play on that roll. Cards that can't be played on it aren't offered.
 
@@ -147,7 +147,7 @@ also adds your Fighter level; under the 2014 rules it doesn't. The save notes wh
 - On a roll request whose result the GM hasn't shown yet, the button appears only once the GM shows it. Offering it
   sooner would tell you that you failed.
 
-This is the class feature. The RoBear-E **Indomitable** card is separate, and you can use either.
+This is the class feature. The **Indomitable** Hero Card is separate, and you can use either.
 
 ## Answering the GM's roll requests
 
@@ -157,7 +157,7 @@ normal.
 
 <img src="docs/images/request-player.webp" alt="A request card for an Athletics check, DC 15: Aria has rolled 17, and Borin has a Roll button" width="320">
 
-Once you've rolled, your result shows on the card. The anchor button beside it plays a RoBear-E Card on that roll.
+Once you've rolled, your result shows on the card. The anchor button beside it plays a Hero Card on that roll.
 Click the result itself to see its dice.
 
 Things you may see on a request card:
@@ -201,6 +201,8 @@ You can't delete a roll you made for a request, so a bad roll can't be thrown aw
 they remove your roll from the card, and your **Roll** button comes back.
 
 ## Credits
+
+Inspired by the RoBear-E campaign. Sogrom's Table Tools is not affiliated with, or endorsed by, its creators.
 
 The card art is the work of [Captain RoBear](https://www.youtube.com/channel/UCktEYryPmattKzrpo0_kGzA) and remains
 the property of its creator. The Cinzel and Spectral fonts are under the SIL Open Font License (see `assets/fonts`).
