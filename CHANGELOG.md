@@ -2,6 +2,13 @@
 
 All notable changes to Sogrom's Table Tools.
 
+## 0.0.7
+
+### Roll requests
+
+- **Divine Intervention asks one character.** The request window picks who rolls with radio buttons, without the
+  quick picks or **Select All**, and a request through the API for more than one actor is refused.
+
 ## 0.0.6
 
 For Foundry VTT v14 and the D&D 5e system 6.x.

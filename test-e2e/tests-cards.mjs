@@ -759,7 +759,7 @@ test("sheet: Divine Intervention whispers the GM a button that opens the request
   await app.waitFor({ timeout: 5000 });
   const form = await app.evaluate(el => ({
     mode: el.querySelector('input[name="mode"]:checked')?.value,
-    actors: [...el.querySelectorAll('input[name^="actors."]:checked')]
+    actors: [...el.querySelectorAll('input[name="actor"]:checked')]
       .map(box => box.closest("label")?.textContent.trim())
   }));
   assertEqual(form, { mode: "divine", actors: ["Aria"] }, "the request window");

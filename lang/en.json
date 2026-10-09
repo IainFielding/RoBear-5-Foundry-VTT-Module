@@ -188,7 +188,7 @@
         },
         "Divine": {
           "Label": "Divine Intervention",
-          "Hint": "Each actor picks a run of numbers, then must roll one of them on a d100."
+          "Hint": "One actor picks a run of numbers, then must roll one of them on a d100."
         }
       },
       "Sides": {
@@ -335,6 +335,7 @@
         "Successes": "A skill challenge needs from 1 to {total} successes, not {successes}.",
         "Range": "Divine Intervention needs from {min} to {max} numbers to pick, not {range}.",
         "DivineRoll": "Divine Intervention's roll is a d100, not {type}.",
+        "DivineActor": "Divine Intervention needs exactly one actor.",
         "Choices": "Only a Standard Roll, Team Challenge or Skill Challenge can offer a choice of rolls, and at most {max} to choose from, given as a list of alternatives.",
         "ChoiceDC": "A Team Challenge's rolls are averaged against one DC, so its alternatives can't have DCs of their own.",
         "Scoring": "Unknown way to score a Team Challenge: {scoring}. Use one of: {scorings}.",
@@ -354,7 +355,7 @@
         "Scoring": "Scoring",
         "ContestHint": "Each side makes its own roll, and the higher result wins.",
         "NumbersToPick": "Numbers to Pick",
-        "DivineHint": "Each player picks this many numbers in a row, then rolls a d100 and must roll one of them.",
+        "DivineHint": "The player picks this many numbers in a row, then rolls a d100 and must roll one of them.",
         "WhoRolls": "Who Rolls",
         "SelectAll": "Select or clear everyone",
         "Picks": {

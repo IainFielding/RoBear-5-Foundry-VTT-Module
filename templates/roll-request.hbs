@@ -160,16 +160,23 @@
     <fieldset>
         <legend>
             {{localize "STT.Request.Config.WhoRolls"}}
+            {{#unless divine}}
             <button type="button" class="stt-request-select-all" data-action="selectAll"
                     data-tooltip aria-label="{{localize 'STT.Request.Config.SelectAll'}}">
                 <i class="fa-solid fa-check-double" inert></i>
             </button>
+            {{/unless}}
         </legend>
-        {{> sttQuickPicks picks=picks}}
+        {{!-- Divine Intervention is one actor's prayer, so it picks one actor and has no quick picks. --}}
+        {{#unless divine}}{{> sttQuickPicks picks=picks}}{{/unless}}
         <div class="stt-request-actor-list">
             {{#each actors as |actor|}}
             <label class="stt-request-actor-choice">
+                {{#if @root.divine}}
+                <input type="radio" name="actor" value="{{actor.index}}" {{checked actor.checked}}>
+                {{else}}
                 <input type="checkbox" name="actors.{{actor.index}}" {{checked actor.checked}}>
+                {{/if}}
                 <img src="{{actor.img}}" alt="">
                 <span>{{actor.name}}</span>
             </label>

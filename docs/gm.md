@@ -232,9 +232,10 @@ team's rolls are pooled like a Team Challenge, natural 1s and 20s included, and 
 
 #### Divine Intervention
 
-Set how many numbers each player picks, from 1 to 50 (16 by default). When a player clicks **Roll**, they pick that
-many numbers in a row from 1 to 100, then roll a d100, and must roll one of their numbers. The **Advantage** card
-rolls a second d100 and keeps whichever lands in their numbers, and **Lucky** rerolls the d100.
+Choose the one character who prays, and set how many numbers they pick, from 1 to 50 (16 by default). When the
+player clicks **Roll**, they pick that many numbers in a row from 1 to 100, then roll a d100, and must roll one of
+their numbers. The **Advantage** card rolls a second d100 and keeps whichever lands in their numbers, and **Lucky**
+rerolls the d100.
 
 When a player plays the **Divine Intervention** card from their sheet, you're whispered a note with a **Set Up Divine
 Intervention** button. It opens this window set to Divine Intervention, with that player's character the one to
