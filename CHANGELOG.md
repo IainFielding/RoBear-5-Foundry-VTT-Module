@@ -2,6 +2,17 @@
 
 All notable changes to Sogrom's Table Tools.
 
+## Unreleased
+
+### Roll requests
+
+- **Four ways to score a Team Challenge.** Choose **Scoring** in the request window: the average of the rolls, as
+  before; **Half must succeed**, the Player's Handbook group check; **Leader, helped by the rest**, where the highest
+  modifier's roll counts, +1 for each other success and −1 for each failure; or **Weakest link**, where the lowest
+  modifier's roll counts, +1 for each other success. The card marks what each roll did for the team, and its summary
+  shows the working. A new setting, **Team Challenge scoring by default**, picks where the window starts, and macros
+  can pass `scoring`.
+
 ## 0.0.6
 
 For Foundry VTT v14 and the D&D 5e system 6.x.

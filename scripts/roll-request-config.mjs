@@ -4,7 +4,7 @@
 
 import { MODULE_ID, localize } from "./hero-cards.mjs";
 import {
-  CHALLENGE_PARTS, DICE, DIVINE_RANGE, MAX_CHOICES, MODES, createRequest, getChoices, getPartLabel
+  CHALLENGE_PARTS, DICE, DIVINE_RANGE, MAX_CHOICES, MODES, SCORING, createRequest, getChoices, getPartLabel
 } from "./roll-requests.mjs";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -32,6 +32,7 @@ const { FormDataExtended } = foundry.applications.ux;
  * @property {Record<string, [string, string]>} sideRolls  Each contest mode's roll for each side, keyed by mode,
  *   starting as d20 against d20.
  * @property {number} successes
+ * @property {string} scoring  How a Team Challenge is scored: a key in SCORING.
  * @property {boolean} showDC
  * @property {"public"|"gm"} rollMode
  * @property {string[]} actors                 Who rolls, outside a contest.
@@ -120,6 +121,7 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
     const draft = this.#draft;
     const mode = MODES[draft.mode];
     const challenge = draft.mode === "challenge";
+    const team = draft.mode === "team";
     const rollOptions = getRollGroups(mode.dice ?? ["d20"]);
 
     // Divine Intervention is always a d100, so it has no roll to choose.
@@ -169,6 +171,11 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
       successOptions: Array.from({ length: CHALLENGE_PARTS }, (_, i) => ({
         value: i + 1, label: localize("STT.Request.Config.SuccessesOf", { count: i + 1, total: CHALLENGE_PARTS })
       })),
+      team,
+      scoringOptions: Object.entries(SCORING).map(([value, s]) => ({
+        value, label: localize(s.label), selected: value === draft.scoring
+      })),
+      scoringHint: localize(SCORING[draft.scoring].hint),
       actors: this.#actors.map((a, i) => choice(a, i, draft.actors.includes(a.uuid))),
       sides: mode.contest ? mode.sides.map((label, side) => ({
         label: localize(label),
@@ -200,6 +207,9 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
       rollMode: "public"
     };
     draft.standard ??= { roll: "d20", dc: 15 };
+    // How a Team Challenge is scored carries over from the last request, and otherwise starts from the GM's setting.
+    if ( !(draft.scoring in SCORING) ) draft.scoring = game.settings.get(MODULE_ID, "teamScoring");
+    if ( !(draft.scoring in SCORING) ) draft.scoring = "average";
     for ( const part of [draft.standard, ...draft.parts] ) part.alternatives ??= [];
     draft.sideRolls ??= {};
     for ( const [key, m] of Object.entries(MODES) ) if ( m.contest ) draft.sideRolls[key] ??= ["d20", "d20"];
@@ -259,6 +269,7 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
     for ( const [i, side] of Object.entries(data.sideRolls ?? {}) ) draft.sideRolls[shown][i] = side.roll;
     if ( data.standard ) draft.standard = toRoll(data.standard);
     if ( "successes" in data ) draft.successes = Number(data.successes) || 2;
+    if ( data.scoring in SCORING ) draft.scoring = data.scoring;
     if ( "range" in data ) {
       draft.range = Math.clamp(Math.round(Number(data.range) || DIVINE_RANGE.initial), DIVINE_RANGE.min, DIVINE_RANGE.max);
     }
@@ -280,6 +291,12 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
   /** @inheritDoc */
   _onChangeForm(formConfig, event) {
     super._onChangeForm(formConfig, event);
+    // The hint under the scoring explains the way chosen.
+    if ( (event.target.name === "scoring") && (event.target.value in SCORING) ) {
+      const hint = this.element.querySelector(".stt-request-scoring-hint");
+      if ( hint ) hint.textContent = localize(SCORING[event.target.value].hint);
+      return;
+    }
     if ( event.target.name !== "mode" ) return;
     this.#readForm();
     this.render({ parts: ["form"] });
@@ -386,6 +403,10 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
       const parts = draft.mode === "standard" ? [toPart(draft.standard)] : draft.parts.slice(0, count).map(toPart);
       if ( (draft.mode === "challenge") && parts.some(p => getChoices(p).some(c => c.dc === null)) ) {
         throw new Error(localize("STT.Request.Config.ChallengeDC"));
+      }
+      if ( draft.mode === "team" ) {
+        if ( SCORING[draft.scoring].needsDC && (parts[0].dc === null) ) throw new Error(localize("STT.Request.Config.ScoringDC"));
+        request.scoring = draft.scoring;
       }
       Object.assign(request, { parts, actors: draft.actors });
       if ( draft.mode === "divine" ) {

@@ -65,11 +65,12 @@ can open them, and each setting applies to the whole world.
 
 ### Roll Requests
 
-<img src="images/gm-settings-roll-requests.webp" alt="The Roll Request Settings window, with its five settings" width="420">
+<img src="images/gm-settings-roll-requests.webp" alt="The Roll Request Settings window, with its six settings" width="420">
 
 | Setting | Default | What it does |
 |---|---|---|
 | **Show the DC to players by default** | Off | Whether **Show DC to Players** starts ticked in the request window. You can still change it for each request. |
+| **Team Challenge scoring by default** | Average of the rolls | How a Team Challenge is scored when you open the request window. You can still change it for each request. See [Team Challenge](#team-challenge). |
 | **Attach rolls to the request card** | On | The rolls made for a request show on its card rather than as messages of their own, as D&D 5e does for an item's saves. Click a result to see its dice. |
 | **Pop up roll requests for players** | Off | Opens a window for each player with a character in a request, with a Roll button for each of their characters. |
 | **Pop up roll requests for the GM** | Off | Opens a window for you when a request includes NPCs, or any actor no player owns. |
@@ -169,10 +170,22 @@ players**; players see "Done" once they have finished.
 
 #### Team Challenge
 
-Everyone rolls, and the average, rounded down, is compared to the DC. Each natural 1 removes the highest roll from
-the pool, and each natural 20 removes the lowest. If that would leave no rolls, 1s and 20s cancel out in pairs, and at
-least one roll always stays. Hover over a removed roll to see why it was removed. Only you see the result until you
-click **Show to players**.
+Everyone rolls, and the team gets one result. Choose how it's worked out under **Scoring**:
+
+| Scoring | How the team's result is worked out |
+|---|---|
+| **Average of the rolls** | The average, rounded down, is compared to the DC. Each natural 1 removes the highest roll from the pool, and each natural 20 removes the lowest. If that would leave no rolls, 1s and 20s cancel out in pairs, and at least one roll always stays. Hover over a removed roll to see why it was removed. |
+| **Half must succeed** | The group check from the Player's Handbook: if at least half the team meets the DC, the whole team succeeds. |
+| **Leader, helped by the rest** | The roll with the highest modifier counts, +1 for each other roll that meets the DC and −1 for each that doesn't. |
+| **Weakest link** | The roll with the lowest modifier counts, +1 for each other roll that meets the DC. Other failures don't count against it. |
+
+All but the average are judged against the DC, so they need one. A roll's modifier is its total less the d20 it kept,
+so where you offer a choice of rolls, such as Athletics or Acrobatics, each actor is judged by the roll they chose. On
+a tie, the higher total counts. The card marks each roll with what it did for the team (**Leader**, **+1**, **−1**),
+and its summary shows the working, such as "Aria leads: 21, +1 helped, −2 hindered = 20".
+
+Only you see the result until you click **Show to players**. A Hero Card played on a roll, or a changed DC, scores the
+team again, so playing Inspiration on a helper can make them the leader.
 
 <img src="images/gm-team-challenge.webp" alt="A Team Challenge card: Aria's natural 20 ringed in gold, Borin's 4 greyed out as removed, Goblin 11. Team average 15, 1 removed, Success" width="300">
 
@@ -219,7 +232,7 @@ roll. Set the numbers to pick, and send it when you're ready.
 **Rolling for NPCs.** Every row has a **Roll** button for you, so you can roll for anyone, including NPCs.
 
 **Changing the DC.** On a Standard Roll, Team Challenge or Skill Challenge card, click the DC to change it, or clear
-it for no DC (each Skill Challenge roll must keep one). Where each choice has its own DC, click the one to change.
+it for no DC (each Skill Challenge roll must keep one, as must a Team Challenge not scored by its average). Where each choice has its own DC, click the one to change.
 Rolls already made are scored again against the new DC.
 
 <img src="images/gm-change-dc.webp" alt="The Change DC window, with the DC set to 12" width="340">

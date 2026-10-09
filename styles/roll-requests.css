@@ -537,6 +537,22 @@
   color: var(--cc-fail);
 }
 
+/* What each roll did for a team scored by its successes: brass for the roll that counts, teal for a help, red for a
+   hindrance. */
+:is(.chat-message, .stt-request-popup) .stt-team-note.leader,
+:is(.chat-message, .stt-request-popup) .stt-team-note.weakest {
+  color: var(--cc-settled-bright);
+  letter-spacing: 0.04em;
+}
+
+:is(.chat-message, .stt-request-popup) .stt-team-note.helped {
+  color: var(--cc-open);
+}
+
+:is(.chat-message, .stt-request-popup) .stt-team-note.hindered {
+  color: var(--cc-fail);
+}
+
 :is(.chat-message, .stt-request-popup) .stt-request-summary {
   display: flex;
   align-items: center;

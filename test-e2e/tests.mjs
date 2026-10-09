@@ -325,6 +325,12 @@ test("the request window refuses requests it cannot run", async ({ gm }) => {
   }, "Each roll in a skill challenge needs a DC.");
 
   await attempt(async app => {
+    await chooseMode(app, "team");
+    await app.locator('select[name="scoring"]').selectOption("leader");
+    await app.locator('input[name="parts.0.dc"]').fill("");
+  }, "This way of scoring a Team Challenge needs a DC.");
+
+  await attempt(async app => {
     await chooseMode(app, "rolloff");
     await app.locator('input[name="rivals.0"][value="0"]').check({ force: true });
     await app.locator('input[name="rivals.1"][value="0"]').check({ force: true });
@@ -720,6 +726,68 @@ test("team challenge: the GM's summary keeps each word of the result whole besid
     return words;
   }, id);
   assertEqual(broken, [], "words broken across lines in the summary");
+});
+
+test("team challenge: the window offers each way of scoring, starting from the setting, and explains the one chosen", async ({ gm }) => {
+  const app = await openWindow(gm);
+  try {
+    await chooseMode(app, "team");
+    const scoring = app.locator('select[name="scoring"]');
+    assertEqual(await scoring.evaluate(s => [...s.options].map(o => o.value)), ["average", "half", "leader", "weakest"],
+      "ways of scoring");
+    assertEqual(await scoring.inputValue(), "average", "the scoring the window starts with");
+    await scoring.selectOption("half");
+    const hint = await app.locator(".stt-request-scoring-hint").textContent();
+    assert(hint.includes("at least half"), `The hint doesn't explain Half must succeed: ${hint}`);
+    // The scoring is kept when the GM switches mode and back.
+    await chooseMode(app, "standard");
+    await chooseMode(app, "team");
+    assertEqual(await app.locator('select[name="scoring"]').inputValue(), "half", "the scoring after switching mode");
+  } finally {
+    await gm.eval(() => foundry.applications.instances.get("stt-roll-request")?.close());
+  }
+});
+
+test("team challenge: led by the best roll, helped by successes and hindered by failures", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const id = await postRequest(ctx, {
+    mode: "team", scoring: "leader", parts: [athletics(12)], actors: [ids.aria, ids.borin, ids.goblin]
+  });
+  let card = await readCard(gm, id);
+  assertEqual(card.subtitle, "Team Challenge · Leader · DC 12", "the card's subtitle");
+  // Every fixture's Athletics is +0, so the leader is the highest total.
+  await forceDice(player, [d20(15), d20(8)]);
+  await clickRoll(player, id, "Aria", { fastForward: true });
+  await clickRoll(player, id, "Borin", { fastForward: true });
+  await forceDice(gm, [d20(13)]);
+  await clickRoll(gm, id, "Goblin", { fastForward: true });
+
+  card = await waitForCard(gm, id, c => c.summary, "the GM's team result");
+  assertEqual(card.summary, "Aria leads: 15, +1 helped, −1 hindered = 15 Success Show to players", "the GM's summary");
+  assertEqual(["Aria", "Borin", "Goblin"].map(name => row(card, name).badge), ["Leader", "−1", "+1"], "each row's note");
+
+  card = await waitForCard(player, id, c => c.rows.every(r => r.results.length), "the player to see every roll");
+  assertEqual(card.summary, null, "the player's summary before it is shown");
+  assertEqual(card.rows.map(r => r.badge), [null, null, null], "the notes, before the result is shown");
+
+  await revealSummary(gm, id);
+  card = await waitForCard(player, id, c => c.summary, "the team result once shown");
+  assertEqual(card.summary, "Aria leads: 15, +1 helped, −1 hindered = 15 Success", "the player's summary once shown");
+  assertEqual(row(card, "Borin").badge, "−1", "Borin's note once shown");
+});
+
+test("team challenge: half must succeed, as the Player's Handbook's group check", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const id = await postRequest(ctx, {
+    mode: "team", scoring: "half", parts: [athletics(12)], actors: [ids.aria, ids.borin, ids.goblin]
+  });
+  await forceDice(player, [d20(15), d20(3)]);
+  await clickRoll(player, id, "Aria", { fastForward: true });
+  await clickRoll(player, id, "Borin", { fastForward: true });
+  await forceDice(gm, [d20(4)]);
+  await clickRoll(gm, id, "Goblin", { fastForward: true });
+  const card = await waitForCard(gm, id, c => c.summary, "the GM's team result");
+  assertEqual(card.summary, "1 of 3 succeeded · 2 needed Failure Show to players", "the GM's summary");
 });
 
 /* -------------------------------------------- */

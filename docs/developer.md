@@ -83,6 +83,7 @@ interface RollRequest {
   actors: string[];          // actor UUIDs of everyone in the request, each once
   sides?: [string[], string[]]; // contests only: actor UUIDs on each side
   successes?: number;        // "challenge" only: successes needed, 1–3 (default 2)
+  scoring?: "average" | "half" | "leader" | "weakest"; // "team" only: how it's scored (default: the "teamScoring" setting)
   range?: number;            // "divine" only: how many numbers each actor picks, 1–50 (default 16)
   showDC?: boolean;          // show the DC to players (default: the "showDCDefault" setting)
   rollMode?: "public" | "gm"; // "gm" is a private GM roll (default "public")
@@ -101,7 +102,7 @@ interface RequestPart {
 | `mode` | Window label | `parts` used | `sides` | Notes |
 |---|---|---|---|---|
 | `standard` | Standard Roll | 1 | | Each actor rolls once against the DC. Allows `alternatives`, and a `death` part with none. |
-| `team` | Team Challenge | 1 | | The average of everyone's totals, rounded down, against the DC. Each natural 1 removes the highest roll, each natural 20 the lowest. Allows `alternatives`. |
+| `team` | Team Challenge | 1 | | Scored by `scoring`. `average`: everyone's totals averaged, rounded down, against the DC; each natural 1 removes the highest roll, each natural 20 the lowest. `half`: succeeds if at least half meet the DC. `leader`: the roll with the highest modifier (total less the kept d20), +1 per other success, −1 per other failure, against the DC. `weakest`: the lowest modifier, +1 per other success. All but `average` need a `dc`. Allows `alternatives`. |
 | `challenge` | Skill Challenge | 3 | | Three rolls in turn, each with its own DC; `successes` of them needed. Allows `alternatives`. |
 | `rolloff` | Roll-Off | 2 (one per side) | Required, exactly one actor each | Higher total wins. An actor no player owns rolls as a private GM roll until the GM shows it. |
 | `versus` | Team vs Team | 2 (one per side) | Required, at least one actor each | Each side pooled like a Team Challenge; higher average wins. |
@@ -132,8 +133,9 @@ score as they did. In `team`, whose rolls are averaged against one DC, an altern
 like the module's other exports.
 
 **Defaults.** `withDefaults` fills in a missing or `null` value for `rollMode` (`"public"`), `showDC` (the
-`showDCDefault` setting), `successes` (`2`, for `challenge`) and `range` (`16`, for `divine`). Nothing else is filled
-in.
+`showDCDefault` setting), `successes` (`2`, for `challenge`), `scoring` (the `teamScoring` setting, for `team`) and
+`range` (`16`, for `divine`). Nothing else is filled in. A `team` request with no `scoring` on it, such as one posted
+before there was a choice, is averaged.
 
 ### Validation
 
@@ -153,6 +155,8 @@ language), and posts nothing:
 | Fewer `parts` than the mode uses | A roll request is missing a roll. |
 | `alternatives` in a mode without choices, three or more of them, or not objects | Only a Standard Roll, Team Challenge or Skill Challenge can offer a choice of rolls, and at most 4 to choose from, given as a list of alternatives. |
 | An alternative with a `dc` in a `team` request | A Team Challenge's rolls are averaged against one DC, so its alternatives can't have DCs of their own. |
+| A `team` request's `scoring` isn't one of the four | Unknown way to score a Team Challenge: {scoring}. Use one of: {scorings}. |
+| A `team` request scored by `half`, `leader` or `weakest` with no `dc` | A Team Challenge scored by its successes needs a DC. |
 | A `death` roll outside a `standard` request, or with alternatives, or as one | A death save can only be asked for in a Standard Roll, with no other rolls to choose from. |
 | An unknown `type` | Unknown kind of roll: {type}. |
 | A `key` that dnd5e doesn't know | Unknown {type} for a roll: {key}. Use one of: {keys}. |
@@ -221,6 +225,17 @@ await createRequest({ mode: "standard", parts: [{ type: "death", dc: 10 }], acto
 
 ```js
 await createRequest({ mode: "team", parts: [{ type: "skill", key: "ste", dc: 13 }], actors: party });
+```
+
+**Team Challenge led by the best climber, Athletics or Acrobatics, DC 15:**
+
+```js
+await createRequest({
+  mode: "team",
+  scoring: "leader",
+  parts: [{ type: "skill", key: "ath", dc: 15, alternatives: [{ type: "skill", key: "acr" }] }],
+  actors: party
+});
 ```
 
 **Skill Challenge, all three needed:**

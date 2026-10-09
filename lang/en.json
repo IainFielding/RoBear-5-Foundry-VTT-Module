@@ -68,6 +68,10 @@
         "Name": "Show the DC to players by default",
         "Hint": "Decides whether players can see the DC by default when you create a roll request. You can override it for any request. Hiding the DC removes it from the chat card."
       },
+      "TeamScoring": {
+        "Name": "Team Challenge scoring by default",
+        "Hint": "How a Team Challenge's rolls are scored when you open the request window. You can change it for any request."
+      },
       "AttachRolls": {
         "Name": "Attach Rolls to Request Cards",
         "Hint": "Keep related rolls neatly grouped within their request card instead of creating separate chat messages."
@@ -168,7 +172,7 @@
         },
         "Team": {
           "Label": "Team Challenge",
-          "Hint": "The party's rolls are averaged. A natural 1 removes the highest roll, and a natural 20 the lowest."
+          "Hint": "Everyone rolls, and the team gets one result: averaged, or scored by who succeeds."
         },
         "Challenge": {
           "Label": "Skill Challenge",
@@ -211,6 +215,43 @@
         "Hidden": "The team's result is hidden.",
         "Average": "Team average {average}{removed}",
         "Removed": " · {count} removed"
+      },
+      "Scoring": {
+        "Average": {
+          "Label": "Average of the rolls",
+          "Short": "Average",
+          "Hint": "The rolls are averaged, rounded down, against the DC. Each natural 1 removes the highest roll, and each natural 20 the lowest."
+        },
+        "Half": {
+          "Label": "Half must succeed",
+          "Short": "Half must succeed",
+          "Hint": "The group check from the Player's Handbook. If at least half the team meets the DC, the whole team succeeds.",
+          "Summary": "{passed} of {total} succeeded · {needed} needed"
+        },
+        "Leader": {
+          "Label": "Leader, helped by the rest",
+          "Short": "Leader",
+          "Hint": "The roll with the highest modifier counts, +1 for each other success and −1 for each other failure.",
+          "Summary": "{name} leads: {base}, +{helped} helped, −{hindered} hindered = {score}"
+        },
+        "Weakest": {
+          "Label": "Weakest link",
+          "Short": "Weakest link",
+          "Hint": "The roll with the lowest modifier counts, +1 for each other success. Other failures don't count against it.",
+          "Summary": "{name} is the weakest link: {base}, +{helped} helped = {score}"
+        },
+        "Note": {
+          "Leader": "Leader",
+          "LeaderTooltip": "The highest modifier, so this roll counts for the team.",
+          "Weakest": "Weakest",
+          "WeakestTooltip": "The lowest modifier, so this roll counts for the team.",
+          "Helped": "+1",
+          "HelpedTooltip": "Succeeded, adding 1 to the team's roll.",
+          "Hindered": "−1",
+          "HinderedTooltip": "Failed, taking 1 from the team's roll.",
+          "Ignored": "—",
+          "IgnoredTooltip": "Failed. Other failures don't count against the weakest link."
+        }
       },
       "Contest": {
         "Tie": "Tie",
@@ -296,6 +337,8 @@
         "DivineRoll": "Divine Intervention's roll is a d100, not {type}.",
         "Choices": "Only a Standard Roll, Team Challenge or Skill Challenge can offer a choice of rolls, and at most {max} to choose from, given as a list of alternatives.",
         "ChoiceDC": "A Team Challenge's rolls are averaged against one DC, so its alternatives can't have DCs of their own.",
+        "Scoring": "Unknown way to score a Team Challenge: {scoring}. Use one of: {scorings}.",
+        "ScoringDC": "A Team Challenge scored by its successes needs a DC.",
         "DeathSave": "A death save can only be asked for in a Standard Roll, with no other rolls to choose from."
       },
       "Config": {
@@ -308,6 +351,7 @@
         "SuccessesNeeded": "Successes Needed",
         "SuccessesOf": "{count} of {total}",
         "ChallengeHint": "An actor stops rolling as soon as they have passed or failed the challenge.",
+        "Scoring": "Scoring",
         "ContestHint": "Each side makes its own roll, and the higher result wins.",
         "NumbersToPick": "Numbers to Pick",
         "DivineHint": "Each player picks this many numbers in a row, then rolls a d100 and must roll one of them.",
@@ -326,6 +370,7 @@
         "BothSides": "No one can be on both sides.",
         "ChooseActor": "Choose at least one actor to roll.",
         "ChallengeDC": "Each roll in a skill challenge needs a DC.",
+        "ScoringDC": "This way of scoring a Team Challenge needs a DC.",
         "AddChoice": "Offer another roll to choose instead",
         "RemoveChoice": "Stop offering this roll",
         "Or": "or",

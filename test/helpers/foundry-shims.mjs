@@ -23,6 +23,13 @@ Object.defineProperty(Array.prototype, "filterJoin", {
   }
 });
 
+// Foundry's own `String#capitalize` (common/primitives/string.mjs).
+Object.defineProperty(String.prototype, "capitalize", {
+  value: function() {
+    return this.length ? this.charAt(0).toUpperCase() + this.slice(1) : this;
+  }
+});
+
 globalThis.Hooks ={ on() {}, once() {}, call() { return true; }, callAll() {} };
 
 globalThis.foundry = {
@@ -89,7 +96,7 @@ function localize(key) {
  * The module's world settings, as a test has set them.
  * @type {Map<string, unknown>}
  */
-export const settingValues = new Map([["showDCDefault", false], ["markNaturals", true]]);
+export const settingValues = new Map([["showDCDefault", false], ["markNaturals", true], ["teamScoring", "average"]]);
 
 let messages = new MessageLog();
 globalThis.game = {

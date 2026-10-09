@@ -11,7 +11,7 @@ const MENUS = {
   diceRolling: { id: "stt-settings-dice-rolling", settings: ["markNaturals", "naturalSaves"] },
   rollRequests: {
     id: "stt-settings-roll-requests",
-    settings: ["showDCDefault", "attachRolls", "popupPlayers", "popupGM", "deathSavePrompt"]
+    settings: ["showDCDefault", "teamScoring", "attachRolls", "popupPlayers", "popupGM", "deathSavePrompt"]
   },
   worldScripts: {
     id: "stt-settings-world-scripts",
@@ -112,7 +112,7 @@ test("settings menus: four buttons for the GM, each holding its own settings and
     }, { moduleId: MODULE_ID, key });
     const app = gm.page.locator(`#${id}`);
     await app.waitFor({ timeout: 10_000 });
-    const names = await app.locator('input[type="checkbox"]').evaluateAll(inputs => inputs.map(i => i.name));
+    const names = await app.locator('input[type="checkbox"], select').evaluateAll(inputs => inputs.map(i => i.name));
     assertEqual(names, settings, `${key} settings`);
     await app.locator('[data-action="close"]').click();
     await app.waitFor({ state: "detached", timeout: 5000 });

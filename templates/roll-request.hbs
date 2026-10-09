@@ -81,6 +81,19 @@
             <p class="hint">{{localize "STT.Request.Config.ChallengeHint"}}</p>
         </div>
         {{/if}}
+        {{#if team}}
+        <div class="form-group">
+            <label>{{localize "STT.Request.Config.Scoring"}}</label>
+            <div class="form-fields">
+                <select name="scoring">
+                    {{#each scoringOptions as |option|}}
+                    <option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>
+                    {{/each}}
+                </select>
+            </div>
+            <p class="hint stt-request-scoring-hint">{{scoringHint}}</p>
+        </div>
+        {{/if}}
         {{#if contest}}
         <p class="hint">{{localize "STT.Request.Config.ContestHint"}}</p>
         {{/if}}
