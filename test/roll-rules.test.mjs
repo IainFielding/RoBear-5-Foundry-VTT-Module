@@ -102,6 +102,11 @@ describe("Skill Challenge progress", () => {
   it("needing 3 of 3 ends on the first failure", () => {
     expect(getChallengeState([pass, fail, null], 3)).toMatchObject({ success: false, next: null });
   });
+
+  it("waits on a roll whose dice are still rolling, asking for nothing after it", () => {
+    expect(getChallengeState([pass, { rolling: true, success: null }, null], 2))
+      .toEqual({ passed: 1, failed: 0, success: null, next: null });
+  });
 });
 
 /* -------------------------------------------- */
@@ -176,6 +181,30 @@ describe("Results from tagged roll messages", () => {
     ];
     expect(getResults(message).get("A")).toEqual([null]);
     expect(getResults(message).has("Z")).toBe(false);
+  });
+
+  it("holds back a roll while Dice So Nice's dice are still moving, and scores it once they land", () => {
+    const message = requestMessage({ mode: "standard", actors: ["A"], parts: [{ type: "skill", key: "ath", dc: 12 }] });
+    const roll = Object.assign(rollMessage({ actor: "A", total: 15, natural: 13 }), { _dice3danimating: true });
+    game.messages = [roll];
+    game.modules = new Map([["dice-so-nice", { active: true }]]);
+    try {
+      expect(getResults(message).get("A")[0]).toMatchObject({ rolling: true, visible: false, success: null });
+      // With Dice So Nice set to show messages straight away, there is nothing to hold back.
+      settingValues.set("immediatelyDisplayChatMessages", true);
+      expect(getResults(message).get("A")[0]).toMatchObject({ rolling: false, visible: true, success: true });
+      settingValues.set("immediatelyDisplayChatMessages", false);
+      delete roll._dice3danimating;
+      expect(getResults(message).get("A")[0]).toMatchObject({ rolling: false, visible: true, success: true });
+    } finally {
+      delete game.modules;
+      settingValues.delete("immediatelyDisplayChatMessages");
+    }
+  });
+
+  it("leaves a group unfinished while one of its rolls is still rolling", () => {
+    const results = new Map([["A", [{ total: 12, visible: true }]], ["B", [{ total: 9, visible: false, rolling: true }]]]);
+    expect(getGroupOutcome(["A", "B"], results, true)).toMatchObject({ complete: false });
   });
 
   it("keeps a skill challenge's parts apart", () => {

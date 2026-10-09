@@ -191,7 +191,7 @@
   /* Art at the top of every card in a row, whether its name takes one line or two. */
   justify-content: flex-start;
   gap: 6px;
-  width: 110px;
+  width: 132px;
   height: auto;
   margin: 0;
   padding: 6px 6px 8px;
@@ -205,8 +205,8 @@
 }
 
 .stt-card-dialog .stt-card-choice img {
-  width: 96px;
-  aspect-ratio: 240 / 365;
+  width: 120px;
+  aspect-ratio: 1498 / 2077;
   object-fit: cover;
   border: 1px solid var(--cc-line);
   border-radius: 0;
@@ -286,7 +286,7 @@
 .stt-card-log .stt-card-log-art {
   flex: none;
   width: 22px;
-  aspect-ratio: 240 / 365;
+  aspect-ratio: 1498 / 2077;
   object-fit: cover;
   border: 1px solid var(--cc-settled, #c9a227);
   border-radius: 0;
@@ -325,8 +325,8 @@
 }
 
 .stt-played-card img {
-  width: min(260px, calc(55vh * 240 / 365), calc((100vw - 96px) / 3));
-  aspect-ratio: 240 / 365;
+  width: min(260px, calc(55vh * 1498 / 2077), calc((100vw - 96px) / 3));
+  aspect-ratio: 1498 / 2077;
   object-fit: cover;
   border: 1px solid var(--cc-settled);
   box-shadow:

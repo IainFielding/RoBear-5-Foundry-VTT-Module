@@ -523,6 +523,22 @@
   border-color: var(--cc-fail);
 }
 
+/* Dice So Nice's dice are still moving: the result waits for them to land. */
+:is(.chat-message, .stt-request-popup) .stt-request-result.rolling {
+  color: var(--cc-text);
+  animation: stt-result-rolling 1.2s ease-in-out infinite;
+}
+
+@keyframes stt-result-rolling {
+  50% { opacity: 0.4; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(.chat-message, .stt-request-popup) .stt-request-result.rolling {
+    animation: none;
+  }
+}
+
 :is(.chat-message, .stt-request-popup) .stt-request-result.critical {
   /* Ringed in gold in hero-cards.css, as a natural 20 in chat is. */
   color: var(--cc-settled-bright);

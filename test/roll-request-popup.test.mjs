@@ -52,6 +52,19 @@ describe("When a pop-up has nothing left to roll", () => {
     expect(hasRollsLeft(standard, ["aria"])).toBe(false);
   });
 
+  it("stays open while a roll's Dice So Nice dice are still moving", () => {
+    const roll = Object.assign(rollMessage({ actor: "aria", total: 12, natural: 12 }), { _dice3danimating: true });
+    game.messages = [roll];
+    game.modules = new Map([["dice-so-nice", { active: true }]]);
+    try {
+      expect(hasRollsLeft(standard, ["aria"])).toBe(true);
+      delete roll._dice3danimating;
+      expect(hasRollsLeft(standard, ["aria"])).toBe(false);
+    } finally {
+      delete game.modules;
+    }
+  });
+
   it("is done in a skill challenge once the outcome is settled, before the third roll", () => {
     const parts = [{ type: "d20", dc: 10 }, { type: "d20", dc: 10 }, { type: "d20", dc: 10 }];
     const challenge = requestMessage({ mode: "challenge", actors: ["aria"], parts, successes: 2 });

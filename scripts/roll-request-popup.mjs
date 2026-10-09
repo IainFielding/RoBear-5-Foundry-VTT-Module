@@ -29,6 +29,11 @@ Hooks.once("ready", openRecentRequests);
 Hooks.on("createChatMessage", onCreateMessage);
 Hooks.on("updateChatMessage", onChangeMessage);
 Hooks.on("deleteChatMessage", onDeleteMessage);
+// A roll shows as rolling while Dice So Nice shows its dice, so its pop-up is redrawn once they land.
+Hooks.on("diceSoNiceRollComplete", id => {
+  const message = game.messages.get(id);
+  if ( message ) onChangeMessage(message);
+});
 
 /**
  * Register the pop-up settings.
@@ -127,13 +132,14 @@ export function getPopupActors(request) {
 /**
  * @param {ChatMessage5e} message  The request message.
  * @param {string[]} uuids
- * @returns {boolean}  Whether any of these actors still has a roll to make.
+ * @returns {boolean}  Whether any of these actors still has a roll to make, or one whose dice are still rolling.
  */
 export function hasRollsLeft(message, uuids) {
   const request = message.getFlag(MODULE_ID, "request");
   const results = getResults(message);
   return uuids.some(uuid => {
     const rolls = results.get(uuid);
+    if ( rolls.some(r => r?.rolling) ) return true;
     if ( request.mode === "challenge" ) return getChallengeState(rolls, request.successes).next !== null;
     return !rolls[0];
   });

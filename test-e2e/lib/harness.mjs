@@ -193,7 +193,7 @@ export function readCard(session, id) {
         name: text(row.querySelector(".stt-request-name")),
         classes: ["success", "failure", "removed"].filter(c => row.classList.contains(c)),
         results: [...row.querySelectorAll(".stt-request-result")].map(p => ({
-          text: text(p), classes: ["success", "failure", "critical", "fumble", "uncounted"].filter(c => p.classList.contains(c))
+          text: text(p), classes: ["success", "failure", "critical", "fumble", "uncounted", "rolling"].filter(c => p.classList.contains(c))
         })),
         range: text(row.querySelector(".stt-request-range")),
         rollButtons: row.querySelectorAll(".stt-request-roll").length,
