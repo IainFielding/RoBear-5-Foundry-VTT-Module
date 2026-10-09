@@ -67,6 +67,18 @@ A collection of optional enhancements that that improve readability, reduce fric
 
 <img src="docs/images/world-scripts-rarity.webp" alt="An inventory with Item Rarity Colours on, each item tinted by its rarity" width="420">
 
+## Documentation
+
+| Guide | For |
+|---|---|
+| **[Player Guide](docs/player.md)** | Playing Hero Cards, adding feature dice, Indomitable, and answering roll requests. |
+| **[GM Guide](docs/gm.md)** | Setting up, every setting, running roll requests, and macros. |
+| **[Developer Guide](docs/developer.md)** | The API, stored data, socket messages, code layout and tests. |
+| **[Changelog](CHANGELOG.md)** | What's changed in each release. |
+
+Found a bug or have an idea? [Open an issue](https://github.com/IainFielding/Sogroms-Table-Tools/issues/new/choose).
+Want to help? See [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Installation
 
 In Foundry's setup screen, go to **Add-on Modules → Install Module**, and search for **Sogrom's Table Tools**, or paste
@@ -80,18 +92,6 @@ Then enable it in your world's **Manage Modules**, and drag the **Hero Cards** f
 **Items (Sogrom's Table Tools)** compendium onto each character who should have them.
 
 **Requires** Foundry VTT v14 and the D&D 5e system 6.x (tested on 6.0.5).
-
-## Documentation
-
-| Guide | For |
-|---|---|
-| **[Player Guide](docs/player.md)** | Playing Hero Cards, adding feature dice, Indomitable, and answering roll requests. |
-| **[GM Guide](docs/gm.md)** | Setting up, every setting, running roll requests, and macros. |
-| **[Developer Guide](docs/developer.md)** | The API, stored data, socket messages, code layout and tests. |
-| **[Changelog](CHANGELOG.md)** | What's changed in each release. |
-
-Found a bug or have an idea? [Open an issue](https://github.com/IainFielding/Sogroms-Table-Tools/issues/new/choose).
-Want to help? See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Support
 
