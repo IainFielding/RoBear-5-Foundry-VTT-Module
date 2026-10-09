@@ -955,13 +955,21 @@ async function chooseCard(options, hint) {
  */
 async function applyCard(message, { key, activity, label }) {
   const spent = activity.uses?.spent ?? 0;
-  retroactiveUses.add(activity.uuid);
   let used;
-  try {
-    // No usage card is posted: the card is shown on screen and noted on the roll instead, so the roll stays in view.
-    used = await activity.use({ subsequentActions: false }, { configure: false }, { create: false });
-  } finally {
-    retroactiveUses.delete(activity.uuid);
+  // Midi-QOL runs a whole workflow for every activity used, which would roll the card's own die on a card of its own,
+  // apart from the roll the card changes. With Midi, the card's use is spent directly instead.
+  if ( game.modules.get("midi-qol")?.active ) {
+    if ( !hasUsesLeft(activity) ) return;
+    await activity.item.update({ [`system.activities.${activity.id}.uses.spent`]: spent + 1 });
+    used = true;
+  } else {
+    retroactiveUses.add(activity.uuid);
+    try {
+      // No usage card is posted: the card is shown on screen and noted on the roll instead, so the roll stays in view.
+      used = await activity.use({ subsequentActions: false }, { configure: false }, { create: false });
+    } finally {
+      retroactiveUses.delete(activity.uuid);
+    }
   }
   if ( !used ) return;
 
