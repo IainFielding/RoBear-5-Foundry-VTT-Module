@@ -45,7 +45,7 @@ Whether you're running a skill challenge, resolving a chase, or calling for a dr
 
 ### Enhanced Rolls
 
-Enhance chat rolls with clearer visual feedback, faster access to character abilities, and optional rules that make critical moments feel truly special. Important rolls stand out, class features stay within easy reach, and players can react without digging through their character sheets.
+Give important rolls the spotlight they deserve. Critical successes and failures stand out instantly, feature dice can be applied directly from chat, and optional rules make natural 1s and 20s feel truly memorable.
 
 - Natural 1s and 20s stand out with distinctive red and gold highlights.
 - Critical save outcomes can deal maximum damage or avoid damage entirely.
@@ -59,13 +59,11 @@ Enhance chat rolls with clearer visual feedback, faster access to character abil
 
 ### Gameplay Enhancements
 
-A collection of optional enhancements that smooth rough edges, improve readability, and make everyday tasks a little easier. Each feature can be enabled independently, letting you build the experience that works best for your group.
+A collection of optional enhancements that that improve readability, reduce friction, and make everyday play smoother for both players and GMs. Enable only the features you want and tailor the experience to your table.
 
-- Visual bloodied indicators.
-- Dimmed unprepared spells.
-- Coloured item rarities.
-- Improved chat controls.
-- Enhanced activity layouts.
+- Bloodied creatures are easier to spot at a glance.
+- Unprepared spells are visually distinguished in spell lists.
+- Item rarities are colour-coded throughout the sheet.
 
 <img src="docs/images/world-scripts-rarity.webp" alt="An inventory with Item Rarity Colours on, each item tinted by its rarity" width="420">
 
@@ -97,12 +95,12 @@ Want to help? See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Support
 
-Sogrom's Table Tools is free. If it's made your table a little more heroic, you can
-[buy me a coffee on Ko-fi](https://ko-fi.com/sogrom).
+Sogrom's Table Tools is completely free. If it's added a little extra heroism to your table, consider 
+[buying me a coffee on Ko-fi](https://ko-fi.com/sogrom).
 
 ## Credits
 
-Inspired by the RoBear-E campaign. Sogrom's Table Tools is not affiliated with, or endorsed by, its creators.
+Inspired by D&D campaigns DM'd by [Captain RoBear](https://www.youtube.com/channel/UCktEYryPmattKzrpo0_kGzA). Sogrom's Table Tools is not affiliated with, or endorsed by, its creators.
 
 The card art is made from images licensed from [Adobe Stock](https://stock.adobe.com) and [Pexels](https://www.pexels.com),
 which remain the property of their creators. No AI-generated imagery is used. [docs/art-sources.md](docs/art-sources.md)
