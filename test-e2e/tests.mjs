@@ -1112,7 +1112,7 @@ test("divine intervention: the player picks 16 numbers, then rolls the d100 into
   card = await waitForCard(player, id, c => c.summary, "the answer");
   assertEqual(row(card, "Aria").range, "85–100", "the range on the card");
   assertEqual(row(card, "Aria").results[0], { text: "90", classes: ["success"] }, "the result");
-  assertEqual(card.summary, "1 of 1 answered The gods answer", "summary");
+  assertEqual(card.summary, "The gods answer", "summary");
 });
 
 test("divine intervention: cancelling the picker rolls nothing", async (ctx) => {
@@ -1143,7 +1143,7 @@ test("divine intervention: Luck rerolls a miss, and only Advantage and Luck are 
   assertEqual([...offered].sort(), ["Advantage", "Lucky"], "cards offered on the d100");
   const card = await waitForCard(player, id, c => c.summary?.includes("answer") && row(c, "Aria").results[0].text === "45",
     "the reroll");
-  assertEqual(card.summary, "1 of 1 answered The gods answer", "summary after Luck");
+  assertEqual(card.summary, "The gods answer", "summary after Luck");
   const log = await gm.eval(({ id, moduleId }) => game.messages.find(m => m.getFlag(moduleId, "requestRoll")?.request === id)
     .getFlag(moduleId, "log").map(e => e.text), { id, moduleId: MODULE_ID });
   assertEqual(log, ["Lucky: rerolled the d100: 10 → 45"], "the card's note on the roll");
@@ -1160,7 +1160,7 @@ test("divine intervention: Advantage keeps a second d100 that lands in range", a
   await forceDice(player, [d100(50)]);
   await playCard(player, id, "Aria", "Advantage");
   let card = await waitForCard(player, id, c => row(c, "Aria").results[0].text === "50", "Advantage");
-  assertEqual(card.summary, "1 of 1 answered The gods answer", "summary after Advantage");
+  assertEqual(card.summary, "The gods answer", "summary after Advantage");
   card = await readCard(player, id);
   const offered = await player.eval(({ id }) => document.querySelector(`#chat .chat-log [data-message-id="${id}"] .stt-card-button`)
     ? "button" : "none", { id });

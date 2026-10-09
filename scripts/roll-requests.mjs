@@ -1646,13 +1646,11 @@ function renderSummary(message, request, results, team) {
   }
 
   if ( !rows.every(r => r[0]?.visible) ) return;
+  // Divine Intervention is one actor's plea, so its summary is just whether the gods answered.
   if ( request.mode === "divine" ) {
-    const answered = rows.filter(r => r[0].success).length;
-    summary.classList.add(answered ? "success" : "failure");
-    summary.append(
-      textElement("span", localize("STT.Request.Summary.Divine", { count: answered, total: rows.length })),
-      textElement("strong", localize(answered ? "STT.Request.Divine.Answered" : "STT.Request.Divine.NoAnswer"))
-    );
+    const answered = rows.some(r => r[0].success);
+    summary.classList.add("divine", answered ? "success" : "failure");
+    summary.append(textElement("strong", localize(answered ? "STT.Request.Divine.Answered" : "STT.Request.Divine.NoAnswer")));
     return summary;
   }
   if ( !getChoices(request.parts[0]).some(c => Number.isNumeric(c.dc)) ) return;

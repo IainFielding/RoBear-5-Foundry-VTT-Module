@@ -617,6 +617,10 @@
   color: var(--cc-text);
 }
 
+:is(.chat-message, .stt-request-popup) .stt-request-summary.divine {
+  justify-content: center;
+}
+
 :is(.chat-message, .stt-request-popup) .stt-request-summary strong {
   color: var(--cc-bright);
   font-family: var(--cc-font-heading);
