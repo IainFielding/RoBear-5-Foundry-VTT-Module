@@ -1,7 +1,7 @@
 # Sogrom's Table Tools: GM Guide
 
 This guide is for the GM. It covers setting Sogrom's Table Tools up, the settings, and asking the table for rolls. What players
-see and do, including how the Hero Cards work, is in the [player guide](README.md). Read that first: as GM you
+see and do, including how the Hero Cards work, is in the [player guide](player.md). Read that first: as GM you
 can do everything a player can.
 
 ## Contents
@@ -17,6 +17,7 @@ can do everything a player can.
   - [Pop-ups](#pop-ups)
   - [Death saves](#death-saves)
 - [Cards and dice at the table](#cards-and-dice-at-the-table)
+- [Other modules](#other-modules)
 - [Macros](#macros)
 
 ## Setting up
@@ -40,14 +41,14 @@ The compendiums sit in a **Sogrom's Table Tools** folder in the Compendium sideb
 ## Settings
 
 In **Game Settings → Configure Settings → Sogrom's Table Tools**, the settings are grouped behind four buttons:
-**Hero Cards**, **Dice Rolling**, **Roll Requests** and **World Altering Scripts**. Each opens a window with that group's settings. Only a GM
+**Hero Cards**, **Dice Rolling**, **Roll Requests** and **Gameplay Enhancements**. Each opens a window with that group's settings. Only a GM
 can open them, and each setting applies to the whole world.
 
-<img src="docs/images/gm-settings.webp" alt="The Sogrom's Table Tools tab of Foundry's settings, with the Hero Cards, Dice Rolling, Roll Requests and World Altering Scripts buttons" width="640">
+<img src="images/gm-settings.webp" alt="The Sogrom's Table Tools tab of Foundry's settings, with the Hero Cards, Dice Rolling, Roll Requests and Gameplay Enhancements buttons" width="640">
 
 ### Hero Cards
 
-<img src="docs/images/gm-settings-hero-cards.webp" alt="The Hero Card Settings window, with its two settings" width="420">
+<img src="images/gm-settings-hero-cards.webp" alt="The Hero Card Settings window, with its two settings" width="420">
 
 | Setting | Default | What it does |
 |---|---|---|
@@ -56,7 +57,7 @@ can open them, and each setting applies to the whole world.
 
 ### Dice Rolling
 
-<img src="docs/images/gm-settings-dice-rolling.webp" alt="The Dice Rolling Settings window, with its two settings" width="420">
+<img src="images/gm-settings-dice-rolling.webp" alt="The Dice Rolling Settings window, with its two settings" width="420">
 
 | Setting | Default | What it does |
 |---|---|---|
@@ -65,21 +66,22 @@ can open them, and each setting applies to the whole world.
 
 ### Roll Requests
 
-<img src="docs/images/gm-settings-roll-requests.webp" alt="The Roll Request Settings window, with its five settings" width="420">
+<img src="images/gm-settings-roll-requests.webp" alt="The Roll Request Settings window, with its six settings" width="420">
 
 | Setting | Default | What it does |
 |---|---|---|
 | **Show the DC to players by default** | Off | Whether **Show DC to Players** starts ticked in the request window. You can still change it for each request. |
+| **Team Challenge scoring by default** | Average of the rolls | How a Team Challenge is scored when you open the request window. You can still change it for each request. See [Team Challenge](#team-challenge). |
 | **Attach rolls to the request card** | On | The rolls made for a request show on its card rather than as messages of their own, as D&D 5e does for an item's saves. Click a result to see its dice. |
 | **Pop up roll requests for players** | Off | Opens a window for each player with a character in a request, with a Roll button for each of their characters. |
 | **Pop up roll requests for the GM** | Off | Opens a window for you when a request includes NPCs, or any actor no player owns. |
 | **Ask for death saves** | Off | Posts a death save request at the start of a dying character's turn in combat. See [Death saves](#death-saves). |
 
-### World Altering Scripts
+### Gameplay Enhancements
 
 Optional changes to tokens and actor sheets. Each is off until you turn it on.
 
-<img src="docs/images/gm-settings-world-scripts.webp" alt="The World Altering Scripts window, with its five scripts, each unticked" width="420">
+<img src="images/gm-settings-world-scripts.webp" alt="The Gameplay Enhancements window, with its five settings, each unticked" width="420">
 
 | Setting | Default | What it does |
 |---|---|---|
@@ -90,34 +92,48 @@ Optional changes to tokens and actor sheets. Each is off until you turn it on.
 | **Item Rarity Colours** | Off | Tints each item row on actor sheets by its rarity: green for uncommon, blue for rare, purple for very rare, orange for legendary and gold for artifact. |
 
 <table><tr>
-<td><img src="docs/images/world-scripts-rarity.webp" alt="Aria's inventory with Item Rarity Colours on: a cream Potion of Healing, a green Cloak of Elvenkind, a blue Flame Tongue, a purple Staff of Power, an orange Holy Avenger and a gold Orb of Dragonkind" width="400"></td>
-<td><img src="docs/images/world-scripts-fade.webp" alt="Aria's spells with Fade Unprepared Spells on: Sleep and Misty Step are faded, Magic Missile, Shield and Hold Person are not" width="400"></td>
+<td><img src="images/world-scripts-rarity.webp" alt="Aria's inventory with Item Rarity Colours on: a cream Potion of Healing, a green Cloak of Elvenkind, a blue Flame Tongue, a purple Staff of Power, an orange Holy Avenger and a gold Orb of Dragonkind" width="400"></td>
+<td><img src="images/world-scripts-fade.webp" alt="Aria's spells with Fade Unprepared Spells on: Sleep and Misty Step are faded, Magic Missile, Shield and Hold Person are not" width="400"></td>
 </tr></table>
 
-<img src="docs/images/world-scripts-chat-labels.webp" alt="A Dagger card in chat with Chat Button Labels on: its buttons read Attack and Damage" width="300">
+<img src="images/world-scripts-chat-labels.webp" alt="A Dagger card in chat with Chat Button Labels on: its buttons read Attack and Damage" width="300">
 
-<img src="docs/images/world-scripts-one-tab.webp" alt="A Dagger's Attack activity with One-Tab Activities on: its Identity, Activation and Effect tabs side by side" width="640">
+<img src="images/world-scripts-one-tab.webp" alt="A Dagger's Attack activity with One-Tab Activities on: its Identity, Activation and Effect tabs side by side" width="640">
 
 ## Asking for rolls
 
 Open the request window from the **tankard** button in the chat controls, under the chat log:
 
-<img src="docs/images/gm-chat-control.webp" alt="The chat controls, with the tankard button for roll requests among the buttons on the right" width="300">
+<img src="images/gm-chat-control.webp" alt="The chat controls, with the tankard button for roll requests among the buttons on the right" width="300">
 
 When the chat sidebar is closed, use **Request Rolls** in the token controls instead. Only a GM sees these
 buttons.
 
 ### The request window
 
-<img src="docs/images/gm-request-window.webp" alt="The Request Rolls window: six kinds of roll, the roll and DC, who rolls, and options" width="520">
+<img src="images/gm-request-window.webp" alt="The Request Rolls window: six kinds of roll, the roll and DC, who rolls, and options" width="520">
 
 1. **Kind of roll.** Pick one of the six kinds described below. The fields below change to suit it, and anything
    you've filled in carries over when you switch.
 2. **Rolls.** Choose the roll: a plain die (a d20 by default, or a d6, d8, d10, d12 or d100), any skill or tool check,
    ability check, or saving throw. Then set the DC, or leave it blank for none.
 3. **Who rolls.** The actors of any tokens you have selected are ticked for you; otherwise the player characters
-   are. The list offers the selected tokens, the player characters, and the tokens on the current scene. The tick
-   button beside the heading selects them all.
+   are. The list offers the selected tokens, the player characters, the members of your groups, the combatants, and
+   the tokens on the current scene. The tick button beside the heading selects them all.
+
+   Above the list, **quick picks** tick a whole group in one click, and untick it if it's all ticked already:
+
+   | Quick pick | Who it ticks |
+   |---|---|
+   | Your party's name | The members of D&D 5e's primary party. Each of your other group actors gets a pick of its own, by its name. |
+   | **Combat: everyone** | Everyone in the current combat. Each unlinked token rolls for itself. |
+   | **Combat: hostile** | The combatants whose tokens are hostile, for when only the monsters need to roll. |
+   | **Selected tokens** | The tokens you have selected now, even ones selected after you opened the window. |
+   | **Everyone on scene** | Every token on the scene you're viewing. |
+
+   A pick only shows when there's someone in it, and it's highlighted while all of its members are ticked. In Team vs
+   Team, each side has its own picks, and ticking a group for one side takes its members off the other. When a combat
+   is running and no NPCs are selected, the NPCs' side starts with the hostile combatants.
 4. **Options.**
    - **Show DC to Players.** Unticked, players see "DC ?" on the card, and the DC is kept off their rolls so D&D 5e
      doesn't show them success or failure.
@@ -133,7 +149,7 @@ In a Standard Roll or Skill Challenge, each choice has a DC of its own, so an ea
 example, Athletics at DC 15 or Acrobatics at DC 10. A new choice starts with the roll's DC. In a Team Challenge,
 the choices share one DC, because the rolls are averaged against it.
 
-<img src="docs/images/gm-request-choices.webp" alt="The Rolls section with Athletics at DC 15, or Acrobatics at DC 10" width="520">
+<img src="images/gm-request-choices.webp" alt="The Rolls section with Athletics at DC 15, or Acrobatics at DC 10" width="520">
 
 The card lists each choice with its DC, and you can click any of them to change it. Players see each DC on the card
 and on the buttons they choose from, or "DC ?" if you're keeping the DC hidden.
@@ -148,14 +164,14 @@ you click **Show to players**, and you can hide it again.
 <table>
 <tr><th>What you see</th><th>What players see</th></tr>
 <tr>
-<td><img src="docs/images/gm-request-hidden.webp" alt="The GM's card: DC 15, Aria 17 in green, Borin 8 and Goblin 12 in red, 1 of 3 succeeded, and a Show to Players button" width="300"></td>
-<td><img src="docs/images/player-request-hidden.webp" alt="The player's card: DC ?, the same totals with no success or failure shown" width="300"></td>
+<td><img src="images/gm-request-hidden.webp" alt="The GM's card: DC 15, Aria 17 in green, Borin 8 and Goblin 12 in red, 1 of 3 succeeded, and a Show to Players button" width="300"></td>
+<td><img src="images/player-request-hidden.webp" alt="The player's card: DC ?, the same totals with no success or failure shown" width="300"></td>
 </tr>
 </table>
 
 Once you show it:
 
-<img src="docs/images/player-request-shown.webp" alt="The player's card after the GM shows it: Aria in green, Borin and Goblin in red, 1 of 3 succeeded" width="300">
+<img src="images/player-request-shown.webp" alt="The player's card after the GM shows it: Aria in green, Borin and Goblin in red, 1 of 3 succeeded" width="300">
 
 #### Skill Challenge
 
@@ -163,18 +179,30 @@ Three rolls in turn, each with its own roll and DC. Choose how many successes ar
 actor stops rolling as soon as they have passed or failed. Only you see who passed until you click **Show to
 players**; players see "Done" once they have finished.
 
-<img src="docs/images/gm-request-window-challenge.webp" alt="The request window set to Skill Challenge, with three rolls, each with a DC, and Successes Needed: 2 of 3" width="520">
+<img src="images/gm-request-window-challenge.webp" alt="The request window set to Skill Challenge, with three rolls, each with a DC, and Successes Needed: 2 of 3" width="520">
 
-<img src="docs/images/gm-skill-challenge.webp" alt="A Skill Challenge card: Athletics DC 12, Stealth DC 14, Constitution Save DC 13. Aria passed with 15 and 16; Borin failed his first roll and has a Roll button for the second" width="300">
+<img src="images/gm-skill-challenge.webp" alt="A Skill Challenge card: Athletics DC 12, Stealth DC 14, Constitution Save DC 13. Aria passed with 15 and 16; Borin failed his first roll and has a Roll button for the second" width="300">
 
 #### Team Challenge
 
-Everyone rolls, and the average, rounded down, is compared to the DC. Each natural 1 removes the highest roll from
-the pool, and each natural 20 removes the lowest. If that would leave no rolls, 1s and 20s cancel out in pairs, and at
-least one roll always stays. Hover over a removed roll to see why it was removed. Only you see the result until you
-click **Show to players**.
+Everyone rolls, and the team gets one result. Choose how it's worked out under **Scoring**:
 
-<img src="docs/images/gm-team-challenge.webp" alt="A Team Challenge card: Aria's natural 20 ringed in gold, Borin's 4 greyed out as removed, Goblin 11. Team average 15, 1 removed, Success" width="300">
+| Scoring | How the team's result is worked out |
+|---|---|
+| **Average of the rolls** | The average, rounded down, is compared to the DC. Each natural 1 removes the highest roll from the pool, and each natural 20 removes the lowest. If that would leave no rolls, 1s and 20s cancel out in pairs, and at least one roll always stays. Hover over a removed roll to see why it was removed. |
+| **Half must succeed** | The group check from the Player's Handbook: if at least half the team meets the DC, the whole team succeeds. |
+| **Leader, helped by the rest** | The roll with the highest modifier counts, +1 for each other roll that meets the DC and −1 for each that doesn't. |
+| **Weakest link** | The roll with the lowest modifier counts, +1 for each other roll that meets the DC. Other failures don't count against it. |
+
+All but the average are judged against the DC, so they need one. A roll's modifier is its total less the d20 it kept,
+so where you offer a choice of rolls, such as Athletics or Acrobatics, each actor is judged by the roll they chose. On
+a tie, the higher total counts. The card marks each roll with what it did for the team (**Leader**, **+1**, **−1**),
+and its summary shows the working, such as "Aria leads: 21, +1 helped, −2 hindered = 20".
+
+Only you see the result until you click **Show to players**. A Hero Card played on a roll, or a changed DC, scores the
+team again, so playing Inspiration on a helper can make them the leader.
+
+<img src="images/gm-team-challenge.webp" alt="A Team Challenge card: Aria's natural 20 ringed in gold, Borin's 4 greyed out as removed, Goblin 11. Team average 15, 1 removed, Success" width="300">
 
 #### Roll-Off
 
@@ -182,7 +210,7 @@ One actor against another, player characters or NPCs. Pick a **Challenger** and 
 a d20 (the default), a d6, d8, d10, d12 or d100, or any check, save or tool. The higher total wins; an equal total is a
 tie.
 
-<img src="docs/images/gm-request-window-rolloff.webp" alt="The request window set to Roll-Off, with Aria as Challenger and the Goblin as Opponent" width="520">
+<img src="images/gm-request-window-rolloff.webp" alt="The request window set to Roll-Off, with Aria as Challenger and the Goblin as Opponent" width="520">
 
 An NPC's roll is a private GM roll: players see "?" until you click **Show NPC roll** on the card, and you can hide it
 again.
@@ -190,8 +218,8 @@ again.
 <table>
 <tr><th>What you see</th><th>What players see</th></tr>
 <tr>
-<td><img src="docs/images/gm-rolloff.webp" alt="The GM's Roll-Off card: Aria 14 against Goblin 9, Aria wins, and a Show NPC Roll button" width="300"></td>
-<td><img src="docs/images/player-rolloff.webp" alt="The player's Roll-Off card: Aria 14 against Goblin ?, The result is hidden" width="300"></td>
+<td><img src="images/gm-rolloff.webp" alt="The GM's Roll-Off card: Aria 14 against Goblin 9, Aria wins, and a Show NPC Roll button" width="300"></td>
+<td><img src="images/player-rolloff.webp" alt="The player's Roll-Off card: Aria 14 against Goblin ?, The result is hidden" width="300"></td>
 </tr>
 </table>
 
@@ -200,7 +228,7 @@ again.
 Pick a **Players** team and an **NPCs** team, and a roll for each (a d20 by default, or any check, save or tool). Each
 team's rolls are pooled like a Team Challenge, natural 1s and 20s included, and the higher average wins.
 
-<img src="docs/images/gm-versus.webp" alt="A Team vs Team card: Players (Aria 13, Borin 16) average 14, NPCs (Goblin 10) average 10. Players win" width="300">
+<img src="images/gm-versus.webp" alt="A Team vs Team card: Players (Aria 13, Borin 16) average 14, NPCs (Goblin 10) average 10. Players win" width="300">
 
 #### Divine Intervention
 
@@ -208,19 +236,23 @@ Set how many numbers each player picks, from 1 to 50 (16 by default). When a pla
 many numbers in a row from 1 to 100, then roll a d100, and must roll one of their numbers. The **Advantage** card
 rolls a second d100 and keeps whichever lands in their numbers, and **Lucky** rerolls the d100.
 
-<img src="docs/images/gm-request-window-divine.webp" alt="The request window set to Divine Intervention, with Numbers to Pick set to 16" width="520">
+When a player plays the **Divine Intervention** card from their sheet, you're whispered a note with a **Set Up Divine
+Intervention** button. It opens this window set to Divine Intervention, with that player's character the one to
+roll. Set the numbers to pick, and send it when you're ready.
+
+<img src="images/gm-request-window-divine.webp" alt="The request window set to Divine Intervention, with Numbers to Pick set to 16" width="520">
 
 ### Running a request
 
 **Rolling for NPCs.** Every row has a **Roll** button for you, so you can roll for anyone, including NPCs.
 
 **Changing the DC.** On a Standard Roll, Team Challenge or Skill Challenge card, click the DC to change it, or clear
-it for no DC (each Skill Challenge roll must keep one). Where each choice has its own DC, click the one to change.
+it for no DC (each Skill Challenge roll must keep one, as must a Team Challenge not scored by its average). Where each choice has its own DC, click the one to change.
 Rolls already made are scored again against the new DC.
 
-<img src="docs/images/gm-change-dc.webp" alt="The Change DC window, with the DC set to 12" width="340">
+<img src="images/gm-change-dc.webp" alt="The Change DC window, with the DC set to 12" width="340">
 
-<img src="docs/images/gm-request-dc-changed.webp" alt="The card after changing the DC to 12: the Goblin's 12 now succeeds, 2 of 3 succeeded" width="300">
+<img src="images/gm-request-dc-changed.webp" alt="The card after changing the DC to 12: the Goblin's 12 now succeeds, 2 of 3 succeeded" width="300">
 
 **Cards on requested rolls.** Requested rolls are ordinary D&D 5e rolls, so players can play Hero Cards on them,
 from the tankard button beside their result. The card updates as soon as a card changes a roll.
@@ -238,7 +270,7 @@ their own. Click a result to see its dice. Notes on any cards played show under 
   **Attach rolls to the request card** off, you can also delete the roll's own chat message. Players can't delete a
   roll made for a request, so they can't throw away a bad roll.
 
-<img src="docs/images/gm-roll-again.webp" alt="Aria's failed roll of 4 opened on the request card, showing its dice and a Roll Again button" width="300">
+<img src="images/gm-roll-again.webp" alt="Aria's failed roll of 4 opened on the request card, showing its dice and a Roll Again button" width="300">
 
 ### Private rolls and what "hidden" means
 
@@ -257,7 +289,7 @@ Two settings, both off by default, open a window when a request is posted:
   window then.
 - **Pop up roll requests for the GM** does the same for you, for NPCs and any other actor no player owns.
 
-<img src="docs/images/popup-gm.webp" alt="The GM's Roll Request window for a Wisdom check, DC 12, with a Roll button for the Goblin" width="380">
+<img src="images/popup-gm.webp" alt="The GM's Roll Request window for a Wisdom check, DC 12, with a Roll button for the Goblin" width="380">
 
 Each window closes once everything in it is rolled. The chat card works either way.
 
@@ -268,7 +300,7 @@ at 0 hit points and dying. It's an ordinary request, for that one creature, so i
 above: the player's window for their character, and yours only for a creature no player owns. You can always roll it
 from the chat card.
 
-<img src="docs/images/death-save-request.webp" alt="A Death Save request card, Standard Roll at DC 10, with a Roll button for Aria" width="300">
+<img src="images/death-save-request.webp" alt="A Death Save request card, Standard Roll at DC 10, with a Roll button for Aria" width="300">
 
 - **Who is asked.** Characters, and NPCs marked **Important** on their sheet, as D&D 5e shows death saves for. A
   creature that is defeated in the combat tracker, dead, or stable isn't asked.
@@ -293,6 +325,25 @@ from the chat card.
   feature) is only offered once you click **Show to players**, so it doesn't give away who failed.
 - **Natural 1s and 20s.** The lock is a world setting: see [Settings](#settings).
 
+## Other modules
+
+Sogrom's Table Tools works alongside modules that change how D&D 5e rolls and shows its chat cards:
+
+- **RSReforged.** Its quick rolls draw an activity's attack, damage and formula rolls inside the activity's card. The
+  Hero Card button, notes on cards played, and natural 1 and 20 rings appear there, and a feature's die shown there,
+  such as Bardic Inspiration, can be added to a roll from the card's right-click menu. Damage applied with
+  RSReforged's own Apply buttons follows **Natural 1s and 20s on saves against damage**. RSReforged swaps Shift on a
+  Roll button: a plain click rolls straight away, and Shift-click opens the roll window.
+- **Midi-QOL: partly supported.** Using the Hero Cards feature from the sheet opens the card chooser, as it does
+  without Midi. When Midi rolls the saves and applies a spell's damage itself, a natural 20 on the save takes no damage
+  and a natural 1 takes the damage's maximum past resistances and immunities, following **Natural 1s and 20s on saves
+  against damage**. A feature's die that Midi shows on the feature's card, such as Bardic Inspiration, can be added to
+  a roll from the card's right-click menu. Natural 1s and 20s on the saves Midi lists on its card are ringed.
+
+  What isn't supported: a card played after Midi has resolved a roll changes the roll in chat, but not the hits,
+  saves or damage Midi has already worked out and applied. If you want cards to decide outcomes, set Midi's hit
+  checking and damage application to manual, so the card can be played before the result is applied.
+
 ## Macros
 
 A macro can open the request window, or post a request without it:
@@ -302,6 +353,9 @@ const tools = game.modules.get("sogrom-table-tools").api;
 
 // Open the request window, as the tankard button does.
 tools.requestRolls();
+
+// Open it on a Team Challenge, with the combat's hostile combatants ticked.
+tools.requestRolls({ mode: "team", group: "hostile" });
 
 // Ask the party's player characters for a DC 15 Athletics check.
 const party = game.actors.filter(a => a.hasPlayerOwner && (a.type === "character"));
@@ -314,4 +368,4 @@ await tools.createRequest({
 
 Anything the macro leaves out is filled in as the window would fill it. A request that can't be rolled, such as one
 naming a skill D&D 5e doesn't know, is refused with a message saying why. The
-[Developer Guide](DEVELOPER.md#the-api) describes every option, with an example for each kind of request.
+[Developer Guide](developer.md#the-api) describes every option, with an example for each kind of request.

@@ -5,7 +5,7 @@
 
 import { MODULE_ID } from "./config.mjs";
 import {
-  assert, assertEqual, clickRoll, forceDice, postRequest, rollButton, test, waitFor, waitForCard, waitForRoll
+  assert, assertEqual, clickRoll, forceDice, postRequest, rollButton, rollModifiers, test, waitFor, waitForCard, waitForRoll
 } from "./lib/harness.mjs";
 
 const d20 = n => [n, 20];
@@ -124,7 +124,7 @@ test("indomitable: a save chosen from a choice fails against its own DC, not the
   await dialog.waitFor({ timeout: 10_000 });
   // 12 would pass the Constitution save's DC 10, but this is the Strength save, against DC 18.
   await forceDice(player, [d20(12)]);
-  await dialog.locator('button[data-action="choice1"]').click({ modifiers: ["Shift"] });
+  await dialog.locator('button[data-action="choice1"]').click({ modifiers: await rollModifiers(player, id, "Borin", true) });
   await waitForRoll(gm, id, ids.borin);
   await waitForCard(gm, id, c => row(c, "Borin").results[0]?.classes.includes("failure"), "Borin's failed save");
   await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-reveal`).click();

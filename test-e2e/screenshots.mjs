@@ -570,7 +570,7 @@ shot("a death save request", async (ctx) => {
   await capture(player, "death-save-request", message(player, id));
 });
 
-shot("the World Altering Scripts", async (ctx) => {
+shot("the Gameplay Enhancements", async (ctx) => {
   const { gm, player } = ctx;
   for ( const key of ["fadeUnprepared", "rarityColours", "chatButtonLabels", "oneTabActivities"] ) {
     await setSetting(ctx, key, true);

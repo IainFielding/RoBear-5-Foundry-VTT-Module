@@ -3,14 +3,14 @@
 This guide is for macro authors, module developers and contributors. It documents the module's public API, the data it
 stores on documents, its settings and socket messages, and how the code and tests are laid out.
 
-What the module does from the table's side is in the [player guide](README.md) and the [GM Guide](GM.md). How to
-contribute (sign-off, commit messages, pull requests) is in [CONTRIBUTING.md](CONTRIBUTING.md).
+What the module does from the table's side is in the [player guide](player.md) and the [GM Guide](gm.md). How to
+contribute (sign-off, commit messages, pull requests) is in [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Contents
 
 - [At a glance](#at-a-glance)
 - [The API](#the-api)
-  - [`requestRolls()`](#requestrolls)
+  - [`requestRolls(preset)`](#requestrollspreset)
   - [`createRequest(request)`](#createrequestrequest)
   - [The request object](#the-request-object)
   - [Validation](#validation)
@@ -46,18 +46,20 @@ The API object is assigned in the `init` hook, so it is available from `setup` o
 Only these two functions are public. The modules in `scripts/` export other helpers, which the tests import directly,
 but those are internal and may change in any release.
 
-### `requestRolls()`
+### `requestRolls(preset)`
 
 Opens the **Request Rolls** window, as the tankard button in the chat controls does. If the window is already
 open, it is brought to the front, keeping what the GM has filled in.
 
 | | |
 |---|---|
+| `preset` | Optional. `{ mode?, actors?, group? }`: the kind of request to start on (a key of the modes table below), and who rolls, either as `actors` (actor UUIDs) or as `group`, a quick pick: `"party"`, `"combat"`, `"hostile"`, `"selected"`, `"scene"`, or `"group.<actor ID>"` for another group actor. Anything left out keeps what the window would start with. On a window already open, it changes the mode and who rolls, keeping the rest. |
 | Returns | The `RollRequestConfig` application (an `ApplicationV2`), or `undefined` for a non-GM user. |
 | Who | GM only. For anyone else it does nothing. |
 
 ```js
 game.modules.get("sogrom-table-tools").api.requestRolls();
+game.modules.get("sogrom-table-tools").api.requestRolls({ mode: "standard", group: "party" });
 ```
 
 ### `createRequest(request)`
@@ -83,6 +85,7 @@ interface RollRequest {
   actors: string[];          // actor UUIDs of everyone in the request, each once
   sides?: [string[], string[]]; // contests only: actor UUIDs on each side
   successes?: number;        // "challenge" only: successes needed, 1–3 (default 2)
+  scoring?: "average" | "half" | "leader" | "weakest"; // "team" only: how it's scored (default: the "teamScoring" setting)
   range?: number;            // "divine" only: how many numbers each actor picks, 1–50 (default 16)
   showDC?: boolean;          // show the DC to players (default: the "showDCDefault" setting)
   rollMode?: "public" | "gm"; // "gm" is a private GM roll (default "public")
@@ -101,7 +104,7 @@ interface RequestPart {
 | `mode` | Window label | `parts` used | `sides` | Notes |
 |---|---|---|---|---|
 | `standard` | Standard Roll | 1 | | Each actor rolls once against the DC. Allows `alternatives`, and a `death` part with none. |
-| `team` | Team Challenge | 1 | | The average of everyone's totals, rounded down, against the DC. Each natural 1 removes the highest roll, each natural 20 the lowest. Allows `alternatives`. |
+| `team` | Team Challenge | 1 | | Scored by `scoring`. `average`: everyone's totals averaged, rounded down, against the DC; each natural 1 removes the highest roll, each natural 20 the lowest. `half`: succeeds if at least half meet the DC. `leader`: the roll with the highest modifier (total less the kept d20), +1 per other success, −1 per other failure, against the DC. `weakest`: the lowest modifier, +1 per other success. All but `average` need a `dc`. Allows `alternatives`. |
 | `challenge` | Skill Challenge | 3 | | Three rolls in turn, each with its own DC; `successes` of them needed. Allows `alternatives`. |
 | `rolloff` | Roll-Off | 2 (one per side) | Required, exactly one actor each | Higher total wins. An actor no player owns rolls as a private GM roll until the GM shows it. |
 | `versus` | Team vs Team | 2 (one per side) | Required, at least one actor each | Each side pooled like a Team Challenge; higher average wins. |
@@ -132,8 +135,9 @@ score as they did. In `team`, whose rolls are averaged against one DC, an altern
 like the module's other exports.
 
 **Defaults.** `withDefaults` fills in a missing or `null` value for `rollMode` (`"public"`), `showDC` (the
-`showDCDefault` setting), `successes` (`2`, for `challenge`) and `range` (`16`, for `divine`). Nothing else is filled
-in.
+`showDCDefault` setting), `successes` (`2`, for `challenge`), `scoring` (the `teamScoring` setting, for `team`) and
+`range` (`16`, for `divine`). Nothing else is filled in. A `team` request with no `scoring` on it, such as one posted
+before there was a choice, is averaged.
 
 ### Validation
 
@@ -153,6 +157,8 @@ language), and posts nothing:
 | Fewer `parts` than the mode uses | A roll request is missing a roll. |
 | `alternatives` in a mode without choices, three or more of them, or not objects | Only a Standard Roll, Team Challenge or Skill Challenge can offer a choice of rolls, and at most 4 to choose from, given as a list of alternatives. |
 | An alternative with a `dc` in a `team` request | A Team Challenge's rolls are averaged against one DC, so its alternatives can't have DCs of their own. |
+| A `team` request's `scoring` isn't one of the four | Unknown way to score a Team Challenge: {scoring}. Use one of: {scorings}. |
+| A `team` request scored by `half`, `leader` or `weakest` with no `dc` | A Team Challenge scored by its successes needs a DC. |
 | A `death` roll outside a `standard` request, or with alternatives, or as one | A death save can only be asked for in a Standard Roll, with no other rolls to choose from. |
 | An unknown `type` | Unknown kind of roll: {type}. |
 | A `key` that dnd5e doesn't know | Unknown {type} for a roll: {key}. Use one of: {keys}. |
@@ -223,6 +229,17 @@ await createRequest({ mode: "standard", parts: [{ type: "death", dc: 10 }], acto
 await createRequest({ mode: "team", parts: [{ type: "skill", key: "ste", dc: 13 }], actors: party });
 ```
 
+**Team Challenge led by the best climber, Athletics or Acrobatics, DC 15:**
+
+```js
+await createRequest({
+  mode: "team",
+  scoring: "leader",
+  parts: [{ type: "skill", key: "ath", dc: 15, alternatives: [{ type: "skill", key: "acr" }] }],
+  actors: party
+});
+```
+
 **Skill Challenge, all three needed:**
 
 ```js
@@ -291,6 +308,12 @@ them out from its roll messages each time it draws.
 | `request` | `RollRequest` | `createRequest`, or the window | The request, with defaults filled in. Only honoured on a GM's message. Changing the DC from the card rewrites `request.parts[n].dc`, or an alternative's `dc`. |
 | `revealed` | `boolean` | The GM's **Show to players** button | Whether players see the results and summary. Unset means hidden. A death save request is posted with it set. |
 | `deathSave` | `{ actor: string, combat: string, round: number }` | `death-saves.mjs` | Marks a death save request posted at the start of a turn: the actor's UUID, and the combat and round it was posted for, so a turn started again posts no second request. |
+
+### On a Divine Intervention note
+
+| Flag | Type | Written by | Meaning |
+|---|---|---|---|
+| `divineSetup` | `string` | `hero-cards.mjs`, on the player's client | The UUID of the actor who played the Divine Intervention card from their sheet. The note is whispered to the GMs, whose Foundry adds a button that opens the request window set to Divine Intervention for that actor. A player could write the flag on a message of their own, but all it can do is preset the GM's window. |
 
 ### On a roll made for a request
 
@@ -459,11 +482,11 @@ scripts/
   bonus-rolls.mjs           Adding another feature's die to a roll, and the socket messages for it.
   class-features.mjs        Fighter's Indomitable.
   natural-saves.mjs         Natural 1s and 20s on saves against an activity's damage.
-  bloodied-tint.mjs         World Altering Scripts: the red tint on D&D 5e's Bloodied effect.
-  fade-unprepared.mjs       World Altering Scripts: fading unprepared spells on actor sheets.
-  rarity-colours.mjs        World Altering Scripts: tinting item rows on actor sheets by rarity.
-  chat-button-labels.mjs    World Altering Scripts: labels on compact chat cards' icon buttons.
-  one-tab-activities.mjs    World Altering Scripts: an activity sheet's tabs side by side.
+  bloodied-tint.mjs         Gameplay Enhancements: the red tint on D&D 5e's Bloodied effect.
+  fade-unprepared.mjs       Gameplay Enhancements: fading unprepared spells on actor sheets.
+  rarity-colours.mjs        Gameplay Enhancements: tinting item rows on actor sheets by rarity.
+  chat-button-labels.mjs    Gameplay Enhancements: labels on compact chat cards' icon buttons.
+  one-tab-activities.mjs    Gameplay Enhancements: an activity sheet's tabs side by side.
   settings-menus.mjs        The settings menus (ApplicationV2).
 templates/roll-request.hbs  The request window's form.
 templates/settings-menu.hbs A settings menu's form.
@@ -475,7 +498,7 @@ src/packs/                  Compendium sources, as YAML. Built into packs/ (not 
 test/                       Unit tests (Vitest), with Foundry shims in test/helpers.
 test-e2e/                   End-to-end tests and the screenshot script, driving a real Foundry with Playwright.
 tools/                      Pack build/extract and manifest validation.
-docs/images/                Screenshots for the guides.
+docs/                       The player, GM and developer guides, the art sources, and the screenshots in images/.
 ```
 
 ## Development
@@ -488,7 +511,7 @@ npm run check      # manifest validation, lint and unit tests, as CI runs them
 ```
 
 Link the repository into Foundry's `Data/modules` folder as `sogrom-table-tools`, then build the compendiums. See
-[CONTRIBUTING.md](CONTRIBUTING.md#getting-set-up) for the commands.
+[CONTRIBUTING.md](../CONTRIBUTING.md#getting-set-up) for the commands.
 
 ### Compendium packs
 
@@ -510,7 +533,7 @@ npm run extract:packs   # packs/ → YAML, after editing the packs in Foundry; t
 | `npm run lint` | ESLint, with no warnings allowed. |
 
 The end-to-end harness needs a local Foundry install: copy `test-e2e/config.example.mjs` to `test-e2e/config.mjs`
-and set the paths. [test-e2e/README.md](test-e2e/README.md) explains the setup, the test world and its fixtures, and
+and set the paths. [test-e2e/README.md](../test-e2e/README.md) explains the setup, the test world and its fixtures, and
 what each file tests. Add tests for new features, and run both suites before opening a pull request.
 
 ### Screenshots
@@ -532,5 +555,5 @@ guides use.
 Publishing a GitHub release, tagged `v1.2.3` or `1.2.3`, runs `.github/workflows/main.yml`. It fills in the version
 and URLs in `module.json`,
 runs `npm run check`, builds the packs, and attaches `module.json` and `module.zip` to the release. The archive holds
-only what the module needs at runtime, as listed in the workflow's `zip` step; the guides (the README included), the
-screenshots and the dev tooling aren't in it. Record user-facing changes in [CHANGELOG.md](CHANGELOG.md).
+only what the module needs at runtime, as listed in the workflow's `zip` step; the README, the guides in docs/, the
+screenshots and the dev tooling aren't in it. Record user-facing changes in [CHANGELOG.md](../CHANGELOG.md).

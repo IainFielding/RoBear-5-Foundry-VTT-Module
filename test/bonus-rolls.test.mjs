@@ -10,8 +10,8 @@ const fighter = { id: "fighter", isGM: false };
  * @param {object} data
  * @returns {object}  A chat message stand-in, as the bonus roll rules read it.
  */
-function message({ type = "base", author = bard, whisper = [], blind = false, flags = {} } = {}) {
-  return { type, author, whisper, blind, system: {}, rolls: [{}], getFlag: (scope, key) => (scope === MODULE_ID ? flags[key] : undefined) };
+function message({ type = "base", author = bard, whisper = [], blind = false, flags = {}, rolls = [{}] } = {}) {
+  return { type, author, whisper, blind, system: {}, rolls, getFlag: (scope, key) => (scope === MODULE_ID ? flags[key] : undefined) };
 }
 
 /* -------------------------------------------- */
@@ -33,6 +33,13 @@ describe("Who can spend a bonus roll", () => {
   it("can't be spent twice, or when it's a check rather than a plain roll", () => {
     expect(canSpend(message({ flags: { bonusUsed: { sign: 1 } } }), bard)).toBe(false);
     expect(canSpend(message({ type: "check" }), bard)).toBe(false);
+  });
+
+  it("can be spent from a feature's card holding only its die, as Midi-QOL keeps it, but not one with an attack or damage", () => {
+    expect(canSpend(message({ type: "usage", rolls: [new CONFIG.Dice.BasicRoll()] }), bard)).toBe(true);
+    expect(canSpend(message({ type: "usage", rolls: [new CONFIG.Dice.D20Roll()] }), bard)).toBe(false);
+    expect(canSpend(message({ type: "usage", rolls: [new CONFIG.Dice.BasicRoll(), new CONFIG.Dice.DamageRoll()] }), bard))
+      .toBe(false);
   });
 
   it("can't be spent on a roll made for a roll request", () => {

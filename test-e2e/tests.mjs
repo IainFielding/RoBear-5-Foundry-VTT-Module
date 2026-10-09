@@ -8,7 +8,8 @@
 
 import { MODULE_ID, PLAYER_USER } from "./config.mjs";
 import {
-  assert, assertEqual, cardsOnRow, clickRoll, forceDice, playCard, postRequest, readCard, rollButton, test, unusedDice,
+  assert, assertEqual, cardsOnRow, clickRoll, forceDice, playCard, postRequest, readCard, rollButton, rollModifiers, test,
+  unusedDice,
   waitFor, waitForCard, waitForRoll
 } from "./lib/harness.mjs";
 
@@ -325,6 +326,12 @@ test("the request window refuses requests it cannot run", async ({ gm }) => {
   }, "Each roll in a skill challenge needs a DC.");
 
   await attempt(async app => {
+    await chooseMode(app, "team");
+    await app.locator('select[name="scoring"]').selectOption("leader");
+    await app.locator('input[name="parts.0.dc"]').fill("");
+  }, "This way of scoring a Team Challenge needs a DC.");
+
+  await attempt(async app => {
     await chooseMode(app, "rolloff");
     await app.locator('input[name="rivals.0"][value="0"]').check({ force: true });
     await app.locator('input[name="rivals.1"][value="0"]').check({ force: true });
@@ -334,6 +341,110 @@ test("the request window refuses requests it cannot run", async ({ gm }) => {
     await chooseMode(app, "versus");
     for ( const box of await app.locator('input[name^="teams.1."]').all() ) await box.evaluate(el => { el.checked = false; });
   }, "Choose who rolls for the NPCs.");
+});
+
+/* -------------------------------------------- */
+/*  Quick Picks                                 */
+/* -------------------------------------------- */
+
+/**
+ * Make Aria and Borin dnd5e's primary party, "The Wanderers", and start a combat with the Goblin as a hostile combatant.
+ * @param {import("./lib/session.mjs").Session} gm
+ * @returns {Promise<{ party: string, disposition: number }>}  The party's ID, and the Goblin token's disposition before.
+ */
+function setUpPartyAndCombat(gm) {
+  return gm.eval(async () => {
+    const [aria, borin, goblin] = ["Aria", "Borin", "Goblin"].map(name => game.actors.getName(name));
+    const party = await Actor.create({
+      name: "The Wanderers", type: "group", system: { members: [{ actor: aria.id }, { actor: borin.id }] }
+    });
+    await game.settings.set("dnd5e", "primaryParty", { actor: party });
+    const scene = game.scenes.active;
+    const token = scene.tokens.getName("Goblin");
+    const disposition = token.disposition;
+    await token.update({ disposition: CONST.TOKEN_DISPOSITIONS.HOSTILE });
+    // Made active once it has a combatant: Foundry fails to start the turn of a combat created active and empty.
+    const combat = await Combat.create({ scene: scene.id });
+    await combat.createEmbeddedDocuments("Combatant", [{ tokenId: token.id, sceneId: scene.id, actorId: goblin.id }]);
+    await combat.update({ active: true });
+    return { party: party.id, disposition };
+  });
+}
+
+/**
+ * Undo setUpPartyAndCombat. The combat is deleted between tests anyway.
+ * @param {import("./lib/session.mjs").Session} gm
+ * @param {{ party: string, disposition: number }} setup
+ */
+function tearDownPartyAndCombat(gm, setup) {
+  return gm.eval(async ({ party, disposition }) => {
+    await foundry.applications.instances.get("stt-roll-request")?.close();
+    await game.settings.set("dnd5e", "primaryParty", { actor: null });
+    await game.actors.get(party)?.delete();
+    await game.scenes.active.tokens.getName("Goblin")?.update({ disposition });
+  }, setup);
+}
+
+/**
+ * Each quick pick in the window, as "id:pressed", and who is ticked.
+ * @param {import("playwright").Locator} app
+ */
+function readPicks(app) {
+  return app.evaluate(el => ({
+    picks: [...el.querySelectorAll(".stt-request-pick")].map(b => `${b.dataset.group}${b.dataset.side ? `@${b.dataset.side}` : ""}`
+      + `:${b.getAttribute("aria-pressed")}`),
+    labels: [...el.querySelectorAll(".stt-request-pick-label")].map(l => l.textContent.trim()),
+    ticked: [...el.querySelectorAll('input[type="checkbox"]:checked')]
+      .map(i => `${i.name.split(".").slice(0, -1).join(".")}:${i.closest("label").textContent.trim()}`)
+  }));
+}
+
+test("quick picks: the party and the combat's hostile combatants are ticked, or unticked, in one click", async ({ gm }) => {
+  const setup = await setUpPartyAndCombat(gm);
+  try {
+    const app = await openWindow(gm);
+    // The window starts on the last kind of request sent, which an earlier test may have made a Roll-Off.
+    await chooseMode(app, "standard");
+    let form = await readPicks(app);
+    assertEqual(form.labels, ["The Wanderers", "Combat: everyone", "Combat: hostile", "Everyone on scene"], "quick picks");
+    // The player characters start ticked, and they are the whole party.
+    assertEqual(form.picks, ["party:true", "combat:false", "hostile:false", "scene:false"], "which picks are ticked");
+
+    await app.locator('.stt-request-pick[data-group="party"]').click();
+    await app.locator('.stt-request-pick[data-group="hostile"]').click();
+    await gm.page.waitForTimeout(300);
+    form = await readPicks(app);
+    assertEqual(form.ticked, ["actors:Goblin"], "who is ticked after unticking the party and ticking the hostiles");
+    assertEqual(form.picks, ["party:false", "combat:true", "hostile:true", "scene:true"], "which picks are ticked after");
+
+    // In Team vs Team, the NPCs start as the hostile combatants, and each side has its own picks.
+    await chooseMode(app, "versus");
+    form = await readPicks(app);
+    assert(form.ticked.includes("teams.1:Goblin"), `The Goblin isn't on the NPCs' side: ${form.ticked.join(", ")}`);
+    assertEqual(form.picks, ["party@0:true", "combat@0:false", "scene@0:false", "combat@1:true", "hostile@1:true",
+      "scene@1:true"], "each side's picks");
+    // Ticking everyone on the scene for the players takes the Goblin off the NPCs' side.
+    await app.locator('.stt-request-pick[data-group="scene"][data-side="0"]').click();
+    await gm.page.waitForTimeout(300);
+    form = await readPicks(app);
+    assert(!form.ticked.includes("teams.1:Goblin"), "The Goblin is on both sides.");
+  } finally {
+    await tearDownPartyAndCombat(gm, setup);
+  }
+});
+
+test("quick picks: a macro can open the window with a group ticked", async ({ gm }) => {
+  const setup = await setUpPartyAndCombat(gm);
+  try {
+    await gm.eval(moduleId => game.modules.get(moduleId).api.requestRolls({ mode: "team", group: "hostile" }), MODULE_ID);
+    const app = gm.page.locator("#stt-roll-request");
+    await app.waitFor({ timeout: 10_000 });
+    const form = await readWindow(app);
+    assertEqual(form.checkedMode, "team", "the mode the macro asked for");
+    assertEqual(form.actors.filter(a => a.checked).map(a => a.name), ["Goblin"], "who the macro asked for");
+  } finally {
+    await tearDownPartyAndCombat(gm, setup);
+  }
 });
 
 /* -------------------------------------------- */
@@ -369,7 +480,7 @@ test("standard roll: the player rolls through dnd5e's roll window and the GM fas
   assertEqual(row(card, "Aria").results, [{ text: "5", classes: ["failure"] }], "Aria's result, for the GM");
   assertEqual(row(card, "Goblin").results, [{ text: "15", classes: ["success"] }], "Goblin's result, for the GM");
   assertEqual(await unusedDice(player), 0, "the player's forced dice all used");
-});
+}, { skip: { midi: "Midi-QOL fast-forwards rolls, so dnd5e's roll window does not open." } });
 
 test("standard roll: players see no pass or fail, on the card or the roll, until the GM shows the result", async (ctx) => {
   const { gm, player, ids } = ctx;
@@ -509,7 +620,7 @@ test("standard roll: a double click makes one roll", async (ctx) => {
   const { gm, player, ids } = ctx;
   const id = await postRequest(ctx, { mode: "standard", parts: [athletics(12)], actors: [ids.aria] });
   await forceDice(player, [d20(7), d20(8)]);
-  await rollButton(player, id, "Aria").dblclick({ modifiers: ["Shift"] });
+  await rollButton(player, id, "Aria").dblclick({ modifiers: await rollModifiers(player, id, "Aria", true) });
   await waitForRoll(gm, id, ids.aria);
   await player.page.waitForTimeout(1500);
   const rolls = await gm.eval(({ id, moduleId }) => game.messages.filter(m => m.getFlag(moduleId, "requestRoll")?.request === id).length,
@@ -720,6 +831,68 @@ test("team challenge: the GM's summary keeps each word of the result whole besid
     return words;
   }, id);
   assertEqual(broken, [], "words broken across lines in the summary");
+});
+
+test("team challenge: the window offers each way of scoring, starting from the setting, and explains the one chosen", async ({ gm }) => {
+  const app = await openWindow(gm);
+  try {
+    await chooseMode(app, "team");
+    const scoring = app.locator('select[name="scoring"]');
+    assertEqual(await scoring.evaluate(s => [...s.options].map(o => o.value)), ["average", "half", "leader", "weakest"],
+      "ways of scoring");
+    assertEqual(await scoring.inputValue(), "average", "the scoring the window starts with");
+    await scoring.selectOption("half");
+    const hint = await app.locator(".stt-request-scoring-hint").textContent();
+    assert(hint.includes("at least half"), `The hint doesn't explain Half must succeed: ${hint}`);
+    // The scoring is kept when the GM switches mode and back.
+    await chooseMode(app, "standard");
+    await chooseMode(app, "team");
+    assertEqual(await app.locator('select[name="scoring"]').inputValue(), "half", "the scoring after switching mode");
+  } finally {
+    await gm.eval(() => foundry.applications.instances.get("stt-roll-request")?.close());
+  }
+});
+
+test("team challenge: led by the best roll, helped by successes and hindered by failures", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const id = await postRequest(ctx, {
+    mode: "team", scoring: "leader", parts: [athletics(12)], actors: [ids.aria, ids.borin, ids.goblin]
+  });
+  let card = await readCard(gm, id);
+  assertEqual(card.subtitle, "Team Challenge · Leader · DC 12", "the card's subtitle");
+  // Every fixture's Athletics is +0, so the leader is the highest total.
+  await forceDice(player, [d20(15), d20(8)]);
+  await clickRoll(player, id, "Aria", { fastForward: true });
+  await clickRoll(player, id, "Borin", { fastForward: true });
+  await forceDice(gm, [d20(13)]);
+  await clickRoll(gm, id, "Goblin", { fastForward: true });
+
+  card = await waitForCard(gm, id, c => c.summary, "the GM's team result");
+  assertEqual(card.summary, "Aria leads: 15, +1 helped, −1 hindered = 15 Success Show to players", "the GM's summary");
+  assertEqual(["Aria", "Borin", "Goblin"].map(name => row(card, name).badge), ["Leader", "−1", "+1"], "each row's note");
+
+  card = await waitForCard(player, id, c => c.rows.every(r => r.results.length), "the player to see every roll");
+  assertEqual(card.summary, null, "the player's summary before it is shown");
+  assertEqual(card.rows.map(r => r.badge), [null, null, null], "the notes, before the result is shown");
+
+  await revealSummary(gm, id);
+  card = await waitForCard(player, id, c => c.summary, "the team result once shown");
+  assertEqual(card.summary, "Aria leads: 15, +1 helped, −1 hindered = 15 Success", "the player's summary once shown");
+  assertEqual(row(card, "Borin").badge, "−1", "Borin's note once shown");
+});
+
+test("team challenge: half must succeed, as the Player's Handbook's group check", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const id = await postRequest(ctx, {
+    mode: "team", scoring: "half", parts: [athletics(12)], actors: [ids.aria, ids.borin, ids.goblin]
+  });
+  await forceDice(player, [d20(15), d20(3)]);
+  await clickRoll(player, id, "Aria", { fastForward: true });
+  await clickRoll(player, id, "Borin", { fastForward: true });
+  await forceDice(gm, [d20(4)]);
+  await clickRoll(gm, id, "Goblin", { fastForward: true });
+  const card = await waitForCard(gm, id, c => c.summary, "the GM's team result");
+  assertEqual(card.summary, "1 of 3 succeeded · 2 needed Failure Show to players", "the GM's summary");
 });
 
 /* -------------------------------------------- */
@@ -1222,7 +1395,7 @@ test("choice of rolls: the player picks one, which is rolled and scored against 
   await dialog.waitFor({ timeout: 10_000 });
   const labels = await dialog.locator(".form-footer button").allTextContents();
   assertEqual(labels.map(l => l.trim()), ["Athletics Check · DC 12", "Strength Save · DC 12"], "the rolls offered");
-  await dialog.locator('button[data-action="choice1"]').click({ modifiers: ["Shift"] });
+  await dialog.locator('button[data-action="choice1"]').click({ modifiers: await rollModifiers(player, id, "Aria", true) });
 
   const roll = await waitForRoll(gm, id, ids.aria);
   assertEqual([roll.type, roll.total, roll.flag.choice], ["save", 14, 1], "Aria's roll");
@@ -1250,12 +1423,12 @@ test("choice of rolls: each choice is scored against its own DC, which the GM ca
   const labels = await dialog.locator(".form-footer button").allTextContents();
   assertEqual(labels.map(l => l.trim()), ["Dexterity Check · DC ?", "Strength Check · DC ?"], "the rolls offered");
   await forceDice(player, [d20(12)]);
-  await dialog.locator('button[data-action="choice1"]').click({ modifiers: ["Shift"] });
+  await dialog.locator('button[data-action="choice1"]').click({ modifiers: await rollModifiers(player, id, "Aria", true) });
   await dialog.waitFor({ state: "detached", timeout: 10_000 });
   await waitForRoll(gm, id, ids.aria);
   await rollButton(player, id, "Borin").click();
   await forceDice(player, [d20(12)]);
-  await player.page.locator('.stt-choice-dialog button[data-action="choice0"]').click({ modifiers: ["Shift"] });
+  await player.page.locator('.stt-choice-dialog button[data-action="choice0"]').click({ modifiers: await rollModifiers(player, id, "Borin", true) });
   await waitForRoll(gm, id, ids.borin);
 
   // 12 beats Dexterity's DC 10, but not Strength's DC 15.

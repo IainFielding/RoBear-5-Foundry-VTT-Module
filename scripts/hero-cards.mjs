@@ -6,6 +6,7 @@
 export const MODULE_ID = "sogrom-table-tools";
 const CARDS_ITEM_ID = "xFVsPIjSASjXaqUO";
 const CARDS_IDENTIFIER = "hero-cards";
+const DIVINE_CARD_ID = "c4kwzmakUx2o9UFQ";
 const IMAGE_PATH = `modules/${MODULE_ID}/assets/images`;
 
 /**
@@ -174,20 +175,58 @@ function registerSettings() {
  * Hero Cards feature. Shift-click still uses dnd5e's own behaviour.
  */
 function wrapItemUse() {
+  // Midi-QOL wraps the same method through libWrapper, without continuing the chain, so a plain patch underneath it
+  // would never run. A libWrapper WRAPPER always runs before it.
+  if ( game.modules.get("lib-wrapper")?.active ) {
+    globalThis.libWrapper.register(MODULE_ID, "CONFIG.Item.documentClass.prototype.use", useItem, "WRAPPER");
+    return;
+  }
   const proto = CONFIG.Item.documentClass.prototype;
   const use = proto.use;
-  proto.use = async function(config={}, dialog={}, message={}) {
-    if ( !isCardItem(this) || !this.actor || config.event?.shiftKey ) return use.call(this, config, dialog, message);
-    const options = this.system.activities
-      .filter(a => a.canUse && hasUsesLeft(a))
-      .map(activity => ({ activity, label: getCardLabel(activity), img: getCardArt(activity) }));
-    if ( !options.length ) {
-      ui.notifications.warn(localize("STT.Cards.NoneLeft"));
-      return;
-    }
-    const option = await chooseCard(options, localize("STT.Cards.ChooseFromSheet"));
-    if ( option ) return option.activity.use(config, dialog, message);
+  proto.use = function(...args) {
+    return useItem.call(this, use.bind(this), ...args);
   };
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Use an item, offering the card chooser for the Hero Cards feature in place of dnd5e's list of activities. The rest of
+ * the chain always runs, as a libWrapper WRAPPER must: with the chosen card as the item's only usable activity, so it is
+ * used without asking again, by dnd5e or by a module that takes over using items, such as Midi-QOL. With no card
+ * chosen, the item has no usable activity, and its chat card isn't posted, so nothing happens.
+ * @this {Item5e}
+ * @param {Function} wrapped  The rest of the chain.
+ * @param {object} [config]
+ * @param {object} [dialog]
+ * @param {object} [message]
+ * @returns {Promise<*>}
+ */
+async function useItem(wrapped, config={}, dialog={}, message={}) {
+  if ( !isCardItem(this) || !this.actor || config.event?.shiftKey ) return wrapped(config, dialog, message);
+  const options = this.system.activities
+    .filter(a => a.canUse && hasUsesLeft(a))
+    .map(activity => ({ activity, label: getCardLabel(activity), img: getCardArt(activity) }));
+  let chosen = null;
+  if ( options.length ) chosen = (await chooseCard(options, localize("STT.Cards.ChooseFromSheet")))?.activity ?? null;
+  else ui.notifications.warn(localize("STT.Cards.NoneLeft"));
+
+  // The other cards are put out of use until the chosen one starts, so the sheet lists them all again as it redraws.
+  const others = this.system.activities.filter(a => a !== chosen);
+  for ( const a of others ) Object.defineProperty(a, "canUse", { value: false, configurable: true });
+  let hook;
+  const restore = () => {
+    Hooks.off("dnd5e.preUseActivity", hook);
+    for ( const a of others ) delete a.canUse;
+  };
+  hook = Hooks.on("dnd5e.preUseActivity", activity => {
+    if ( activity.uuid === chosen?.uuid ) restore();
+  });
+  try {
+    return await wrapped(config, dialog, chosen ? message : { ...message, createMessage: false });
+  } finally {
+    restore();
+  }
 }
 
 /* -------------------------------------------- */
@@ -216,6 +255,60 @@ function onRenderChatMessage(message, html) {
 
   const activity = getCardActivity(message);
   if ( activity ) compactCardUsage(html, activity);
+
+  // Rolls RSReforged draws in this card in its own way: its check and save totals, and an activity's attack, damage and
+  // formula rolls, which it draws inside the activity's card while leaving their own messages empty.
+  onEmbeddedRolls(html, (roll, element) => {
+    if ( roll.isContentVisible ) markEmbeddedNaturals(roll, element);
+    if ( roll === message ) return;
+    element.append(...renderLog(roll));
+    if ( getCardOptions(roll).length ) {
+      (element.querySelector(".rsr-header") ?? element).append(createCardButton(roll, { compact: true }));
+    }
+  });
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Elements in which another module draws a roll message, each with that message's ID: RSReforged's check and save
+ * totals, and the attack, damage and formula rolls it draws inside an activity's card.
+ */
+export const EMBEDDED_ROLLS = ".rsr-card[data-message-id]";
+
+/**
+ * Call back for each roll another module draws in a message's card, now and as it draws them. RSReforged draws them
+ * once dnd5e has rendered the card, after this module's own render hooks have run, and again whenever it redraws them.
+ * @param {HTMLElement} html  The rendered message.
+ * @param {(message: ChatMessage5e, element: HTMLElement) => void} callback  Called once for each element.
+ */
+export function onEmbeddedRolls(html, callback) {
+  const seen = new WeakSet();
+  const visit = () => {
+    for ( const element of html.querySelectorAll(EMBEDDED_ROLLS) ) {
+      if ( seen.has(element) ) continue;
+      seen.add(element);
+      const message = game.messages.get(element.dataset.messageId);
+      if ( message ) callback(message, element);
+    }
+  };
+  visit();
+  if ( !game.modules.get("rsreforged")?.active ) return;
+  // RSReforged watches its own cards for this long after a render.
+  const observer = new MutationObserver(visit);
+  observer.observe(html, { childList: true, subtree: true });
+  setTimeout(() => observer.disconnect(), 15_000);
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Ring the natural 1s and 20s of a roll another module draws in its own way.
+ * @param {ChatMessage5e} message
+ * @param {HTMLElement} element  Where the module draws the message's rolls.
+ */
+function markEmbeddedNaturals(message, element) {
+  if ( game.settings.get(MODULE_ID, "markNaturals") ) markRolls(message, [...element.querySelectorAll(".dice-roll")]);
 }
 
 /* -------------------------------------------- */
@@ -235,6 +328,22 @@ function markNaturals(message, html) {
   for ( const summary of html.querySelectorAll(".card-summary[data-message-id]") ) {
     const child = game.messages.get(summary.dataset.messageId);
     if ( child?.isContentVisible ) markRolls(child, [...summary.querySelectorAll(".dice-roll")]);
+  }
+  markMidiSaves(html);
+}
+
+/**
+ * Midi-QOL lists the saves made against an activity on its card, one row for each target, showing each total and
+ * keeping the dice in a tooltip. Ring each total by the d20 its dice kept.
+ * @param {HTMLElement} html
+ */
+function markMidiSaves(html) {
+  for ( const row of html.querySelectorAll(".midi-qol-saves-display li[data-id]") ) {
+    const total = row.querySelector(".midi-qol-save-total");
+    const kept = [...row.querySelectorAll(".dice-rolls .roll.d20")]
+      .find(d => !d.classList.contains("discarded") && !d.classList.contains("rerolled"));
+    const natural = Number(kept?.textContent);
+    if ( total && [1, 20].includes(natural) ) total.classList.add(`stt-natural-${natural}`);
   }
 }
 
@@ -321,10 +430,12 @@ async function onUpdateChatMessage(message, changes) {
 /* -------------------------------------------- */
 
 /**
- * Using the Advantage card from the sheet grants advantage on the next d20 test.
+ * Using the Advantage card from the sheet grants advantage on the next d20 test. Playing Divine Intervention asks the
+ * GM to set up its roll.
  * @param {Activity} activity
  */
 async function onPostUseActivity(activity) {
+  if ( isDivineCard(activity) ) return askForDivineIntervention(activity.actor);
   if ( (getCardKey(activity) !== "advantage") || retroactiveUses.has(activity.uuid) ) return;
   const actor = activity.actor;
   if ( !actor ) return;
@@ -408,6 +519,35 @@ export function getRollKind(message) {
 function getCardKey(activity) {
   const name = activity.name?.trim().toLowerCase();
   return Object.entries(CARDS).find(([, c]) => c.ids.includes(activity.id) || c.names.includes(name))?.[0];
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {Activity} activity
+ * @returns {boolean}  Is this the Divine Intervention card?
+ */
+function isDivineCard(activity) {
+  if ( !activity.item || !isCardItem(activity.item) ) return false;
+  return (activity.id === DIVINE_CARD_ID) || (activity.name?.trim().toLowerCase() === "divine intervention");
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Whisper the GMs a note that Divine Intervention was played, with a button that opens the request window set up
+ * for it (see roll-requests.mjs).
+ * @param {Actor5e|void} actor  Who played the card.
+ */
+async function askForDivineIntervention(actor) {
+  if ( !actor ) return;
+  const content = `<p>${foundry.utils.escapeHTML(localize("STT.Cards.DivineSetup.Played", { name: actor.name }))}</p>`;
+  await ChatMessage.create({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content,
+    whisper: ChatMessage.getWhisperRecipients("GM").map(u => u.id),
+    flags: { [MODULE_ID]: { divineSetup: actor.uuid } }
+  });
 }
 
 /* -------------------------------------------- */
@@ -815,13 +955,21 @@ async function chooseCard(options, hint) {
  */
 async function applyCard(message, { key, activity, label }) {
   const spent = activity.uses?.spent ?? 0;
-  retroactiveUses.add(activity.uuid);
   let used;
-  try {
-    // No usage card is posted: the card is shown on screen and noted on the roll instead, so the roll stays in view.
-    used = await activity.use({ subsequentActions: false }, { configure: false }, { create: false });
-  } finally {
-    retroactiveUses.delete(activity.uuid);
+  // Midi-QOL runs a whole workflow for every activity used, which would roll the card's own die on a card of its own,
+  // apart from the roll the card changes. With Midi, the card's use is spent directly instead.
+  if ( game.modules.get("midi-qol")?.active ) {
+    if ( !hasUsesLeft(activity) ) return;
+    await activity.item.update({ [`system.activities.${activity.id}.uses.spent`]: spent + 1 });
+    used = true;
+  } else {
+    retroactiveUses.add(activity.uuid);
+    try {
+      // No usage card is posted: the card is shown on screen and noted on the roll instead, so the roll stays in view.
+      used = await activity.use({ subsequentActions: false }, { configure: false }, { create: false });
+    } finally {
+      retroactiveUses.delete(activity.uuid);
+    }
   }
   if ( !used ) return;
 

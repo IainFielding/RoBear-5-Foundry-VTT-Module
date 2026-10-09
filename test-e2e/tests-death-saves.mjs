@@ -3,7 +3,9 @@
  */
 
 import { MODULE_ID } from "./config.mjs";
-import { assert, assertEqual, forceDice, readCard, test, waitFor, waitForCard, waitForRoll } from "./lib/harness.mjs";
+import {
+  assert, assertEqual, forceDice, readCard, rollModifiers, test, waitFor, waitForCard, waitForRoll
+} from "./lib/harness.mjs";
 
 const d20 = n => [n, 20];
 
@@ -181,7 +183,7 @@ test("death saves: a dying character is asked on their turn, and the player roll
   assertEqual(await waitForPopup(player), ["Aria"], "the actors in the player's pop-up");
 
   await forceDice(player, [d20(14)]);
-  await popup(player).locator(".stt-request-roll").click({ modifiers: ["Shift"] });
+  await popup(player).locator(".stt-request-roll").click({ modifiers: await rollModifiers(player, id, "Aria", true) });
   const roll = await waitForRoll(gm, id, ids.aria);
   assertEqual([roll.type, roll.total], ["save", 14], "the death save's roll message");
   // The outcome is on the sheet as soon as it is rolled, so the player sees it without the GM showing it.
@@ -247,7 +249,8 @@ test("death saves: a character who stabilizes is not asked again until they take
   const [id] = await waitForDeathSaveRequests(gm, ids.aria, 1);
 
   await forceDice(player, [d20(15)]);
-  await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-roll`).click({ modifiers: ["Shift"] });
+  await player.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-roll`)
+    .click({ modifiers: await rollModifiers(player, id, "Aria", true) });
   await waitForRoll(gm, id, ids.aria);
   await waitFor(gm, moduleId => game.actors.getName("Aria").getFlag(moduleId, "stable") === true, MODULE_ID,
     "Aria to be noted as stable");

@@ -23,14 +23,14 @@
           "Hint": "Configure roll request behaviour, including DC visibility, roll display options, pop-up prompts, and automatic death save requests."
         },
         "WorldScripts": {
-          "Name": "World Altering Scripts",
-          "Label": "World Altering Scripts",
+          "Name": "Gameplay Enhancements",
+          "Label": "Gameplay Enhancements",
           "Hint": "Optional quality-of-life improvements for tokens, character sheets, chat cards, and activity windows. Enable only the features you want to use."
         }
       },
       "BloodiedTint": {
         "Name": "Bloodied Token Tint",
-        "Hint": "Highlights Bloodied creatures with a red tint and matching token ring colours, making them easier to spot during play."
+        "Hint": "Automaticaly Highlights Bloodied creatures with a red tint and matching token ring colours, making them easier to spot during play."
       },
       "FadeUnprepared": {
         "Name": "Fade Unprepared Spells",
@@ -38,7 +38,7 @@
       },
       "ChatButtonLabels": {
         "Name": "Chat Button Labels",
-        "Hint": "Display text labels alongside chat card icons, making actions easier to identify at a glance."
+        "Hint": "Fixes the small attack and damage buttons from dnd 6.0 update, adds words making them much easier to see and use."
       },
       "OneTabActivities": {
         "Name": "One-Tab Activities",
@@ -58,7 +58,7 @@
       },
       "NaturalSaves": {
         "Name": "Natural 1s and 20s on saves against damage",
-        "Hint": "By default, a natural 20 on a saving throw against a spell's or feature's damage means no damage is taken. A natural 1 deals the maximum possible damage instead, treating every damage die as though it rolled its highest value (for example, 36 from 6d6), and ignoring any resistances or immunities. The Apply tray is automatically populated with these results, but the GM remains free to adjust them before applying damage."
+        "Hint": "Natural 20 on a saving throw against a spell's or feature's damage means no damage is taken. A natural 1 deals the maximum possible damage instead, treating every damage die as though it rolled its highest value (for example, 36 from 6d6), and ignoring any resistances or immunities. The Apply tray is automatically populated with these results, but the GM remains free to adjust them before applying damage."
       },
       "ShowPlayedCards": {
         "Name": "Show Played Cards on Screen",
@@ -67,6 +67,10 @@
       "ShowDCDefault": {
         "Name": "Show the DC to players by default",
         "Hint": "Decides whether players can see the DC by default when you create a roll request. You can override it for any request. Hiding the DC removes it from the chat card."
+      },
+      "TeamScoring": {
+        "Name": "Team Challenge scoring by default",
+        "Hint": "How a Team Challenge's rolls are scored when you open the request window. You can change it for any request."
       },
       "AttachRolls": {
         "Name": "Attach Rolls to Request Cards",
@@ -103,6 +107,10 @@
       "DialogTitle": "Use a Hero Card",
       "LegacyLabel": "Hero Cards:",
       "Plays": "{name} plays",
+      "DivineSetup": {
+        "Played": "{name} played Divine Intervention. Set up their roll when you're ready.",
+        "Button": "Set Up Divine Intervention"
+      },
       "Log": {
         "Entry": "{card}: {detail}",
         "Inspiration": "added {formula} ({bonus}): {before} + {bonus} = {after}",
@@ -164,7 +172,7 @@
         },
         "Team": {
           "Label": "Team Challenge",
-          "Hint": "The party's rolls are averaged. A natural 1 removes the highest roll, and a natural 20 the lowest."
+          "Hint": "Everyone rolls, and the team gets one result: averaged, or scored by who succeeds."
         },
         "Challenge": {
           "Label": "Skill Challenge",
@@ -207,6 +215,43 @@
         "Hidden": "The team's result is hidden.",
         "Average": "Team average {average}{removed}",
         "Removed": " · {count} removed"
+      },
+      "Scoring": {
+        "Average": {
+          "Label": "Average of the rolls",
+          "Short": "Average",
+          "Hint": "The rolls are averaged, rounded down, against the DC. Each natural 1 removes the highest roll, and each natural 20 the lowest."
+        },
+        "Half": {
+          "Label": "Half must succeed",
+          "Short": "Half must succeed",
+          "Hint": "The group check from the Player's Handbook. If at least half the team meets the DC, the whole team succeeds.",
+          "Summary": "{passed} of {total} succeeded · {needed} needed"
+        },
+        "Leader": {
+          "Label": "Leader, helped by the rest",
+          "Short": "Leader",
+          "Hint": "The roll with the highest modifier counts, +1 for each other success and −1 for each other failure.",
+          "Summary": "{name} leads: {base}, +{helped} helped, −{hindered} hindered = {score}"
+        },
+        "Weakest": {
+          "Label": "Weakest link",
+          "Short": "Weakest link",
+          "Hint": "The roll with the lowest modifier counts, +1 for each other success. Other failures don't count against it.",
+          "Summary": "{name} is the weakest link: {base}, +{helped} helped = {score}"
+        },
+        "Note": {
+          "Leader": "Leader",
+          "LeaderTooltip": "The highest modifier, so this roll counts for the team.",
+          "Weakest": "Weakest",
+          "WeakestTooltip": "The lowest modifier, so this roll counts for the team.",
+          "Helped": "+1",
+          "HelpedTooltip": "Succeeded, adding 1 to the team's roll.",
+          "Hindered": "−1",
+          "HinderedTooltip": "Failed, taking 1 from the team's roll.",
+          "Ignored": "—",
+          "IgnoredTooltip": "Failed. Other failures don't count against the weakest link."
+        }
       },
       "Contest": {
         "Tie": "Tie",
@@ -292,6 +337,8 @@
         "DivineRoll": "Divine Intervention's roll is a d100, not {type}.",
         "Choices": "Only a Standard Roll, Team Challenge or Skill Challenge can offer a choice of rolls, and at most {max} to choose from, given as a list of alternatives.",
         "ChoiceDC": "A Team Challenge's rolls are averaged against one DC, so its alternatives can't have DCs of their own.",
+        "Scoring": "Unknown way to score a Team Challenge: {scoring}. Use one of: {scorings}.",
+        "ScoringDC": "A Team Challenge scored by its successes needs a DC.",
         "DeathSave": "A death save can only be asked for in a Standard Roll, with no other rolls to choose from."
       },
       "Config": {
@@ -304,11 +351,20 @@
         "SuccessesNeeded": "Successes Needed",
         "SuccessesOf": "{count} of {total}",
         "ChallengeHint": "An actor stops rolling as soon as they have passed or failed the challenge.",
+        "Scoring": "Scoring",
         "ContestHint": "Each side makes its own roll, and the higher result wins.",
         "NumbersToPick": "Numbers to Pick",
         "DivineHint": "Each player picks this many numbers in a row, then rolls a d100 and must roll one of them.",
         "WhoRolls": "Who Rolls",
         "SelectAll": "Select or clear everyone",
+        "Picks": {
+          "Label": "Quick picks",
+          "Tooltip": "Tick everyone in {name}, or untick them if they all are.",
+          "Combat": "Combat: everyone",
+          "Hostile": "Combat: hostile",
+          "Selected": "Selected tokens",
+          "Scene": "Everyone on scene"
+        },
         "NoActors": "Select tokens, or give players characters, to choose who rolls.",
         "Options": "Options",
         "ShowDC": "Show DC to Players",
@@ -322,6 +378,7 @@
         "BothSides": "No one can be on both sides.",
         "ChooseActor": "Choose at least one actor to roll.",
         "ChallengeDC": "Each roll in a skill challenge needs a DC.",
+        "ScoringDC": "This way of scoring a Team Challenge needs a DC.",
         "AddChoice": "Offer another roll to choose instead",
         "RemoveChoice": "Stop offering this roll",
         "Or": "or",

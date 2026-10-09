@@ -2,6 +2,58 @@
 
 All notable changes to Sogrom's Table Tools.
 
+## 0.0.6
+
+For Foundry VTT v14 and the D&D 5e system 6.x.
+
+### Hero Cards
+
+- **Divine Intervention, played from the sheet, tells the GM.** The GM is whispered a note with a **Set Up Divine
+  Intervention** button, which opens the request window set to Divine Intervention with that character the one to
+  roll.
+- **The card window lines up.** Every card's art starts at the same height, whether its name takes one line or two.
+
+### Roll requests
+
+- **Four ways to score a Team Challenge.** Choose **Scoring** in the request window: the average of the rolls, as
+  before; **Half must succeed**, the Player's Handbook group check; **Leader, helped by the rest**, where the highest
+  modifier's roll counts, +1 for each other success and −1 for each failure; or **Weakest link**, where the lowest
+  modifier's roll counts, +1 for each other success. The card marks what each roll did for the team, and its summary
+  shows the working. A new setting, **Team Challenge scoring by default**, picks where the window starts, and macros
+  can pass `scoring`.
+- **Quick picks in Who Rolls.** One click ticks your party, everyone in the combat, just its hostile combatants, the
+  selected tokens, or everyone on the scene, and a second click unticks them. Each of your other group actors gets a
+  pick too. In Team vs Team, each side has its own, and the NPCs' side starts with the hostile combatants when a combat
+  is running. `requestRolls({ mode, group })` opens the window with a group ticked.
+
+### Works with other modules
+
+- **RSReforged.** On the cards its quick rolls draw, Hero Cards can be played on attacks used from the sheet, natural
+  1s and 20s are ringed, card notes show, and a feature's die can be added to a roll from the right-click menu.
+  Damage applied with its Apply buttons follows **Natural 1s and 20s on saves against damage**.
+- **Midi-QOL, partly supported.** The Hero Cards feature opens the card chooser from the sheet again, instead of
+  Midi's list of activities. Damage Midi applies itself follows **Natural 1s and 20s on saves against damage**, and a
+  feature's die on a Midi card can be added to a roll from the right-click menu. Natural 1s and 20s are ringed on the
+  saves Midi lists on its card, and a card played on a roll in chat doesn't roll its own die again through Midi's
+  workflow. A card played after Midi has resolved a roll doesn't change the hits, saves or damage Midi
+  has already applied: see Other modules in the GM guide.
+
+### Settings
+
+- **World Altering Scripts are now Gameplay Enhancements**, in Configure Settings and in the guides. The settings
+  themselves are unchanged, and worlds keep what they had turned on.
+- **Clearer hint for Chat Button Labels**, saying what it fixes.
+
+### Documentation
+
+- **A new README** introduces the module, with links to the guides.
+- **The guides have moved into `docs/`**: the player guide (the old README), the GM guide and the developer guide.
+- **Screenshots retaken** for the settings, the card window and the request window.
+
+### Smaller download
+
+- **Unused font weights removed**: Spectral's light and medium weights, which nothing used, about 150 KB.
+
 ## 0.0.5: First release
 
 For Foundry VTT v14 and the D&D 5e system 6.x.
@@ -35,12 +87,11 @@ For Foundry VTT v14 and the D&D 5e system 6.x.
   right-click menu.
 - **Fighter's Indomitable** is offered on a failed save, under both the 2014 and 2024 rules.
 
-### World Altering Scripts
+### Gameplay Enhancements
 
-- **Five optional scripts**, each off until the GM turns it on: Bloodied Token Tint, Fade Unprepared Spells, Item
+- **Five optional enhancements**, each off until the GM turns it on: Bloodied Token Tint, Fade Unprepared Spells, Item
   Rarity Colours, Chat Button Labels and One-Tab Activities.
 
 ### Settings
 
-- **Grouped into four menus** in Configure Settings: Hero Cards, Dice Rolling, Roll Requests and World Altering
-  Scripts.
+- **Grouped into four menus** in Configure Settings: Hero Cards, Dice Rolling, Roll Requests and Gameplay Enhancements.

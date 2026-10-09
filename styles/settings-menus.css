@@ -1,7 +1,7 @@
 /*
- * Settings menus: each row is a name, a checkbox and a hint. The checkbox needs no more room than itself, so the name
- * takes the rest of the row, and a name that still wraps keeps its lines together, as in Foundry's own Configure
- * Settings window.
+ * Settings menus: each row is a name, a checkbox or dropdown, and a hint. A checkbox needs no more room than itself, so
+ * the name takes the rest of the row, and a name that still wraps keeps its lines together, as in Foundry's own Configure
+ * Settings window. A dropdown is as wide as its longest choice, beside a name that wraps to make room for it.
  */
 .stt-settings-menu .form-group > label {
   line-height: 1.25;
@@ -11,4 +11,18 @@
 .stt-settings-menu .form-group > .form-fields {
   flex: 0 0 2rem;
   justify-content: flex-end;
+}
+
+.stt-settings-menu .form-group:has(select) > label {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.stt-settings-menu .form-group > .form-fields:has(select) {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+.stt-settings-menu .form-group > .form-fields > select {
+  width: auto;
 }

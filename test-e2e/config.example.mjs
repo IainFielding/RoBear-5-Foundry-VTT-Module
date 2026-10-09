@@ -38,7 +38,21 @@ export const BASE_URL = `${SSL ? "https" : "http"}://127.0.0.1:${PORT}`;
 export const MODULE_ID = "sogrom-table-tools";
 
 /** The disposable test world. Its id is also its directory name under `Data/worlds`. */
-export const WORLD = {
+/**
+ * `STT_COMPAT=rsr` or `STT_COMPAT=midi` runs in a world of its own with that module enabled too, to check compatibility.
+ * The modules must be installed in `Data/modules`: see `README.md`.
+ */
+const COMPAT = {
+  rsr: ["rsreforged"],
+  midi: ["midi-qol", "dae", "socketlib", "lib-wrapper"]
+}[process.env.STT_COMPAT] ?? null;
+
+export const WORLD = COMPAT ? {
+  id: `stt-compat-${process.env.STT_COMPAT}`,
+  title: `Sogrom's Table Tools Compat (${process.env.STT_COMPAT})`,
+  description: "<p>Compatibility tests for Sogrom's Table Tools. Its contents are created and deleted on every run.</p>",
+  modules: [MODULE_ID, ...COMPAT]
+} : {
   id: "stt-e2e",
   title: "Sogrom's Table Tools E2E",
   description: "<p>Automated tests for Sogrom's Table Tools. Its contents are created and deleted on every run.</p>",

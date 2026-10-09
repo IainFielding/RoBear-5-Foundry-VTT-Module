@@ -3,7 +3,7 @@
  */
 
 import { MODULE_ID } from "./config.mjs";
-import { assert, assertEqual, forceDice, postRequest, test, waitFor, waitForRoll } from "./lib/harness.mjs";
+import { assert, assertEqual, forceDice, postRequest, rollModifiers, test, waitFor, waitForRoll } from "./lib/harness.mjs";
 
 const d20 = n => [n, 20];
 const athletics = dc => ({ type: "skill", key: "ath", dc });
@@ -94,13 +94,13 @@ test("pop-ups: a player gets their own characters, rolls from the pop-up, and it
   assertEqual(await popup(player).locator(".stt-request-header h3").textContent(), "Athletics Check", "the pop-up's title");
 
   await forceDice(player, [d20(14), d20(6)]);
-  await popupRollButton(player, "Aria").click({ modifiers: ["Shift"] });
+  await popupRollButton(player, "Aria").click({ modifiers: await rollModifiers(player, id, "Aria", true) });
   await waitForRoll(gm, id, ids.aria);
   await popup(player).locator('li:has(.stt-request-name:text-is("Aria")) .stt-request-result').waitFor({ timeout: 10_000 });
   assert(await popup(player).isVisible(), "The pop-up closed with Borin still to roll.");
   assertEqual(await popupRollButton(player, "Aria").count(), 0, "Aria's Roll button once rolled");
 
-  await popupRollButton(player, "Borin").click({ modifiers: ["Shift"] });
+  await popupRollButton(player, "Borin").click({ modifiers: await rollModifiers(player, id, "Borin", true) });
   await waitForRoll(gm, id, ids.borin);
   await waitForPopupToClose(player);
 });
@@ -111,14 +111,14 @@ test("pop-ups: the roll window opens from the pop-up as it does from the chat ca
   const id = await postRequest(ctx, { mode: "standard", parts: [athletics(12)], actors: [ids.aria] });
   await waitForPopup(player);
   await forceDice(player, [d20(11)]);
-  await popupRollButton(player, "Aria").click();
+  await popupRollButton(player, "Aria").click({ modifiers: await rollModifiers(player, id, "Aria", false) });
   const normal = player.page.locator(".application.roll-configuration button", { hasText: "Normal" });
   await normal.waitFor({ timeout: 10_000 });
   await normal.click();
   const aria = await waitForRoll(gm, id, ids.aria);
   assertEqual(aria.total, 11, "Aria's roll");
   await waitForPopupToClose(player);
-});
+}, { skip: { midi: "Midi-QOL fast-forwards rolls, so dnd5e's roll window does not open." } });
 
 test("pop-ups: a skill challenge's pop-up stays open until the challenge is settled", async (ctx) => {
   const { gm, player, ids } = ctx;
@@ -128,11 +128,11 @@ test("pop-ups: a skill challenge's pop-up stays open until the challenge is sett
   });
   await waitForPopup(player);
   await forceDice(player, [d20(15), d20(15)]);
-  await popupRollButton(player, "Aria").click({ modifiers: ["Shift"] });
+  await popupRollButton(player, "Aria").click({ modifiers: await rollModifiers(player, id, "Aria", true) });
   await waitForRoll(gm, id, ids.aria, 0);
   await popupRollButton(player, "Aria").waitFor({ timeout: 10_000 });
   assert(await popup(player).isVisible(), "The pop-up closed after the first of three rolls.");
-  await popupRollButton(player, "Aria").click({ modifiers: ["Shift"] });
+  await popupRollButton(player, "Aria").click({ modifiers: await rollModifiers(player, id, "Aria", true) });
   await waitForRoll(gm, id, ids.aria, 1);
   // Two successes settle it, so there is no third roll to wait for.
   await waitForPopupToClose(player);
@@ -144,7 +144,7 @@ test("pop-ups: a team challenge's pop-up marks no one's roll as passing or faili
   const id = await postRequest(ctx, { mode: "team", parts: [athletics(15)], actors: [ids.aria, ids.borin] });
   await waitForPopup(player);
   await forceDice(player, [d20(3)]);
-  await popupRollButton(player, "Aria").click({ modifiers: ["Shift"] });
+  await popupRollButton(player, "Aria").click({ modifiers: await rollModifiers(player, id, "Aria", true) });
   await waitForRoll(gm, id, ids.aria);
   const aria = popup(player).locator('li.stt-request-actor:has(.stt-request-name:text-is("Aria"))');
   await aria.locator(".stt-request-result").waitFor({ timeout: 10_000 });
@@ -171,7 +171,7 @@ test("pop-ups: the GM's pop-up holds only the actors no player owns", async (ctx
   assertEqual(await waitForPopup(gm), ["Goblin"], "the actors in the GM's pop-up");
   assertEqual(await popupActors(player), null, "the player's pop-up, with only the GM setting on");
   await forceDice(gm, [d20(13)]);
-  await popupRollButton(gm, "Goblin").click({ modifiers: ["Shift"] });
+  await popupRollButton(gm, "Goblin").click({ modifiers: await rollModifiers(gm, id, "Goblin", true) });
   const goblin = await waitForRoll(gm, id, ids.goblin, 1);
   assertEqual(goblin.total, 13, "the Goblin's roll, for the Opponent's side");
   await waitForPopupToClose(gm);
@@ -227,7 +227,7 @@ test("pop-ups: an open pop-up redraws when the GM shows the result, and a closed
   const id = await postRequest(ctx, { mode: "standard", parts: [athletics(12)], actors: [ids.aria, ids.borin] });
   await waitForPopup(player);
   await forceDice(player, [d20(14)]);
-  await popupRollButton(player, "Aria").click({ modifiers: ["Shift"] });
+  await popupRollButton(player, "Aria").click({ modifiers: await rollModifiers(player, id, "Aria", true) });
   await waitForRoll(gm, id, ids.aria);
   const aria = popup(player).locator('li.stt-request-actor:has(.stt-request-name:text-is("Aria"))');
   await aria.locator(".stt-request-result").waitFor({ timeout: 10_000 });

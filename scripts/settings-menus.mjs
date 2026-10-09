@@ -1,6 +1,6 @@
 /**
- * Settings menus: the module's settings, grouped into Hero Cards, Dice Rolling, Roll Requests and World Altering
- * Scripts, each opened from a button in Configure Settings rather than listed there.
+ * Settings menus: the module's settings, grouped into Hero Cards, Dice Rolling, Roll Requests and Gameplay
+ * Enhancements, each opened from a button in Configure Settings rather than listed there.
  */
 
 import { MODULE_ID } from "./hero-cards.mjs";
@@ -46,12 +46,18 @@ class SettingsMenu extends HandlebarsApplicationMixin(ApplicationV2) {
     const context = await super._prepareContext(options);
     context.settings = this.constructor.SETTINGS.map(key => {
       const setting = game.settings.settings.get(`${MODULE_ID}.${key}`);
+      const value = game.settings.get(MODULE_ID, key);
+      // A setting with choices is a dropdown; the others are checkboxes.
+      const choices = setting.choices ? Object.entries(setting.choices).map(([choice, label]) => ({
+        value: choice, label: game.i18n.localize(label), selected: choice === value
+      })) : null;
       return {
         key,
         id: `${this.id}-${key}`,
         label: game.i18n.localize(setting.name),
         hint: game.i18n.localize(setting.hint),
-        value: game.settings.get(MODULE_ID, key)
+        value,
+        choices
       };
     });
     context.buttons = [{ type: "submit", icon: "fa-solid fa-floppy-disk", label: "SETTINGS.Save" }];
@@ -70,7 +76,9 @@ class SettingsMenu extends HandlebarsApplicationMixin(ApplicationV2) {
   static async #onSubmit(event, form, formData) {
     const values = formData.object;
     for ( const key of this.constructor.SETTINGS ) {
-      const value = !!values[key];
+      const { choices } = game.settings.settings.get(`${MODULE_ID}.${key}`);
+      const value = choices ? values[key] : !!values[key];
+      if ( choices && !(value in choices) ) continue;
       if ( value !== game.settings.get(MODULE_ID, key) ) await game.settings.set(MODULE_ID, key, value);
     }
   }
@@ -108,7 +116,7 @@ class RollRequestSettings extends SettingsMenu {
   };
 
   /** @override */
-  static SETTINGS = ["showDCDefault", "attachRolls", "popupPlayers", "popupGM", "deathSavePrompt"];
+  static SETTINGS = ["showDCDefault", "teamScoring", "attachRolls", "popupPlayers", "popupGM", "deathSavePrompt"];
 }
 
 class WorldScriptSettings extends SettingsMenu {

@@ -1,5 +1,5 @@
 /**
- * End-to-end tests for the settings menus and the World Altering Scripts: Bloodied Token Tint, Fade Unprepared Spells,
+ * End-to-end tests for the settings menus and the Gameplay Enhancements: Bloodied Token Tint, Fade Unprepared Spells,
  * Item Rarity Colours, Chat Button Labels and One-Tab Activities.
  */
 
@@ -11,7 +11,7 @@ const MENUS = {
   diceRolling: { id: "stt-settings-dice-rolling", settings: ["markNaturals", "naturalSaves"] },
   rollRequests: {
     id: "stt-settings-roll-requests",
-    settings: ["showDCDefault", "attachRolls", "popupPlayers", "popupGM", "deathSavePrompt"]
+    settings: ["showDCDefault", "teamScoring", "attachRolls", "popupPlayers", "popupGM", "deathSavePrompt"]
   },
   worldScripts: {
     id: "stt-settings-world-scripts",
@@ -112,7 +112,7 @@ test("settings menus: four buttons for the GM, each holding its own settings and
     }, { moduleId: MODULE_ID, key });
     const app = gm.page.locator(`#${id}`);
     await app.waitFor({ timeout: 10_000 });
-    const names = await app.locator('input[type="checkbox"]').evaluateAll(inputs => inputs.map(i => i.name));
+    const names = await app.locator('input[type="checkbox"], select').evaluateAll(inputs => inputs.map(i => i.name));
     assertEqual(names, settings, `${key} settings`);
     await app.locator('[data-action="close"]').click();
     await app.waitFor({ state: "detached", timeout: 5000 });
@@ -124,7 +124,7 @@ test("settings menus: ticking a box and saving changes that setting, and only th
     ["bloodiedTint", "fadeUnprepared", "rarityColours", "chatButtonLabels", "oneTabActivities"]
       .map(key => [key, game.settings.get(moduleId, key)])
   ), MODULE_ID);
-  assert(Object.values(before).every(v => v === false), "A World Altering Script started on.");
+  assert(Object.values(before).every(v => v === false), "A Gameplay Enhancement started on.");
 
   await gm.eval(moduleId => new (game.settings.menus.get(`${moduleId}.worldScripts`).type)().render({ force: true }),
     MODULE_ID);
@@ -138,11 +138,11 @@ test("settings menus: ticking a box and saving changes that setting, and only th
     ["bloodiedTint", "fadeUnprepared", "rarityColours", "chatButtonLabels", "oneTabActivities"]
       .map(key => [key, game.settings.get(moduleId, key)])
   ), MODULE_ID);
-  assertEqual(after, { ...before, rarityColours: true }, "World Altering Scripts after saving");
+  assertEqual(after, { ...before, rarityColours: true }, "Gameplay Enhancements after saving");
 });
 
 /* -------------------------------------------- */
-/*  World Altering Scripts                      */
+/*  Gameplay Enhancements                       */
 /* -------------------------------------------- */
 
 test("world scripts: every one is off by default", async ({ gm }) => {

@@ -11,6 +11,9 @@ import { MODULE_ID } from "./config.mjs";
 import { assertEqual, forceDice, test, waitFor } from "./lib/harness.mjs";
 
 const d20 = n => [n, 20];
+
+/** RSReforged applies damage from Apply buttons of its own instead of dnd5e's tray; the compatibility tests cover those. */
+const NO_TRAY = "RSReforged has no damage tray; see the compatibility tests.";
 const d8 = n => [n, 8];
 
 /**
@@ -182,7 +185,7 @@ test("natural saves: a natural 1 takes maximum damage past resistance, and a nat
   } finally {
     await cleanUp(gm);
   }
-});
+}, { skip: { rsr: NO_TRAY } });
 
 test("natural saves: a natural 1 takes maximum damage past immunity", async ({ gm, player }) => {
   try {
@@ -196,7 +199,7 @@ test("natural saves: a natural 1 takes maximum damage past immunity", async ({ g
   } finally {
     await cleanUp(gm);
   }
-});
+}, { skip: { rsr: NO_TRAY } });
 
 test("natural saves: a natural 1 rolled after the damage takes its maximum too", async ({ gm, player }) => {
   try {
@@ -212,7 +215,7 @@ test("natural saves: a natural 1 rolled after the damage takes its maximum too",
   } finally {
     await cleanUp(gm);
   }
-});
+}, { skip: { rsr: NO_TRAY } });
 
 test("natural saves: with the setting off, a natural 1 or 20 changes no damage", async ({ gm, player }) => {
   try {
@@ -235,4 +238,4 @@ test("natural saves: with the setting off, a natural 1 or 20 changes no damage",
   } finally {
     await cleanUp(gm);
   }
-});
+}, { skip: { rsr: NO_TRAY } });

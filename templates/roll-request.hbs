@@ -11,6 +11,22 @@
 </select>
 {{/inline}}
 
+{{#*inline "sttQuickPicks"}}
+{{#if picks.length}}
+<div class="stt-request-picks" role="group" aria-label="{{localize 'STT.Request.Config.Picks.Label'}}">
+    {{#each picks as |pick|}}
+    <button type="button" class="stt-request-pick" data-action="pickGroup" data-group="{{pick.id}}"
+            {{#if pick.hasSide}}data-side="{{pick.side}}"{{/if}} aria-pressed="{{pick.pressed}}"
+            data-tooltip-text="{{pick.tooltip}}">
+        <i class="{{pick.icon}}" inert></i>
+        <span class="stt-request-pick-label">{{pick.label}}</span>
+        <span class="stt-request-pick-count">{{pick.count}}</span>
+    </button>
+    {{/each}}
+</div>
+{{/if}}
+{{/inline}}
+
 <div class="stt-request-form">
 
     {{!-- Mode --}}
@@ -81,6 +97,19 @@
             <p class="hint">{{localize "STT.Request.Config.ChallengeHint"}}</p>
         </div>
         {{/if}}
+        {{#if team}}
+        <div class="form-group">
+            <label>{{localize "STT.Request.Config.Scoring"}}</label>
+            <div class="form-fields">
+                <select name="scoring">
+                    {{#each scoringOptions as |option|}}
+                    <option value="{{option.value}}" {{#if option.selected}}selected{{/if}}>{{option.label}}</option>
+                    {{/each}}
+                </select>
+            </div>
+            <p class="hint stt-request-scoring-hint">{{scoringHint}}</p>
+        </div>
+        {{/if}}
         {{#if contest}}
         <p class="hint">{{localize "STT.Request.Config.ContestHint"}}</p>
         {{/if}}
@@ -110,6 +139,7 @@
                 </button>
                 {{/unless}}
             </legend>
+            {{> sttQuickPicks picks=side.picks}}
             <div class="stt-request-actor-list">
                 {{#each side.actors as |actor|}}
                 <label class="stt-request-actor-choice">
@@ -135,6 +165,7 @@
                 <i class="fa-solid fa-check-double" inert></i>
             </button>
         </legend>
+        {{> sttQuickPicks picks=picks}}
         <div class="stt-request-actor-list">
             {{#each actors as |actor|}}
             <label class="stt-request-actor-choice">

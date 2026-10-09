@@ -15,10 +15,18 @@ const tests = [];
  * Register a test.
  * @param {string} name
  * @param {(ctx: TestContext) => Promise<void>} fn
+ * @param {object} [options]
+ * @param {Record<string, string>} [options.skip]  Compatibility runs to skip the test in, keyed by `STT_COMPAT`, each with
+ *   why: what the test checks is something that module replaces, such as dnd5e's roll window.
  */
-export function test(name, fn) {
-  tests.push({ name, fn });
+export function test(name, fn, { skip={} }={}) {
+  tests.push({ name, fn, skip });
 }
+
+/**
+ * The compatibility run in progress, as `STT_COMPAT` names it, or null in the plain world.
+ */
+export const COMPAT = process.env.STT_COMPAT || null;
 
 /**
  * @typedef {object} TestContext
@@ -34,7 +42,7 @@ export function test(name, fn) {
  * @param {object} [options]
  * @param {string} [options.filter]  Only run tests whose name contains this.
  * @param {(ctx: TestContext) => Promise<void>} [options.beforeEach]
- * @returns {Promise<{ passed: number, failed: { name: string, error: string }[] }>}
+ * @returns {Promise<{ passed: number, failed: { name: string, error: string }[], skipped: number }>}
  */
 export async function runTests(ctx, { filter, beforeEach } = {}) {
   // A screenshot from an earlier run would look like a failure of this one.
@@ -43,8 +51,14 @@ export async function runTests(ctx, { filter, beforeEach } = {}) {
   }
   const failed = [];
   let passed = 0;
-  for ( const [i, { name, fn }] of tests.entries() ) {
+  let skipped = 0;
+  for ( const [i, { name, fn, skip }] of tests.entries() ) {
     if ( filter && !name.toLowerCase().includes(filter.toLowerCase()) ) continue;
+    if ( COMPAT && skip[COMPAT] ) {
+      skipped++;
+      console.log(`  skip  ${name}\n        ${skip[COMPAT]}`);
+      continue;
+    }
     const started = Date.now();
     try {
       await beforeEach?.(ctx);
@@ -60,7 +74,7 @@ export async function runTests(ctx, { filter, beforeEach } = {}) {
       console.log(`  FAIL  ${name}\n${indent(err.message)}\n        screenshots: test-e2e/${slug}-*.png`);
     }
   }
-  return { passed, failed };
+  return { passed, failed, skipped };
 }
 
 /**
@@ -236,6 +250,28 @@ export function rollButton(session, id, name) {
 }
 
 /**
+ * The modifier keys that roll an actor's request roll straight away, or that open dnd5e's roll window for it. Shift
+ * fast-forwards, except with RSReforged, which swaps them for the checks, saves and tools it rolls: a plain click
+ * rolls those straight away, and Shift opens the window. A plain die is dnd5e's own either way.
+ * @param {import("./session.mjs").Session} session
+ * @param {string} id     The request message's ID.
+ * @param {string} name   The actor's name.
+ * @param {boolean} fastForward
+ * @returns {Promise<string[]>}
+ */
+export async function rollModifiers(session, id, name, fastForward) {
+  const swapped = await session.eval(({ id, name, moduleId }) => {
+    if ( !game.modules.get("rsreforged")?.active ) return false;
+    const request = game.messages.get(id)?.getFlag(moduleId, "request");
+    const uuid = game.actors.getName(name)?.uuid;
+    const side = request?.sides?.findIndex(s => s.includes(uuid)) ?? -1;
+    const part = request?.parts[Math.max(side, 0)];
+    return [part, ...(part?.alternatives ?? [])].some(c => ["skill", "check", "save", "tool", "death"].includes(c?.type));
+  }, { id, name, moduleId: MODULE_ID });
+  return fastForward !== swapped ? ["Shift"] : [];
+}
+
+/**
  * Click an actor's Roll button the way a user would.
  * @param {import("./session.mjs").Session} session
  * @param {string} id
@@ -248,10 +284,10 @@ export async function clickRoll(session, id, name, { fastForward = false } = {})
   const button = rollButton(session, id, name);
   assertEqual(await button.count(), 1, `Roll buttons for ${name} (${session.user})`);
   if ( fastForward ) {
-    await button.click({ modifiers: ["Shift"] });
+    await button.click({ modifiers: await rollModifiers(session, id, name, true) });
     return;
   }
-  await button.click();
+  await button.click({ modifiers: await rollModifiers(session, id, name, false) });
   const normal = session.page.locator(".application.roll-configuration button", { hasText: "Normal" });
   await normal.waitFor({ timeout: 10_000 }).catch(() => {
     throw new Error(`dnd5e's roll window did not open after clicking Roll for ${name} (${session.user}).`);

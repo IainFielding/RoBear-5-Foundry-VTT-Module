@@ -62,6 +62,41 @@ export const MODES = {
 };
 
 /**
+ * Ways a Team Challenge's rolls can be scored. Labels, short labels and hints are keys in the language file. A way with
+ * `needsDC` judges each roll against the DC, so its request must have one.
+ * - average: the rolls are averaged, rounded down. Each natural 1 removes the highest roll, and each natural 20 the
+ *   lowest.
+ * - half: the PHB group check. The team succeeds if at least half of it meets the DC.
+ * - leader: the roll with the highest modifier counts, +1 for each other success and -1 for each other failure.
+ * - weakest: the roll with the lowest modifier counts, +1 for each other success. Other failures don't count.
+ */
+export const SCORING = {
+  average: {
+    label: "STT.Request.Scoring.Average.Label",
+    short: "STT.Request.Scoring.Average.Short",
+    hint: "STT.Request.Scoring.Average.Hint"
+  },
+  half: {
+    label: "STT.Request.Scoring.Half.Label",
+    short: "STT.Request.Scoring.Half.Short",
+    hint: "STT.Request.Scoring.Half.Hint",
+    needsDC: true
+  },
+  leader: {
+    label: "STT.Request.Scoring.Leader.Label",
+    short: "STT.Request.Scoring.Leader.Short",
+    hint: "STT.Request.Scoring.Leader.Hint",
+    needsDC: true
+  },
+  weakest: {
+    label: "STT.Request.Scoring.Weakest.Label",
+    short: "STT.Request.Scoring.Weakest.Short",
+    hint: "STT.Request.Scoring.Weakest.Hint",
+    needsDC: true
+  }
+};
+
+/**
  * How many consecutive numbers the GM may give a Divine Intervention roll.
  */
 export const DIVINE_RANGE = { min: 1, max: 50, initial: 16 };
@@ -121,7 +156,7 @@ let rollIndex = null;
 
 Hooks.once("init", () => {
   registerSettings();
-  game.modules.get(MODULE_ID).api = { requestRolls: openRollRequest, createRequest };
+  game.modules.get(MODULE_ID).api = { requestRolls: preset => openRollRequest(preset), createRequest };
 });
 Hooks.on("renderChatInput", onRenderChatInput);
 Hooks.on("getSceneControlButtons", onGetSceneControlButtons);
@@ -142,6 +177,15 @@ function registerSettings() {
     config: false,
     type: Boolean,
     default: false
+  });
+  game.settings.register(MODULE_ID, "teamScoring", {
+    name: "STT.Settings.TeamScoring.Name",
+    hint: "STT.Settings.TeamScoring.Hint",
+    scope: "world",
+    config: false,
+    type: String,
+    choices: Object.fromEntries(Object.entries(SCORING).map(([key, { label }]) => [key, label])),
+    default: "average"
   });
   game.settings.register(MODULE_ID, "attachRolls", {
     name: "STT.Settings.AttachRolls.Name",
@@ -165,17 +209,19 @@ function registerSettings() {
 /**
  * Open the roll request window, or bring it to the front if it is already open, keeping what the GM has filled in.
  * A second window would replace the first under the same ID, leaving the first orphaned.
+ * @param {RequestPreset} [preset]  The kind of request and who rolls, set over what the window would start with.
  * @returns {RollRequestConfig|void}
  */
-export function openRollRequest() {
+export function openRollRequest(preset) {
   if ( !game.user.isGM ) return;
   const open = foundry.applications.instances.get(RollRequestConfig.DEFAULT_OPTIONS.id);
   if ( open?.rendered ) {
     if ( open.minimized ) open.maximize();
     open.bringToFront();
+    if ( preset ) open.applyPreset(preset);
     return open;
   }
-  const app = new RollRequestConfig();
+  const app = new RollRequestConfig({ preset });
   app.render({ force: true });
   return app;
 }
@@ -195,7 +241,7 @@ function onRenderChatInput(_app, elements) {
   button.className = "ui-control icon fa-solid fa-beer-mug-empty stt-request-control";
   button.dataset.tooltipText = localize("STT.Request.WindowTitle");
   button.setAttribute("aria-label", localize("STT.Request.WindowTitle"));
-  button.addEventListener("click", openRollRequest);
+  button.addEventListener("click", () => openRollRequest());
   controls.prepend(button);
 }
 
@@ -213,7 +259,7 @@ function onGetSceneControlButtons(controls) {
     title: "STT.Request.WindowTitle",
     icon: "fa-solid fa-beer-mug-empty",
     button: true,
-    onChange: openRollRequest
+    onChange: () => openRollRequest()
   };
 }
 
@@ -311,6 +357,8 @@ function refreshRequest(message, changes) {
  * @property {string[][]} [sides]    For a contest, the actor UUIDs on each side.
  * @property {number} [range]        For Divine Intervention, how many consecutive numbers each actor picks.
  * @property {number} successes      Successes a skill challenge needs.
+ * @property {string} [scoring]      For a Team Challenge, how its rolls are scored: a key in SCORING. Requests posted
+ *   before there was a choice have none, and are averaged.
  * @property {boolean} showDC        Show the DC to players.
  * @property {"public"|"gm"} rollMode
  */
@@ -370,6 +418,7 @@ export function getRequest(message) {
 export function withDefaults(request) {
   const defaults = { rollMode: "public", showDC: game.settings.get(MODULE_ID, "showDCDefault") };
   if ( request?.mode === "challenge" ) defaults.successes = 2;
+  if ( request?.mode === "team" ) defaults.scoring = game.settings.get(MODULE_ID, "teamScoring");
   if ( request?.mode === "divine" ) defaults.range = DIVINE_RANGE.initial;
   const filled = { ...defaults, ...request };
   for ( const key of Object.keys(defaults) ) filled[key] ??= defaults[key];
@@ -432,6 +481,12 @@ export function validateRequest(request) {
   if ( request.mode === "challenge" ) {
     const { successes } = request;
     check(between(successes, 1, CHALLENGE_PARTS), "STT.Request.Invalid.Successes", { successes, total: CHALLENGE_PARTS });
+  }
+  if ( request.mode === "team" ) {
+    // Left out, as by a request posted before there was a choice, a team is averaged.
+    const scoring = request.scoring ?? "average";
+    check(scoring in SCORING, "STT.Request.Invalid.Scoring", { scoring, scorings: Object.keys(SCORING).join(", ") });
+    check(!SCORING[scoring].needsDC || Number.isNumeric(parts[0].dc), "STT.Request.Invalid.ScoringDC");
   }
   if ( request.mode === "divine" ) {
     const { range } = request;
@@ -539,6 +594,17 @@ export function getChoiceLabel(part) {
 
 /**
  * @param {RollRequest} request
+ * @returns {string}  How the request's team is scored, a key in SCORING. Only a Team Challenge has a choice; a Team vs
+ *   Team, and a Team Challenge posted before there was one, are averaged.
+ */
+export function getScoring(request) {
+  return (request.mode === "team") && (request.scoring in SCORING) ? request.scoring : "average";
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {RollRequest} request
  * @returns {boolean}  Whether the request sets two sides against each other.
  */
 export function isContest(request) {
@@ -576,7 +642,9 @@ export function getRequestSubtitle(request, dc=null) {
     if ( request.range === 1 ) return localize("STT.Request.Subtitle.DivineOne");
     return localize("STT.Request.Subtitle.Divine", { count: request.range });
   }
-  const label = localize(MODES[request.mode].label);
+  const scoring = getScoring(request);
+  const label = [localize(MODES[request.mode].label), scoring === "average" ? "" : localize(SCORING[scoring].short)]
+    .filterJoin(" · ");
   // Each choice's DC is listed with it, under the header.
   if ( hasChoiceDCs(request, request.parts[0]) ) return label;
   if ( dc ) return [label, " · ", dc];
@@ -789,31 +857,105 @@ export function poolTeamRolls(entries) {
 /* -------------------------------------------- */
 
 /**
- * @typedef {object} GroupOutcome
+ * @typedef {object} TeamScore
+ * @property {string} scoring             How it was scored: a key in SCORING.
+ * @property {number} score               The team's result: its average, how many succeeded, or the counting roll with
+ *   what the others added.
+ * @property {boolean|null} success       Null without a DC.
+ * @property {Map<string, string>} removed  Rolls taken out of an average, and why.
+ * @property {Map<string, string>} notes  What each roll did: "leader", "weakest", "helped", "hindered" or "ignored".
+ * @property {number} [exact]             For an average, the exact average.
+ * @property {number} [needed]            For half, how many successes the team needed.
+ * @property {number} [total]             For half, how many rolled.
+ * @property {string} [leader]            For leader or weakest, the UUID of the actor whose roll counted.
+ * @property {number} [base]              For leader or weakest, that roll's total.
+ * @property {number} [helped]            For leader or weakest, the other successes.
+ * @property {number} [hindered]          For leader, the other failures.
+ */
+
+/**
+ * Score a team's rolls. A way that needs a DC falls back to an average without one, as a request a macro posted
+ * without validating it might be.
+ * @param {{ uuid: string, total: number, natural: number }[]} entries  One per actor.
+ * @param {string} [scoring="average"]  A key in SCORING.
+ * @param {number|null} [dc]
+ * @returns {TeamScore}
+ */
+export function scoreTeam(entries, scoring="average", dc=null) {
+  const hasDC = Number.isNumeric(dc);
+  if ( !SCORING[scoring]?.needsDC || !hasDC || !entries.length ) {
+    const { average, exact, removed } = poolTeamRolls(entries);
+    return { scoring: "average", score: average, exact, removed, notes: new Map(), success: hasDC ? average >= dc : null };
+  }
+  const passed = entries.filter(e => e.total >= dc).length;
+  if ( scoring === "half" ) {
+    const needed = Math.ceil(entries.length / 2);
+    return {
+      scoring, score: passed, needed, total: entries.length, removed: new Map(), notes: new Map(), success: passed >= needed
+    };
+  }
+
+  // The modifier is the total less the d20 kept, so it is that of the roll actually made, whichever of a choice it was.
+  // On a tie the higher total counts, then the first listed.
+  const leading = scoring === "leader";
+  const modifier = e => e.total - (e.natural ?? 0);
+  const counted = entries.reduce((best, e) => {
+    const diff = modifier(e) - modifier(best);
+    if ( diff ) return (leading ? diff > 0 : diff < 0) ? e : best;
+    return e.total > best.total ? e : best;
+  });
+  const notes = new Map();
+  let helped = 0;
+  let hindered = 0;
+  for ( const e of entries ) {
+    if ( e === counted ) notes.set(e.uuid, leading ? "leader" : "weakest");
+    else if ( e.total >= dc ) {
+      helped++;
+      notes.set(e.uuid, "helped");
+    } else if ( leading ) {
+      hindered++;
+      notes.set(e.uuid, "hindered");
+    } else notes.set(e.uuid, "ignored");
+  }
+  const score = counted.total + helped - hindered;
+  return {
+    scoring, score, leader: counted.uuid, base: counted.total, helped, hindered, removed: new Map(), notes,
+    success: score >= dc
+  };
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @typedef {Partial<TeamScore>} GroupOutcome
  * @property {boolean} complete        Everyone in the group has rolled.
  * @property {boolean} hidden          Some of the group's rolls are hidden from this user.
- * @property {number} [score]          The group's result: its pooled average, or its only roll.
- * @property {number} [exact]          The exact pooled average.
+ * @property {number} [score]          The group's result: its team score, or its only roll.
  * @property {Map<string, string>} removed  Rolls taken out of the pool, and why.
+ * @property {Map<string, string>} notes    What each roll did, in a team scored by its successes.
  */
 
 /**
  * Work out a group's result once everyone in it has rolled.
  * @param {string[]} uuids
  * @param {Map<string, (PartResult|null)[]>} results
- * @param {boolean} pooled  Whether the group's rolls are pooled like a team challenge.
+ * @param {boolean} pooled  Whether the group's rolls are scored together, as a team.
+ * @param {object} [options]
+ * @param {string} [options.scoring="average"]  How a team is scored: a key in SCORING.
+ * @param {number|null} [options.dc]            The DC a team's rolls are judged against.
  * @returns {GroupOutcome}
  */
-export function getGroupOutcome(uuids, results, pooled) {
+export function getGroupOutcome(uuids, results, pooled, { scoring="average", dc=null }={}) {
+  const none = { removed: new Map(), notes: new Map() };
   // A group with no one in it never has a result.
-  if ( !uuids?.length ) return { complete: false, hidden: false, removed: new Map() };
+  if ( !uuids?.length ) return { complete: false, hidden: false, ...none };
   const entries = uuids.map(uuid => ({ uuid, result: results.get(uuid)?.[0] ?? null }));
   const complete = entries.every(e => e.result);
   const hidden = entries.some(e => e.result && !e.result.visible);
-  if ( !complete || hidden ) return { complete, hidden, removed: new Map() };
-  if ( !pooled ) return { complete, hidden, score: entries[0].result.total, removed: new Map() };
-  const pool = poolTeamRolls(entries.map(({ uuid, result }) => ({ uuid, total: result.total, natural: result.natural })));
-  return { complete, hidden, score: pool.average, exact: pool.exact, removed: pool.removed };
+  if ( !complete || hidden ) return { complete, hidden, ...none };
+  if ( !pooled ) return { complete, hidden, score: entries[0].result.total, ...none };
+  const rolls = entries.map(({ uuid, result }) => ({ uuid, total: result.total, natural: result.natural }));
+  return { complete, hidden, ...scoreTeam(rolls, scoring, dc) };
 }
 
 /* -------------------------------------------- */
@@ -829,10 +971,11 @@ export function getGroupOutcome(uuids, results, pooled) {
 export function getRowGroup(message, request, results, side) {
   if ( request.mode === "versus" ) return getGroupOutcome(request.sides[side], results, true);
   if ( request.mode !== "team" ) return null;
-  const team = getGroupOutcome(request.actors, results, true);
-  // Which rolls a natural 1 or 20 took out of the pool is part of the result, so players see it with the result.
+  const team = getGroupOutcome(request.actors, results, true, { scoring: getScoring(request), dc: request.parts[0].dc });
+  // Which rolls a natural 1 or 20 took out of the pool, and what each roll did for the team, are part of the result, so
+  // players see them with the result.
   if ( game.user.isGM || message.getFlag(MODULE_ID, "revealed") ) return team;
-  return { ...team, removed: new Map() };
+  return { ...team, removed: new Map(), notes: new Map() };
 }
 
 /* -------------------------------------------- */
@@ -863,11 +1006,31 @@ function onRenderChatMessage(message, html) {
     html.classList.add("stt-attached-roll");
     return;
   }
-  const request = getRequest(message);
   const content = html.querySelector(".message-content");
+  const divineSetup = message.getFlag(MODULE_ID, "divineSetup");
+  if ( divineSetup && content && game.user.isGM ) content.append(createDivineSetupButton(divineSetup));
+  const request = getRequest(message);
   if ( !request || !content ) return;
   html.classList.add("stt-request-message");
   content.replaceChildren(renderRequest(message, request));
+}
+
+/* -------------------------------------------- */
+
+/**
+ * The GM's button on the note that a Divine Intervention card was played: it opens the request window set to Divine
+ * Intervention, with the card's player the one to roll.
+ * @param {string} actorUuid
+ * @returns {HTMLButtonElement}
+ */
+function createDivineSetupButton(actorUuid) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "stt-card-button stt-divine-setup";
+  button.innerHTML = `<i class="fa-solid fa-hands-praying" inert></i> ${foundry.utils.escapeHTML(
+    localize("STT.Cards.DivineSetup.Button"))}`;
+  button.addEventListener("click", () => openRollRequest({ mode: "divine", actors: [actorUuid] }));
+  return button;
 }
 
 /* -------------------------------------------- */
@@ -1003,7 +1166,8 @@ function renderDCButton(message, request, part, choice=0) {
 export async function changeDC(message, part, choice=0) {
   const request = message.getFlag(MODULE_ID, "request");
   const current = getChoiceDC(request.parts[part], choice);
-  const required = request.mode === "challenge";
+  // A skill challenge, and a team scored by its successes, are judged against the DC, so they must keep one.
+  const required = (request.mode === "challenge") || !!SCORING[getScoring(request)].needsDC;
   const { escapeHTML } = foundry.utils;
   const data = await foundry.applications.api.DialogV2.input({
     classes: ["stt-card-dialog", "stt-dc-dialog"],
@@ -1026,7 +1190,7 @@ export async function changeDC(message, part, choice=0) {
   if ( !data || !game.messages.has(message.id) ) return;
   const dc = Number.isNumeric(data.dc) ? Number(data.dc) : null;
   if ( (dc === null) && required ) {
-    ui.notifications.warn(localize("STT.Request.Config.ChallengeDC"));
+    ui.notifications.warn(localize(request.mode === "challenge" ? "STT.Request.Config.ChallengeDC" : "STT.Request.Config.ScoringDC"));
     return;
   }
   // Read the request again, in case it changed while the dialog was open.
@@ -1162,6 +1326,7 @@ export function renderActorRow(message, request, uuid, results, { team=null, sid
     row.classList.add("removed");
     row.dataset.tooltipText = team.removed.get(uuid);
   }
+  const note = team?.notes?.get(uuid);
 
   results.forEach((result, slot) => {
     if ( result?.range && result.visible ) {
@@ -1214,8 +1379,25 @@ export function renderActorRow(message, request, uuid, results, { team=null, sid
     }
     row.append(badge);
   }
+  if ( note ) row.append(renderTeamNote(note));
   if ( game.settings.get(MODULE_ID, "attachRolls") ) renderNotes(row, results);
   return row;
+}
+
+/* -------------------------------------------- */
+
+/**
+ * The badge showing what an actor's roll did for a team scored by its successes: counted, helped, hindered, or neither.
+ * @param {string} note  "leader", "weakest", "helped", "hindered" or "ignored".
+ * @returns {HTMLSpanElement}
+ */
+function renderTeamNote(note) {
+  const key = note.capitalize();
+  const badge = document.createElement("span");
+  badge.className = `stt-request-badge stt-team-note ${note}`;
+  badge.textContent = localize(`STT.Request.Scoring.Note.${key}`);
+  badge.dataset.tooltipText = localize(`STT.Request.Scoring.Note.${key}Tooltip`);
+  return badge;
 }
 
 /* -------------------------------------------- */
@@ -1437,19 +1619,11 @@ function renderSummary(message, request, results, team) {
     // The GM decides when players see the team's result.
     const revealed = !!message.getFlag(MODULE_ID, "revealed");
     if ( !revealed && !game.user.isGM ) return;
-    const dc = request.parts[0].dc;
-    const removed = team.removed.size ? localize("STT.Request.Team.Removed", { count: team.removed.size }) : "";
-    const score = document.createElement("strong");
-    score.textContent = team.score;
-    const average = document.createElement("span");
-    average.append(...formatNodes("STT.Request.Team.Average", { average: score, removed }));
-    setExactTooltip(average, team);
-    summary.append(average);
-    if ( Number.isNumeric(dc) ) {
-      const success = team.score >= dc;
-      summary.classList.add(success ? "success" : "failure");
+    summary.append(renderTeamScore(team));
+    if ( team.success !== null ) {
+      summary.classList.add(team.success ? "success" : "failure");
       const verdict = document.createElement("strong");
-      verdict.textContent = localize(success ? "STT.Request.Success" : "STT.Request.Failure");
+      verdict.textContent = localize(team.success ? "STT.Request.Success" : "STT.Request.Failure");
       summary.append(verdict);
     }
     if ( game.user.isGM ) summary.append(renderRevealButton(message, revealed));
@@ -1488,6 +1662,40 @@ function renderSummary(message, request, results, team) {
   summary.append(textElement("span", localize("STT.Request.Summary.Standard", { count, total: rows.length })));
   if ( game.user.isGM ) summary.append(renderRevealButton(message, revealed));
   return summary;
+}
+
+/* -------------------------------------------- */
+
+/**
+ * How a team's score was reached, for its summary: its average, how many succeeded, or the roll that counted and what
+ * the others added.
+ * @param {GroupOutcome} team
+ * @returns {HTMLSpanElement}
+ */
+function renderTeamScore(team) {
+  const score = document.createElement("strong");
+  score.textContent = team.score;
+  const span = document.createElement("span");
+  switch ( team.scoring ) {
+    case "half":
+      span.append(...formatNodes("STT.Request.Scoring.Half.Summary", {
+        passed: score, total: team.total, needed: team.needed
+      }));
+      break;
+    case "leader":
+    case "weakest":
+      span.append(...formatNodes(`STT.Request.Scoring.${team.scoring.capitalize()}.Summary`, {
+        name: fromUuidSync(team.leader)?.name ?? localize("STT.Common.Someone"),
+        base: team.base, helped: team.helped, hindered: team.hindered, score
+      }));
+      break;
+    default: {
+      const removed = team.removed.size ? localize("STT.Request.Team.Removed", { count: team.removed.size }) : "";
+      span.append(...formatNodes("STT.Request.Team.Average", { average: score, removed }));
+      setExactTooltip(span, team);
+    }
+  }
+  return span;
 }
 
 /* -------------------------------------------- */
