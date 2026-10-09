@@ -267,6 +267,7 @@
       },
       "Result": {
         "Hidden": "Hidden roll",
+        "Rolling": "The dice are still rolling.",
         "TotalWithD20": "{total} (d20: {natural})",
         "Numbered": "Roll {number}: {result}",
         "ClickForDice": "{result}. Click for the dice.",

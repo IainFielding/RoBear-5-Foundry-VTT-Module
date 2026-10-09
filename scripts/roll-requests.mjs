@@ -165,6 +165,7 @@ Hooks.on("preDeleteChatMessage", onPreDeleteChatMessage);
 Hooks.on("createChatMessage", onCreateChatMessage);
 Hooks.on("updateChatMessage", refreshRequest);
 Hooks.on("deleteChatMessage", onDeleteChatMessage);
+Hooks.on("diceSoNiceRollComplete", onDiceSoNiceRollComplete);
 
 /**
  * Register the roll request settings.
@@ -313,6 +314,17 @@ function onDeleteChatMessage(message) {
     if ( ids && !ids.size ) rollIndex.rolls.delete(requestId);
   }
   refreshRequest(message);
+}
+
+/* -------------------------------------------- */
+
+/**
+ * A roll's request card shows it as rolling while Dice So Nice shows its dice, so it is redrawn once they land.
+ * @param {string} messageId  The roll message's ID.
+ */
+function onDiceSoNiceRollComplete(messageId) {
+  const message = game.messages.get(messageId);
+  if ( message ) refreshRequest(message);
 }
 
 /* -------------------------------------------- */
@@ -674,8 +686,9 @@ export function getDCText(request, dc) {
  * @property {ChatMessage5e} message
  * @property {number} total
  * @property {number|void} natural   The d20 that counted.
- * @property {boolean} visible       Whether this user may see the result.
- * @property {boolean|null} success  Null without a DC.
+ * @property {boolean} visible       Whether this user may see the result: not while its dice are still rolling.
+ * @property {boolean} rolling       Whether Dice So Nice is still showing its dice.
+ * @property {boolean|null} success  Null without a DC, or while its dice are still rolling.
  * @property {number} choice         Which of the part's choices was rolled: 0 for its own roll, or 1 on for an
  *   alternative.
  * @property {{ start: number, end: number }} [range]  The numbers picked for Divine Intervention.
@@ -761,17 +774,31 @@ export function getResults(message) {
     if ( request.mode === "divine" ) {
       success = isPickedRange(range, request.range) && (first.total >= range.start) && (first.total <= range.end);
     }
+    // While Dice So Nice's dice are still moving, the roll is made but how it went isn't shown yet.
+    const animating = isAnimating(roll);
     results.get(actor)[slot] = {
       message: roll,
       total: first.total,
       natural: first.d20?.results.find(r => r.active)?.result,
-      visible: roll.isContentVisible,
-      success,
+      visible: roll.isContentVisible && !animating,
+      rolling: animating,
+      success: animating ? null : success,
       choice: chosen,
       range
     };
   }
   return results;
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {ChatMessage5e} message  A roll message.
+ * @returns {boolean}  Whether Dice So Nice is still showing its dice, holding back the message until they land.
+ */
+function isAnimating(message) {
+  if ( !message._dice3danimating || !game.modules.get("dice-so-nice")?.active ) return false;
+  return !game.settings.get("dice-so-nice", "immediatelyDisplayChatMessages");
 }
 
 /* -------------------------------------------- */
@@ -813,6 +840,8 @@ export function getChallengeState(results, needed) {
     if ( passed >= needed ) return { passed, failed, success: true, next: null };
     if ( failed > results.length - needed ) return { passed, failed, success: false, next: null };
     if ( !result ) return { passed, failed, success: null, next: i };
+    // A roll whose dice are still moving decides nothing yet, and nothing after it can be rolled until it lands.
+    if ( result.rolling ) return { passed, failed, success: null, next: null };
     if ( result.success ) passed++;
     else failed++;
   }
@@ -952,7 +981,8 @@ export function getGroupOutcome(uuids, results, pooled, { scoring="average", dc=
   // A group with no one in it never has a result.
   if ( !uuids?.length ) return { complete: false, hidden: false, ...none };
   const entries = uuids.map(uuid => ({ uuid, result: results.get(uuid)?.[0] ?? null }));
-  const complete = entries.every(e => e.result);
+  // A roll whose dice are still moving hasn't landed, so the group isn't finished until it does.
+  const complete = entries.every(e => e.result && !e.result.rolling);
   const hidden = entries.some(e => e.result && !e.result.visible);
   if ( !complete || hidden ) return { complete, hidden, ...none };
   if ( !pooled ) return { complete, hidden, score: entries[0].result.total, ...none };
@@ -1357,7 +1387,9 @@ export function renderActorRow(message, request, uuid, results, { team=null, sid
 
   // Cards and features are played on the latest roll that counts, not on one a changed DC has left uncounted, even
   // before players are shown which that is: a card spent on a roll that doesn't count would be wasted.
-  const latest = results.slice(0, settledAt).findLast(r => r);
+  // Nor on one whose dice are still rolling, before anyone can see what it was.
+  let latest = results.slice(0, settledAt).findLast(r => r);
+  if ( latest?.rolling ) latest = null;
   if ( latest && getCardOptions(latest.message).length ) slots.append(createCardButton(latest.message, { compact: true }));
   const indomitable = latest ? createIndomitableButton(latest.message, { compact: true }) : null;
   if ( indomitable ) slots.append(indomitable);
@@ -1518,6 +1550,12 @@ function toggleRollDetail(row, message) {
 function renderResult(result, part, row, chosen=null) {
   const pill = document.createElement("span");
   pill.className = "stt-request-result";
+  if ( result.rolling ) {
+    pill.classList.add("rolling");
+    pill.innerHTML = '<i class="fa-solid fa-dice" inert></i>';
+    pill.dataset.tooltipText = localize("STT.Request.Result.Rolling");
+    return pill;
+  }
   if ( !result.visible ) {
     pill.textContent = "?";
     pill.dataset.tooltipText = localize("STT.Request.Result.Hidden");

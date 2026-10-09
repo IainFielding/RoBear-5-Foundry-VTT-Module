@@ -2,6 +2,13 @@
 
 All notable changes to Sogrom's Table Tools.
 
+## 0.1.1
+
+### Roll requests
+
+- **Results wait for Dice So Nice.** A roll shows as rolling on the request card and pop-up until its 3D dice land,
+  so the total, the pass or fail and the summary no longer give the result away while the dice are still moving.
+
 ## 0.0.7
 
 ### Roll requests

@@ -545,6 +545,54 @@ test("standard roll: a hidden DC stays off the card and off the player's roll", 
   await waitForCard(gm, id, c => row(c, "Aria").results[0]?.classes.includes("success"), "Aria scored against the DC");
 });
 
+// The e2e world doesn't run Dice So Nice, so a stand-in does what it does to a new roll message: marks it as animating,
+// then calls diceSoNiceRollComplete once the dice land.
+test("dice so nice: a roll shows as rolling on the card until its dice land", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const sessions = [gm, player];
+  for ( const session of sessions ) {
+    await session.eval(() => {
+      const { get: modules } = game.modules;
+      const { get: settings } = game.settings;
+      const hook = Hooks.on("createChatMessage", m => {
+        if ( m.getFlag("sogrom-table-tools", "requestRoll") ) m._dice3danimating = true;
+      });
+      game.modules.get = id => (id === "dice-so-nice" ? { active: true } : modules.call(game.modules, id));
+      game.settings.get = (scope, key) => (scope === "dice-so-nice" ? false : settings.call(game.settings, scope, key));
+      window.dsnRestore = () => {
+        Hooks.off("createChatMessage", hook);
+        game.modules.get = modules;
+        game.settings.get = settings;
+      };
+    });
+  }
+  try {
+    const id = await postRequest(ctx, { mode: "standard", parts: [athletics(12)], actors: [ids.goblin] });
+    await forceDice(gm, [d20(14)]);
+    await clickRoll(gm, id, "Goblin", { fastForward: true });
+    const roll = await waitForRoll(gm, id, ids.goblin);
+
+    for ( const session of sessions ) {
+      const card = await waitForCard(session, id, c => c.rows[0].results.length, `the rolling result (${session.user})`);
+      assertEqual(card.rows[0].results, [{ text: "", classes: ["rolling"] }], `the result while rolling (${session.user})`);
+      assertEqual([card.rows[0].classes, card.rows[0].rollButtons, card.summary], [[], 0, null],
+        `the row and summary while rolling (${session.user})`);
+    }
+
+    for ( const session of sessions ) {
+      await session.eval(id => {
+        delete game.messages.get(id)._dice3danimating;
+        Hooks.callAll("diceSoNiceRollComplete", id);
+      }, roll.id);
+    }
+    const card = await waitForCard(gm, id, c => c.summary, "the GM's summary once the dice land");
+    assertEqual(card.rows[0].results, [{ text: "14", classes: ["success"] }], "the result once the dice land");
+    await waitForCard(player, id, c => c.rows[0].results[0]?.text === "14", "the player's result once the dice land");
+  } finally {
+    for ( const session of sessions ) await session.eval(() => { window.dsnRestore?.(); delete window.dsnRestore; });
+  }
+});
+
 test("standard roll: deleting a roll brings the Roll button back", async (ctx) => {
   const { gm, player, ids } = ctx;
   const id = await postRequest(ctx, { mode: "standard", parts: [athletics(12)], actors: [ids.aria] });
