@@ -17,6 +17,7 @@ can do everything a player can.
   - [Pop-ups](#pop-ups)
   - [Death saves](#death-saves)
 - [Cards and dice at the table](#cards-and-dice-at-the-table)
+- [Other modules](#other-modules)
 - [Macros](#macros)
 
 ## Setting up
@@ -323,6 +324,16 @@ from the chat card.
 - **Indomitable waits for you.** On a request whose result you haven't shown, Indomitable (the card or the Fighter
   feature) is only offered once you click **Show to players**, so it doesn't give away who failed.
 - **Natural 1s and 20s.** The lock is a world setting: see [Settings](#settings).
+
+## Other modules
+
+Sogrom's Table Tools works alongside modules that change how D&D 5e rolls and shows its chat cards:
+
+- **RSReforged.** Its quick rolls draw an activity's attack, damage and formula rolls inside the activity's card. The
+  Hero Card button, notes on cards played, and natural 1 and 20 rings appear there, and a feature's die shown there,
+  such as Bardic Inspiration, can be added to a roll from the card's right-click menu. Damage applied with
+  RSReforged's own Apply buttons follows **Natural 1s and 20s on saves against damage**. RSReforged swaps Shift on a
+  Roll button: a plain click rolls straight away, and Shift-click opens the roll window.
 
 ## Macros
 

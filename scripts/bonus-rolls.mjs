@@ -6,7 +6,9 @@
  * roll request's result are worked out again. The bonus roll is marked as used, so it can only be spent once.
  */
 
-import { MODULE_ID, findCombatant, finalize, getRollKind, localize, reportError, sumTotals } from "./hero-cards.mjs";
+import {
+  EMBEDDED_ROLLS, MODULE_ID, findCombatant, finalize, getRollKind, localize, onEmbeddedRolls, reportError, sumTotals
+} from "./hero-cards.mjs";
 
 /**
  * How many of the latest chat messages are offered as rolls to change.
@@ -49,8 +51,8 @@ function onGetContextOptions(_app, options) {
     options.push({
       label: localize(sign > 0 ? "STT.Bonus.MenuAdd" : "STT.Bonus.MenuSubtract"),
       icon: sign > 0 ? "fa-solid fa-plus" : "fa-solid fa-minus",
-      visible: li => canSpend(game.messages.get(li.dataset.messageId), game.user),
-      onClick: (_event, li) => chooseTarget(game.messages.get(li.dataset.messageId), sign).catch(reportError)
+      visible: li => !!getBonusSource(li, game.user),
+      onClick: (_event, li) => chooseTarget(getBonusSource(li, game.user), sign).catch(reportError)
     });
   }
 }
@@ -58,18 +60,52 @@ function onGetContextOptions(_app, options) {
 /* -------------------------------------------- */
 
 /**
- * Note on a bonus roll which roll it was spent on.
+ * The bonus roll a message's right-click menu spends: the message itself, or one another module draws inside its card,
+ * as RSReforged draws a feature's die inside the feature's card and leaves the die's own message empty.
+ * @param {HTMLElement} li  The message's element in the chat log.
+ * @param {User} user
+ * @returns {ChatMessage5e|null}
+ */
+function getBonusSource(li, user) {
+  const message = game.messages.get(li.dataset.messageId);
+  if ( canSpend(message, user) ) return message;
+  for ( const element of li.querySelectorAll(EMBEDDED_ROLLS) ) {
+    const roll = game.messages.get(element.dataset.messageId);
+    if ( (roll !== message) && canSpend(roll, user) ) return roll;
+  }
+  return null;
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Note on a bonus roll which roll it was spent on, and on any card another module draws it inside.
  * @param {ChatMessage5e} message
  * @param {HTMLElement} html
  */
 function onRenderChatMessage(message, html) {
+  const note = createUsedNote(message);
+  if ( note ) html.querySelector(".message-content")?.append(note);
+  onEmbeddedRolls(html, (roll, element) => {
+    const embedded = roll === message ? null : createUsedNote(roll);
+    if ( embedded ) element.append(embedded);
+  });
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {ChatMessage5e} message
+ * @returns {HTMLParagraphElement|null}  A note of the roll a bonus roll was spent on, if it has been.
+ */
+function createUsedNote(message) {
   const used = message.getFlag(MODULE_ID, "bonusUsed");
-  if ( !used ) return;
+  if ( !used ) return null;
   const note = document.createElement("p");
   note.className = "supplement stt-card-log stt-bonus-used";
   note.innerHTML = `<i class="fa-solid ${used.sign > 0 ? "fa-plus" : "fa-minus"}" inert></i>`;
   note.append(localize(used.sign > 0 ? "STT.Bonus.AddedTo" : "STT.Bonus.SubtractedFrom", { target: used.target }));
-  html.querySelector(".message-content")?.append(note);
+  return note;
 }
 
 /* -------------------------------------------- */

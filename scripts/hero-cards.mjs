@@ -217,6 +217,60 @@ function onRenderChatMessage(message, html) {
 
   const activity = getCardActivity(message);
   if ( activity ) compactCardUsage(html, activity);
+
+  // Rolls RSReforged draws in this card in its own way: its check and save totals, and an activity's attack, damage and
+  // formula rolls, which it draws inside the activity's card while leaving their own messages empty.
+  onEmbeddedRolls(html, (roll, element) => {
+    if ( roll.isContentVisible ) markEmbeddedNaturals(roll, element);
+    if ( roll === message ) return;
+    element.append(...renderLog(roll));
+    if ( getCardOptions(roll).length ) {
+      (element.querySelector(".rsr-header") ?? element).append(createCardButton(roll, { compact: true }));
+    }
+  });
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Elements in which another module draws a roll message, each with that message's ID: RSReforged's check and save
+ * totals, and the attack, damage and formula rolls it draws inside an activity's card.
+ */
+export const EMBEDDED_ROLLS = ".rsr-card[data-message-id]";
+
+/**
+ * Call back for each roll another module draws in a message's card, now and as it draws them. RSReforged draws them
+ * once dnd5e has rendered the card, after this module's own render hooks have run, and again whenever it redraws them.
+ * @param {HTMLElement} html  The rendered message.
+ * @param {(message: ChatMessage5e, element: HTMLElement) => void} callback  Called once for each element.
+ */
+export function onEmbeddedRolls(html, callback) {
+  const seen = new WeakSet();
+  const visit = () => {
+    for ( const element of html.querySelectorAll(EMBEDDED_ROLLS) ) {
+      if ( seen.has(element) ) continue;
+      seen.add(element);
+      const message = game.messages.get(element.dataset.messageId);
+      if ( message ) callback(message, element);
+    }
+  };
+  visit();
+  if ( !game.modules.get("rsreforged")?.active ) return;
+  // RSReforged watches its own cards for this long after a render.
+  const observer = new MutationObserver(visit);
+  observer.observe(html, { childList: true, subtree: true });
+  setTimeout(() => observer.disconnect(), 15_000);
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Ring the natural 1s and 20s of a roll another module draws in its own way.
+ * @param {ChatMessage5e} message
+ * @param {HTMLElement} element  Where the module draws the message's rolls.
+ */
+function markEmbeddedNaturals(message, element) {
+  if ( game.settings.get(MODULE_ID, "markNaturals") ) markRolls(message, [...element.querySelectorAll(".dice-roll")]);
 }
 
 /* -------------------------------------------- */

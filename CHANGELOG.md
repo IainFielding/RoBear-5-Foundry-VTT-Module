@@ -17,6 +17,12 @@ All notable changes to Sogrom's Table Tools.
   pick too. In Team vs Team, each side has its own, and the NPCs' side starts with the hostile combatants when a combat
   is running. `requestRolls({ mode, group })` opens the window with a group ticked.
 
+### Works with other modules
+
+- **RSReforged.** On the cards its quick rolls draw, Hero Cards can be played on attacks used from the sheet, natural
+  1s and 20s are ringed, card notes show, and a feature's die can be added to a roll from the right-click menu.
+  Damage applied with its Apply buttons follows **Natural 1s and 20s on saves against damage**.
+
 ## 0.0.6
 
 For Foundry VTT v14 and the D&D 5e system 6.x.
