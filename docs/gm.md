@@ -334,11 +334,15 @@ Sogrom's Table Tools works alongside modules that change how D&D 5e rolls and sh
   such as Bardic Inspiration, can be added to a roll from the card's right-click menu. Damage applied with
   RSReforged's own Apply buttons follows **Natural 1s and 20s on saves against damage**. RSReforged swaps Shift on a
   Roll button: a plain click rolls straight away, and Shift-click opens the roll window.
-- **Midi-QOL.** Using the Hero Cards feature from the sheet opens the card chooser, as it does without Midi. When Midi
-  rolls the saves and applies a spell's damage itself, a natural 20 on the save takes no damage and a natural 1 takes
-  the damage's maximum past resistances and immunities, following **Natural 1s and 20s on saves against damage**. A
-  feature's die that Midi shows on the feature's card, such as Bardic Inspiration, can be added to a roll from the
-  card's right-click menu. Saves Midi shows on its own card aren't ringed.
+- **Midi-QOL: partly supported.** Using the Hero Cards feature from the sheet opens the card chooser, as it does
+  without Midi. When Midi rolls the saves and applies a spell's damage itself, a natural 20 on the save takes no damage
+  and a natural 1 takes the damage's maximum past resistances and immunities, following **Natural 1s and 20s on saves
+  against damage**. A feature's die that Midi shows on the feature's card, such as Bardic Inspiration, can be added to
+  a roll from the card's right-click menu.
+
+  What isn't supported: a card played after Midi has resolved a roll changes the roll in chat, but not the hits,
+  saves or damage Midi has already worked out and applied. If you want cards to decide outcomes, set Midi's hit
+  checking and damage application to manual, so the card can be played before the result is applied.
 
 ## Macros
 
