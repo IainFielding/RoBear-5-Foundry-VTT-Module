@@ -24,7 +24,9 @@ All notable changes to Sogrom's Table Tools.
   Damage applied with its Apply buttons follows **Natural 1s and 20s on saves against damage**.
 - **Midi-QOL, partly supported.** The Hero Cards feature opens the card chooser from the sheet again, instead of
   Midi's list of activities. Damage Midi applies itself follows **Natural 1s and 20s on saves against damage**, and a
-  feature's die on a Midi card can be added to a roll from the right-click menu. A card played after Midi has resolved
+  feature's die on a Midi card can be added to a roll from the right-click menu. Natural 1s and 20s are ringed on the
+  saves Midi lists on its card, and a card played on a roll in chat no longer rolls the card's own die a second time
+  through Midi's workflow. A card played after Midi has resolved
   a roll doesn't change the hits, saves or damage Midi has already applied: see Other modules in the GM guide.
 
 ## 0.0.6
