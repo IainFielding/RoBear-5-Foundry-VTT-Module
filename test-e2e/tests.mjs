@@ -161,9 +161,11 @@ function readWindow(app) {
     dcInputs: [...el.querySelectorAll('input[name$=".dc"]')].map(i => i.value),
     dice: [...(el.querySelector('select[name$=".roll"]')?.options ?? [])].map(o => o.value).filter(v => !v.includes(".")),
     successes: !!el.querySelector('select[name="successes"]'),
-    actors: [...el.querySelectorAll('input[name^="actors."]')].map(i => ({
-      name: i.closest("label").textContent.trim(), checked: i.checked
+    actors: [...el.querySelectorAll('input[name^="actors."], input[name="actor"]')].map(i => ({
+      name: i.closest("label").textContent.trim(), type: i.type, checked: i.checked
     })),
+    picks: el.querySelectorAll(".stt-request-pick").length,
+    selectAll: !!el.querySelector('[data-action="selectAll"]'),
     sides: [...el.querySelectorAll(".stt-request-side")].map(s => ({
       label: s.querySelector("legend").textContent.trim(),
       inputs: [...s.querySelectorAll("input")].map(i => i.type)
@@ -219,6 +221,10 @@ test("the request window shows each mode's own fields", async ({ gm }) => {
     assertEqual(form.rollSelects.length, 0, "divine intervention roll pickers");
     assertEqual(form.range, { value: 16, min: 1, max: 50 }, "divine intervention range");
     assertEqual(form.showDC, false, "Show DC option in divine intervention");
+    // One actor prays, so the window offers radio buttons with only the first of those ticked before still ticked.
+    assertEqual(form.actors.map(a => `${a.name}:${a.type}:${a.checked}`),
+      ["Aria:radio:true", "Borin:radio:false", "Goblin:radio:false"], "divine intervention's one actor");
+    assertEqual([form.picks, form.selectAll], [0, false], "quick picks and Select All in divine intervention");
   } finally {
     await gm.eval(() => foundry.applications.instances.get("stt-roll-request")?.close());
   }

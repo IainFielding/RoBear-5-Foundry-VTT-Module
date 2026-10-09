@@ -200,7 +200,10 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
         value, label: localize(s.label), selected: value === draft.scoring
       })),
       scoringHint: localize(SCORING[draft.scoring].hint),
-      actors: this.#actors.map((a, i) => choice(a, i, draft.actors.includes(a.uuid))),
+      // Divine Intervention asks one actor, so only the first of those chosen in another mode stays ticked.
+      actors: this.#actors.map((a, i) => choice(a, i, draft.mode === "divine"
+        ? draft.actors[0] === a.uuid
+        : draft.actors.includes(a.uuid))),
       picks: pickContext(draft.actors),
       sides: mode.contest ? mode.sides.map((label, side) => ({
         label: localize(label),
@@ -310,6 +313,7 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
 
     if ( shown === "rolloff" ) draft.rivals = [0, 1].map(s => this.#actors[data.rivals?.[s]]?.uuid ?? null);
     else if ( shown === "versus" ) draft.teams = [0, 1].map(s => chosen(data.teams?.[s]));
+    else if ( shown === "divine" ) draft.actors = [this.#actors[data.actor]?.uuid].filter(Boolean);
     else draft.actors = chosen(data.actors);
 
     if ( data.mode in MODES ) draft.mode = data.mode;

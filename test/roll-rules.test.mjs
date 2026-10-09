@@ -366,6 +366,10 @@ describe("Checking a request before it is posted", () => {
     expect(errorFor({ ...valid.divine, parts: [{ type: "d20", dc: null }] })).toBe(refusal("DivineRoll", { type: "d20" }));
   });
 
+  it("refuses Divine Intervention for more than one actor", () => {
+    expect(errorFor({ ...valid.divine, actors: ["A", "B"] })).toBe("Divine Intervention needs exactly one actor.");
+  });
+
   it("refuses a Roll-Off with more than one actor on a side, whose second roll would never count", () => {
     expect(errorFor({ ...valid.rolloff, actors: ["A", "B", "C"], sides: [["A", "C"], ["B"]] }))
       .toBe("Each side of a Roll-Off needs exactly one actor.");
