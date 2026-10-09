@@ -141,7 +141,8 @@ class WorldScriptSettings extends SettingsMenu {
   };
 
   /** @override */
-  static SETTINGS = ["bloodiedTint", "fadeUnprepared", "rarityColours", "chatButtonLabels", "oneTabActivities"];
+  static SETTINGS = ["bloodiedTint", "fadeUnprepared", "rarityColours", "chatButtonLabels", "oneTabActivities",
+    "welcomeCards"];
 }
 
 /* -------------------------------------------- */

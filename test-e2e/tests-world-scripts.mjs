@@ -15,7 +15,7 @@ const MENUS = {
   },
   worldScripts: {
     id: "stt-settings-world-scripts",
-    settings: ["bloodiedTint", "fadeUnprepared", "rarityColours", "chatButtonLabels", "oneTabActivities"]
+    settings: ["bloodiedTint", "fadeUnprepared", "rarityColours", "chatButtonLabels", "oneTabActivities", "welcomeCards"]
   }
 };
 
@@ -139,6 +139,48 @@ test("settings menus: ticking a box and saving changes that setting, and only th
       .map(key => [key, game.settings.get(moduleId, key)])
   ), MODULE_ID);
   assertEqual(after, { ...before, rarityColours: true }, "Gameplay Enhancements after saving");
+});
+
+test("welcome card: whispered to the GM once, its buttons opening the settings menus", async ({ gm, player }) => {
+  const post = () => gm.eval(async moduleId => {
+    const { postWelcomeIfDue } = await import(`/modules/${moduleId}/scripts/welcome.mjs`);
+    await postWelcomeIfDue();
+    return game.messages.filter(m => m.getFlag(moduleId, "welcome")).map(m => ({
+      kind: m.getFlag(moduleId, "welcome"),
+      gmOnly: m.whisper.every(id => game.users.get(id)?.isGM)
+    }));
+  }, MODULE_ID);
+  await gm.eval(moduleId => game.settings.set(moduleId, "welcomeVersion", ""), MODULE_ID);
+  assertEqual(await post(), [{ kind: "welcome", gmOnly: true }], "the welcome card");
+  assertEqual(await post(), [{ kind: "welcome", gmOnly: true }], "the cards after posting again");
+  // Foundry sends a whisper to everyone, but shows it only to those it's whispered to.
+  assertEqual(await player.eval(moduleId => game.messages.filter(m => m.getFlag(moduleId, "welcome") && m.visible).length,
+    MODULE_ID), 0, "welcome cards the player can see");
+
+  const card = gm.page.locator("#chat .chat-log .stt-welcome");
+  await card.waitFor({ timeout: 10_000 });
+  // The Hero Cards feature is a content link the GM can drag onto a character.
+  const link = card.locator("a.content-link[data-uuid]");
+  assertEqual([await link.count(), await link.getAttribute("draggable")], [1, "true"], "the Hero Cards link");
+  const linked = await gm.eval(async uuid => {
+    const item = await fromUuid(uuid);
+    return { name: item?.name, identifier: item?.system.identifier };
+  }, await link.getAttribute("data-uuid"));
+  assertEqual(linked, { name: "Hero Cards", identifier: "hero-cards" }, "the linked item");
+
+  // The tankard in the line about asking for rolls opens the request window.
+  await card.locator(".stt-welcome-tankard").click();
+  const requests = gm.page.locator("#stt-roll-request");
+  await requests.waitFor({ timeout: 10_000 });
+  await gm.eval(() => foundry.applications.instances.get("stt-roll-request")?.close());
+  await requests.waitFor({ state: "detached", timeout: 5000 });
+  assertEqual(await card.locator("[data-stt-settings-menu]").evaluateAll(b => b.map(e => e.dataset.sttSettingsMenu)),
+    ["heroCards", "diceRolling", "rollRequests", "worldScripts"], "the card's buttons");
+  await card.locator('[data-stt-settings-menu="rollRequests"]').click();
+  const app = gm.page.locator(`#${MENUS.rollRequests.id}`);
+  await app.waitFor({ timeout: 10_000 });
+  await app.locator('[data-action="close"]').click();
+  await app.waitFor({ state: "detached", timeout: 5000 });
 });
 
 test("settings menus: the DC by default starts blank, saves a number, and clears again", async ({ gm }) => {

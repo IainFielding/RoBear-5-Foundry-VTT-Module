@@ -30,6 +30,14 @@ can do everything a player can.
    character who should have them. Each card is an activity on that feature with one use, recovered on a long rest.
    To give a card back early, reset its uses on the character sheet.
 
+The first time the module runs in a world, you're whispered a welcome card: where things are, what's new, and a
+button for each group of settings. Drag its **Hero Cards** link onto a character to give them the cards, and click its
+tankard to open the request window. After an update that adds features, you get a short note of what's new instead.
+A patch release says nothing. Turn the cards off with **Welcome and What's New Cards**, under
+[Gameplay Enhancements](#gameplay-enhancements).
+
+<img src="images/gm-welcome.webp" alt="The welcome card: where to find things, with a Hero Cards link and a tankard button, what's new in 0.1.1, and buttons for Hero Cards, Dice Rolling, Roll Requests and Gameplay Enhancements" width="300">
+
 The compendiums sit in a **Sogrom's Table Tools** folder in the Compendium sidebar. Players can view them.
 
 | Compendium | What's in it |
@@ -80,9 +88,10 @@ can open them, and each setting applies to the whole world.
 
 ### Gameplay Enhancements
 
-Optional changes to tokens and actor sheets. Each is off until you turn it on.
+Optional changes to tokens and actor sheets. Each is off until you turn it on. The window also holds **Welcome and
+What's New Cards**, which starts on.
 
-<img src="images/gm-settings-world-scripts.webp" alt="The Gameplay Enhancements window, with its five settings, each unticked" width="420">
+<img src="images/gm-settings-world-scripts.webp" alt="The Gameplay Enhancements window, with its six settings: the five enhancements unticked, and Welcome and What's New Cards ticked" width="420">
 
 | Setting | Default | What it does |
 |---|---|---|
@@ -91,6 +100,7 @@ Optional changes to tokens and actor sheets. Each is off until you turn it on.
 | **Chat Button Labels** | Off | On compact chat cards, each icon button shows its name beside its icon, so you don't have to hover over it to see what it does. |
 | **One-Tab Activities** | Off | An activity's **Identity**, **Activation** and **Effect** tabs are laid out side by side in one wide window, without their hints. Handy when you're making a lot of content. |
 | **Item Rarity Colours** | Off | Tints each item row on actor sheets by its rarity: green for uncommon, blue for rare, purple for very rare, orange for legendary and gold for artifact. |
+| **Welcome and What's New Cards** | On | Whispers the GMs a welcome card the first time the module runs in a world, and a short note of what's new after an update that adds features. See [Setting up](#setting-up). |
 
 <table><tr>
 <td><img src="images/world-scripts-rarity.webp" alt="Aria's inventory with Item Rarity Colours on: a cream Potion of Healing, a green Cloak of Elvenkind, a blue Flame Tongue, a purple Staff of Power, an orange Holy Avenger and a gold Orb of Dragonkind" width="400"></td>

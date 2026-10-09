@@ -4,6 +4,13 @@ All notable changes to Sogrom's Table Tools.
 
 ## 0.1.1
 
+### Welcome card
+
+- **A welcome card for GMs.** The first time the module runs in a world, the GMs are whispered a card saying where
+  things are, with a button for each group of settings. Its **Hero Cards** link drags straight onto a character, and
+  its tankard opens the request window. After an update that adds features, they get a short note of
+  what's new instead. The **Welcome and What's New Cards** setting, under Gameplay Enhancements, turns them off.
+
 ### Roll requests
 
 - **Results wait for Dice So Nice.** A roll shows as rolling on the request card and pop-up until its 3D dice land,

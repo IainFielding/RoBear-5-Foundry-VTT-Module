@@ -388,6 +388,8 @@ in `settings-menus.mjs`. A setting is added to a menu through its class's `SETTI
 | `fadeUnprepared` | Boolean | `false` | Fade unprepared, preparable spells of level 1 or higher on actor sheets. |
 | `rarityColours` | Boolean | `false` | Tint item rows on actor sheets by rarity. |
 | `oneTabActivities` | Boolean | `false` | Lay an activity sheet's tabs side by side, through the `stt-one-tab-activities` body class. |
+| `welcomeCards` | Boolean | `true` | Whisper the GMs the welcome card on a world's first run, and a what's new card after a feature release. |
+| `welcomeVersion` | String | `""` | Not in any menu: the last release a welcome or what's new card announced. A card is due when `WHATS_NEW` in `welcome.mjs` has a later entry. Add an entry there for each feature release; a patch adds none. |
 | `chatButtonLabels` | Boolean | `false` | Show icon buttons' labels on compact chat cards, through the `stt-chat-button-labels` body class. |
 
 ## Socket messages
