@@ -22,6 +22,7 @@ import "./tests-features.mjs";
 import "./tests-natural-saves.mjs";
 import "./tests-death-saves.mjs";
 import "./tests-world-scripts.mjs";
+import "./tests-compat.mjs";
 
 const filter = process.argv.slice(2).find(a => !a.startsWith("--"));
 

@@ -1,0 +1,203 @@
+/**
+ * Compatibility checks, run against other modules that change dnd5e's rolls or chat cards: RSReforged and Midi-QOL.
+ * `STT_COMPAT=rsr npm run test:e2e -- compat` (or `midi`) runs them in a world with that module enabled; without
+ * `STT_COMPAT` they run in the plain test world, which is the baseline.
+ *
+ * Unlike the other tests, rolls here go through `activity.use()`, as a click on the character sheet does, since that is
+ * the path the other modules take over.
+ */
+
+import { MODULE_ID } from "./config.mjs";
+import { assert, assertEqual, forceDice, postRequest, test, waitFor, waitForCard } from "./lib/harness.mjs";
+
+const d20 = n => [n, 20];
+
+/**
+ * Turn on Midi-QOL's "full auto" sample settings, as a table running Midi typically has, if Midi is active.
+ * @param {import("./lib/session.mjs").Session} gm
+ */
+async function configureMidi(gm) {
+  const changed = await gm.eval(async () => {
+    if ( !game.modules.get("midi-qol")?.active ) return false;
+    if ( game.settings.get("midi-qol", "ConfigSettings")?.autoRollAttack ) return false;
+    const json = await (await fetch("/modules/midi-qol/sample-config/midi-qol-full-auto.json")).json();
+    await globalThis.MidiQOL.importSettingsFromJSON(json);
+    return true;
+  });
+  if ( changed ) await gm.reload();
+}
+
+/**
+ * Use Aria's Dagger attack as the player, as a click on the sheet would, and return the attack roll's message. If the
+ * use only posts the item's card, as plain dnd5e does, its attack is then rolled as the card's Attack button would.
+ * @param {import("./lib/session.mjs").Session} player
+ * @returns {Promise<string|null>}
+ */
+async function useDaggerAttack(player) {
+  return player.eval(async () => {
+    const before = new Set(game.messages.keys());
+    const activity = game.actors.getName("Aria").items.getName("Dagger").system.activities.find(a => a.type === "attack");
+    const fresh = type => game.messages.contents.find(m => !before.has(m.id) && (m.type === type));
+    await activity.use({}, { configure: false }, {});
+    for ( let i = 0; (i < 20) && !fresh("attack"); i++ ) await new Promise(r => setTimeout(r, 100));
+    if ( !fresh("attack") ) await activity.rollAttack({}, { configure: false });
+    await new Promise(r => setTimeout(r, 1000));
+    return fresh("attack")?.id ?? null;
+  });
+}
+
+/**
+ * Where a roll's Hero Card button can be seen: on its own message, or inside another card showing that roll.
+ * @param {import("./lib/session.mjs").Session} session
+ * @param {string} id  The roll message's ID.
+ * @returns {Promise<number>}  Visible card buttons for the roll.
+ */
+function visibleCardButtons(session, id) {
+  return session.eval(id => [...document.querySelectorAll("#chat .chat-log .stt-card-button")].filter(button => {
+    const owner = button.closest("[data-message-id]");
+    return (owner?.dataset.messageId === id) && (button.offsetParent !== null);
+  }).length, id);
+}
+
+/**
+ * Click the first visible card button for a roll and play a card.
+ * @param {import("./lib/session.mjs").Session} session
+ * @param {string} id
+ * @param {string} card
+ */
+async function playCardOn(session, id, card) {
+  await session.eval(id => [...document.querySelectorAll("#chat .chat-log .stt-card-button")]
+    .find(b => (b.closest("[data-message-id]")?.dataset.messageId === id) && (b.offsetParent !== null)).click(), id);
+  const dialog = session.page.locator(".stt-card-dialog.application").last();
+  await dialog.locator(".stt-card-choice").first().waitFor({ timeout: 10_000 });
+  const choice = dialog.locator(`.stt-card-choice[data-card="${card}"]`);
+  assert(await choice.count(), `${card} was not offered.`);
+  await choice.first().click();
+}
+
+/**
+ * The roll's totals as the user sees them: every total shown for the roll, wherever it is shown.
+ * @param {import("./lib/session.mjs").Session} session
+ * @param {string} id
+ * @returns {Promise<string[]>}
+ */
+function shownTotals(session, id) {
+  return session.eval(id => [...document.querySelectorAll("#chat .chat-log .dice-total, #chat .chat-log .dice-roll .total")]
+    .filter(el => (el.closest("[data-message-id]")?.dataset.messageId === id) && (el.offsetParent !== null))
+    .map(el => el.textContent.replace(/\s+/g, " ").trim()), id);
+}
+
+/**
+ * Roll Aria's Athletics as the player, fast-forwarded, and return its message once it has been drawn.
+ * @param {import("./lib/session.mjs").Session} player
+ * @returns {Promise<string>}
+ */
+async function rollAthletics(player) {
+  const id = await player.eval(async () => {
+    const before = new Set(game.messages.keys());
+    await game.actors.getName("Aria").rollSkill({ skill: "ath" }, { configure: false });
+    await new Promise(r => setTimeout(r, 1200));
+    return game.messages.contents.find(m => !before.has(m.id) && m.rolls.length)?.id ?? null;
+  });
+  assert(id, "No Athletics roll was made.");
+  return id;
+}
+
+/* -------------------------------------------- */
+
+test("compat: the modules under test are active", async ({ gm }) => {
+  await configureMidi(gm);
+  const active = await gm.eval(() => ["rsreforged", "midi-qol"].filter(id => game.modules.get(id)?.active));
+  console.log(`      active: ${active.join(", ") || "none (baseline)"}`);
+});
+
+test("compat: an attack used from the sheet has a Hero Card button", async ({ player }) => {
+  await forceDice(player, [d20(8), [2, 4], [2, 4]]);
+  const id = await useDaggerAttack(player);
+  assert(id, "No attack roll message was created.");
+  assert(await visibleCardButtons(player, id), "The attack roll has no visible Hero Card button.");
+});
+
+test("compat: Advantage played on an attack used from the sheet changes the roll everyone sees", async ({ player }) => {
+  await forceDice(player, [d20(8), [2, 4], [2, 4]]);
+  const id = await useDaggerAttack(player);
+  assert(id, "No attack roll message was created.");
+  assert(await visibleCardButtons(player, id), "The attack roll has no visible Hero Card button.");
+  await forceDice(player, [d20(17)]);
+  await playCardOn(player, id, "Advantage");
+  const after = await waitFor(player, ({ id, moduleId }) => {
+    const m = game.messages.get(id);
+    return m?.getFlag(moduleId, "log")?.length ? { total: m.rolls[0].total, advantage: m.rolls[0].hasAdvantage } : null;
+  }, { id, moduleId: MODULE_ID }, "Advantage to be recorded");
+  assert(after.advantage, "The attack roll was not given advantage.");
+  await player.page.waitForTimeout(800);
+  const shown = await shownTotals(player, id);
+  assert(shown.some(t => t.includes(String(after.total))), `The new total ${after.total} isn't shown. Shown: ${shown.join(" | ")}`);
+});
+
+test("compat: a natural 20 check is ringed in gold", async ({ player }) => {
+  await forceDice(player, [d20(20)]);
+  const id = await rollAthletics(player);
+  const ringed = await player.eval(id => [...document.querySelectorAll(`#chat .chat-log [data-message-id="${id}"] .stt-natural-20`)]
+    .filter(el => el.offsetParent !== null).length, id);
+  assert(ringed, "The natural 20 has no gold ring.");
+});
+
+test("compat: Lucky on a check rerolls it, and the new total is the one shown", async ({ player }) => {
+  await forceDice(player, [d20(5)]);
+  const id = await rollAthletics(player);
+  assert(await visibleCardButtons(player, id), "The check has no visible Hero Card button.");
+  await forceDice(player, [d20(15)]);
+  await playCardOn(player, id, "Lucky");
+  const total = await waitFor(player, ({ id, moduleId }) => {
+    const m = game.messages.get(id);
+    return m?.getFlag(moduleId, "log")?.length ? m.rolls[0].total : null;
+  }, { id, moduleId: MODULE_ID }, "Lucky to be recorded");
+  assertEqual(total, 15, "the check's total after Lucky");
+  await player.page.waitForTimeout(800);
+  const shown = await shownTotals(player, id);
+  assert(shown.some(t => t.includes("15")), `The new total isn't shown. Shown: ${shown.join(" | ")}`);
+});
+
+test("compat: a requested roll is counted on the request card", async ({ gm, player, ids }) => {
+  const id = await postRequest({ gm, player }, { mode: "standard", actors: [ids.aria], parts: [{ type: "skill", key: "ath", dc: 10 }] });
+  await forceDice(player, [d20(12)]);
+  await player.page.locator(`#chat .chat-log [data-message-id="${id}"] li.stt-request-actor:has(.stt-request-name:text-is("Aria")) .stt-request-roll`).click();
+  const normal = player.page.locator(".application.roll-configuration button", { hasText: "Normal" });
+  if ( await normal.waitFor({ timeout: 2000 }).then(() => true, () => false) ) await normal.click();
+  await waitForCard(gm, id, card => card.rows.find(r => r.name === "Aria")?.results.length > 0, "Aria's result on the card");
+});
+
+test("compat: a natural 1 save against a damaging spell takes the damage's maximum", async ({ gm, player }) => {
+  // Midi rolls the save and applies the damage itself; plain dnd5e and RSReforged leave both to the table, which the
+  // natural-saves tests already cover, so this one is only run with Midi.
+  const midi = await gm.eval(() => !!game.modules.get("midi-qol")?.active);
+  if ( !midi ) return;
+  // Whichever client Midi rolls on, the save shows a 1 and the 1d8 a 2.
+  for ( const session of [gm, player] ) await forceDice(session, [d20(1), [2, 8]]);
+  const result = await gm.eval(async () => {
+    const scene = game.scenes.active;
+    const aria = game.actors.getName("Aria");
+    await aria.update({ "system.attributes.hp": { value: 50, max: 50 } });
+    const [token] = await scene.createEmbeddedDocuments("Token", [{ name: "Aria", actorId: aria.id, actorLink: true, x: 300, y: 100 }]);
+    const goblin = game.actors.getName("Goblin");
+    if ( !goblin.items.getName("Sacred Flame") ) {
+      const spell = (await game.packs.get("dnd5e.spells").getDocuments({ name: "Sacred Flame" }))[0];
+      await goblin.createEmbeddedDocuments("Item", [game.items.fromCompendium(spell)]);
+    }
+    const activity = goblin.items.getName("Sacred Flame").system.activities.find(a => a.type === "save");
+    const before = new Set(game.messages.keys());
+    await globalThis.MidiQOL.completeActivityUse(activity, { targetUuids: [token.uuid], workflowOptions: { autoFastForward: "on" } });
+    await new Promise(r => setTimeout(r, 4000));
+    const made = game.messages.contents.filter(m => !before.has(m.id));
+    const save = made.find(m => m.type === "save") ?? null;
+    return {
+      hp: aria.system.attributes.hp.value,
+      messages: made.map(m => m.type),
+      natural: save?.rolls[0]?.d20?.results.find(r => r.active)?.result ?? null
+    };
+  });
+  console.log(`      midi: ${JSON.stringify(result)}`);
+  assertEqual(result.natural, 1, "the save's natural (forced)");
+  assertEqual(50 - result.hp, 8, "damage taken by a natural 1 save against 1d8 (its maximum)");
+});

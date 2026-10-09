@@ -43,16 +43,18 @@ export class Session {
     page.on("console", msg => session.consoleLog.push(`[${msg.type()}] ${msg.text()}`));
     page.on("pageerror", err => session.consoleLog.push(`[pageerror] ${err.message}\n${err.stack ?? ""}`));
 
-    // No canvas: nothing tested draws on it, and software WebGL under headless Chromium is fragile.
+    // No canvas: nothing tested draws on it, and software WebGL under headless Chromium is fragile. `STT_CANVAS=1` turns
+    // it on, for modules that need it, such as Midi-QOL, which places tokens for every activity used.
     // `core.noCanvas` is a client setting, kept in localStorage, so it is set before the page loads.
-    await page.addInitScript(() => {
-      try { window.localStorage.setItem("core.noCanvas", "true"); } catch { /* storage blocked */ }
+    const noCanvas = process.env.STT_CANVAS !== "1";
+    await page.addInitScript(noCanvas => {
+      try { window.localStorage.setItem("core.noCanvas", String(noCanvas)); } catch { /* storage blocked */ }
       // A failed render is an unhandled rejection, which never fires `pageerror`.
       addEventListener("unhandledrejection", event => {
         const reason = event.reason;
         console.error(`[unhandledrejection] ${reason?.message ?? reason}\n${reason?.stack ?? ""}`);
       });
-    });
+    }, noCanvas);
 
     // The first join after a cold start can land while the server is still wiring itself up.
     for ( let attempt = 1; ; attempt++ ) {

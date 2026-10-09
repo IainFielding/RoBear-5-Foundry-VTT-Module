@@ -35,6 +35,26 @@ npm run test:e2e -- divine       # only tests whose name contains "divine"
 HEADED=1 npm run test:e2e        # watch the browsers
 ```
 
+### Compatibility runs
+
+The same tests can run with another module that changes dnd5e's rolls or chat cards enabled, each in a world of its
+own, `stt-compat-rsr` or `stt-compat-midi`:
+
+```
+STT_COMPAT=rsr npm run test:e2e                    # RSReforged
+STT_COMPAT=midi STT_CANVAS=1 npm run test:e2e      # Midi-QOL, with DAE, socketlib and lib-wrapper
+STT_COMPAT=rsr npm run test:e2e -- compat          # only the compatibility checks
+```
+
+Install the modules into `Data/modules` first: RSReforged 6.x, or Midi-QOL and DAE from their `dnd6` branches with
+socketlib and lib-wrapper. Midi-QOL places a token for every activity used, so it needs the canvas, which
+`STT_CANVAS=1` turns on. The Midi world loads Midi's "full auto" sample settings. RSReforged swaps the meaning of
+Shift on a Roll button, which `clickRoll` follows.
+
+Many tests are written against dnd5e's own roll windows and cards, which these modules skip or replace, so a failure
+in a compatibility run needs reading: `tests-compat.mjs` holds the checks that are meant to pass with either. Without
+`STT_COMPAT`, they run in the plain world as a baseline.
+
 Foundry is started on port 30099 with the `stt-e2e` world, which is created on the first run. Every run
 deletes the world's actors, chat, combats and scenes, then recreates the fixtures in `lib/world.mjs`:
 

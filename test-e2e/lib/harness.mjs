@@ -247,11 +247,13 @@ export function rollButton(session, id, name) {
 export async function clickRoll(session, id, name, { fastForward = false } = {}) {
   const button = rollButton(session, id, name);
   assertEqual(await button.count(), 1, `Roll buttons for ${name} (${session.user})`);
+  // RSReforged swaps them: a plain click rolls straight away, and Shift opens dnd5e's roll window.
+  const swapped = await session.eval(() => !!game.modules.get("rsreforged")?.active);
   if ( fastForward ) {
-    await button.click({ modifiers: ["Shift"] });
+    await button.click(swapped ? {} : { modifiers: ["Shift"] });
     return;
   }
-  await button.click();
+  await button.click(swapped ? { modifiers: ["Shift"] } : {});
   const normal = session.page.locator(".application.roll-configuration button", { hasText: "Normal" });
   await normal.waitFor({ timeout: 10_000 }).catch(() => {
     throw new Error(`dnd5e's roll window did not open after clicking Roll for ${name} (${session.user}).`);
