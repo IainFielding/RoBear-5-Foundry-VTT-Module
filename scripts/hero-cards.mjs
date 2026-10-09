@@ -926,7 +926,8 @@ async function chooseCard(options, hint) {
   await foundry.applications.api.DialogV2.wait({
     classes: ["stt-card-dialog"],
     window: { title: "STT.Cards.DialogTitle", icon: "fa-solid fa-beer-mug-empty" },
-    position: { width: Math.clamp(48 + (options.length * 124), 340, 792) },
+    // Room for up to six cards in a row.
+    position: { width: 48 + (Math.clamp(options.length, 2, 6) * 146) },
     content: `
       <p class="stt-card-hint">${foundry.utils.escapeHTML(hint)}</p>
       <div class="stt-card-grid">${cards}</div>
