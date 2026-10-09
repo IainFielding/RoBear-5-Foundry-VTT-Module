@@ -132,7 +132,7 @@ test("bonus rolls: a feature's die is added to a requested roll from the right-c
   await closeContextMenu(player);
   const entries = await contextEntries(player, bonus);
   assert(!entries.some(e => /to a roll|from a roll/.test(e)), `A spent bonus is still offered: ${entries.join(", ")}`);
-});
+}, { skip: { midi: "Midi-QOL runs a workflow for a plain roll and keeps its die on the feature's card; see the compatibility tests." } });
 
 test("bonus rolls: a player subtracts from the GM's roll, and the GM applies it", async ({ gm, player }) => {
   await forceDice(gm, [d20(15)]);

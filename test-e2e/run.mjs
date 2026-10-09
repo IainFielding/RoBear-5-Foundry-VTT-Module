@@ -58,7 +58,7 @@ try {
 }
 
 if ( result ) {
-  console.log(`\n${result.passed} passed, ${result.failed.length} failed.`);
+  console.log(`\n${result.passed} passed, ${result.failed.length} failed${result.skipped ? `, ${result.skipped} skipped` : ""}.`);
   for ( const { name, error } of result.failed ) console.log(`\n--- ${name} ---\n${error}`);
   if ( result.failed.length ) process.exitCode = 1;
 }

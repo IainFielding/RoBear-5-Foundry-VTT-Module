@@ -6,7 +6,9 @@
  */
 
 import { MODULE_ID } from "./config.mjs";
-import { assert, assertEqual, clickRoll, forceDice, postRequest, test, waitFor, waitForCard } from "./lib/harness.mjs";
+import {
+  COMPAT, assert, assertEqual, clickRoll, forceDice, postRequest, test, waitFor, waitForCard
+} from "./lib/harness.mjs";
 
 const athletics = dc => ({ type: "skill", key: "ath", dc });
 
@@ -483,6 +485,16 @@ function useFeature(player, event = {}) {
   }, event);
 }
 
+/**
+ * Confirm spending the chosen card's use, as dnd5e asks for any activity used from the sheet. RSReforged uses it straight
+ * away instead, unless Shift is held.
+ * @param {import("./lib/session.mjs").Session} player
+ */
+async function confirmUsage(player) {
+  if ( await player.eval(() => game.modules.get("rsreforged")?.active) ) return;
+  await player.page.locator(".application.activity-usage button", { hasText: "Use Ability" }).click();
+}
+
 test("sheet: the card window shows every card left, with its art", async ({ player }) => {
   await useFeature(player);
   const dialog = player.page.locator(".stt-card-dialog.application").last();
@@ -510,8 +522,7 @@ test("sheet: Advantage gives advantage on the next d20 roll, once", async ({ pla
   await useFeature(player);
   const dialog = player.page.locator(".stt-card-dialog.application").last();
   await dialog.locator(".stt-card-choice", { hasText: "Advantage" }).click();
-  // dnd5e then asks to confirm spending the card's use, as it does for any activity used from the sheet.
-  await player.page.locator(".application.activity-usage button", { hasText: "Use Ability" }).click();
+  await confirmUsage(player);
   await waitFor(player, () => game.actors.getName("Aria").getFlag("sogrom-table-tools", "advantage"), null,
     "the pending Advantage flag");
   assertEqual(await usesLeft(player, "Advantage"), 0, "Advantage uses left");
@@ -629,7 +640,10 @@ test("played cards: up to three played together show side by side, and the rest 
   for ( const session of [gm, player] ) {
     await waitFor(session, () => document.querySelectorAll("#stt-played-card .stt-played-card-entry").length === 3,
       null, `three cards on ${session.user}'s screen`, 3000);
-    await session.page.waitForTimeout(300);
+    // They slide in, so they are measured once they have settled in one row.
+    await waitFor(session, () => new Set([...document.querySelectorAll("#stt-played-card .stt-played-card-entry img")]
+      .map(img => Math.round(img.getBoundingClientRect().top))).size === 1, null, `one row on ${session.user}'s screen`, 3000)
+      .catch(() => {});
     const shown = await session.eval(() => [...document.querySelectorAll("#stt-played-card .stt-played-card-entry")]
       .map(el => ({
         name: el.querySelector(".stt-played-card-name").textContent,
@@ -686,7 +700,7 @@ test("played cards: a card played from the sheet is shown on screen, with a shor
   await useFeature(player);
   const dialog = player.page.locator(".stt-card-dialog.application").last();
   await dialog.locator(".stt-card-choice", { hasText: "Charger" }).click();
-  await player.page.locator(".application.activity-usage button", { hasText: "Use Ability" }).click();
+  await confirmUsage(player);
 
   for ( const session of [gm, player] ) {
     await waitFor(session, () => !!document.getElementById("stt-played-card"), null,
@@ -723,7 +737,7 @@ test("sheet: Divine Intervention whispers the GM a button that opens the request
   await useFeature(player);
   const dialog = player.page.locator(".stt-card-dialog.application").last();
   await dialog.locator(".stt-card-choice", { hasText: "Divine Intervention" }).click();
-  await player.page.locator(".application.activity-usage button", { hasText: "Use Ability" }).click();
+  await confirmUsage(player);
 
   const note = await waitFor(gm, () => game.messages.contents.findLast(m => m.getFlag("sogrom-table-tools", "divineSetup"))
     ?.id, null, "the note to the GM", 5000);
@@ -852,7 +866,7 @@ test("natural 1s and 20s: a save summarised inside a spell's card is ringed too"
         `ring on a summarised save showing a natural ${natural} (${session.user})`);
     }
   }
-});
+}, { skip: { midi: "Midi-QOL lists saves on its own card in place of dnd5e's summary; see the compatibility tests." } });
 
 test("natural 1s and 20s: the ring setting exists, is on by default, and turning it off removes every ring", async (ctx) => {
   const { gm, player, ids } = ctx;
@@ -879,8 +893,11 @@ test("natural 1s and 20s: the ring setting exists, is on by default, and turning
     assertEqual(await marked.count(), 0, `rings on a ${kind} with the setting off`);
   }
 
-  await forceDice(player, [d20(1)]);
-  assertEqual(await summaryMarks(player, await saveAgainstSpell(gm, player)), [], "ring on a summarised save, setting off");
+  // Midi-QOL lists saves on its own card in place of dnd5e's summary.
+  if ( COMPAT !== "midi" ) {
+    await forceDice(player, [d20(1)]);
+    assertEqual(await summaryMarks(player, await saveAgainstSpell(gm, player)), [], "ring on a summarised save, setting off");
+  }
 
   const request = await postRequest(ctx, { mode: "standard", parts: [athletics(12)], actors: [ids.aria] });
   await forceDice(player, [d20(20)]);

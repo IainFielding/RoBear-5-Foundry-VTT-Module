@@ -8,7 +8,8 @@
 
 import { MODULE_ID, PLAYER_USER } from "./config.mjs";
 import {
-  assert, assertEqual, cardsOnRow, clickRoll, forceDice, playCard, postRequest, readCard, rollButton, test, unusedDice,
+  assert, assertEqual, cardsOnRow, clickRoll, forceDice, playCard, postRequest, readCard, rollButton, rollModifiers, test,
+  unusedDice,
   waitFor, waitForCard, waitForRoll
 } from "./lib/harness.mjs";
 
@@ -479,7 +480,7 @@ test("standard roll: the player rolls through dnd5e's roll window and the GM fas
   assertEqual(row(card, "Aria").results, [{ text: "5", classes: ["failure"] }], "Aria's result, for the GM");
   assertEqual(row(card, "Goblin").results, [{ text: "15", classes: ["success"] }], "Goblin's result, for the GM");
   assertEqual(await unusedDice(player), 0, "the player's forced dice all used");
-});
+}, { skip: { midi: "Midi-QOL fast-forwards rolls, so dnd5e's roll window does not open." } });
 
 test("standard roll: players see no pass or fail, on the card or the roll, until the GM shows the result", async (ctx) => {
   const { gm, player, ids } = ctx;
@@ -619,7 +620,7 @@ test("standard roll: a double click makes one roll", async (ctx) => {
   const { gm, player, ids } = ctx;
   const id = await postRequest(ctx, { mode: "standard", parts: [athletics(12)], actors: [ids.aria] });
   await forceDice(player, [d20(7), d20(8)]);
-  await rollButton(player, id, "Aria").dblclick({ modifiers: ["Shift"] });
+  await rollButton(player, id, "Aria").dblclick({ modifiers: await rollModifiers(player, id, "Aria", true) });
   await waitForRoll(gm, id, ids.aria);
   await player.page.waitForTimeout(1500);
   const rolls = await gm.eval(({ id, moduleId }) => game.messages.filter(m => m.getFlag(moduleId, "requestRoll")?.request === id).length,
@@ -1394,7 +1395,7 @@ test("choice of rolls: the player picks one, which is rolled and scored against 
   await dialog.waitFor({ timeout: 10_000 });
   const labels = await dialog.locator(".form-footer button").allTextContents();
   assertEqual(labels.map(l => l.trim()), ["Athletics Check · DC 12", "Strength Save · DC 12"], "the rolls offered");
-  await dialog.locator('button[data-action="choice1"]').click({ modifiers: ["Shift"] });
+  await dialog.locator('button[data-action="choice1"]').click({ modifiers: await rollModifiers(player, id, "Aria", true) });
 
   const roll = await waitForRoll(gm, id, ids.aria);
   assertEqual([roll.type, roll.total, roll.flag.choice], ["save", 14, 1], "Aria's roll");
@@ -1422,12 +1423,12 @@ test("choice of rolls: each choice is scored against its own DC, which the GM ca
   const labels = await dialog.locator(".form-footer button").allTextContents();
   assertEqual(labels.map(l => l.trim()), ["Dexterity Check · DC ?", "Strength Check · DC ?"], "the rolls offered");
   await forceDice(player, [d20(12)]);
-  await dialog.locator('button[data-action="choice1"]').click({ modifiers: ["Shift"] });
+  await dialog.locator('button[data-action="choice1"]').click({ modifiers: await rollModifiers(player, id, "Aria", true) });
   await dialog.waitFor({ state: "detached", timeout: 10_000 });
   await waitForRoll(gm, id, ids.aria);
   await rollButton(player, id, "Borin").click();
   await forceDice(player, [d20(12)]);
-  await player.page.locator('.stt-choice-dialog button[data-action="choice0"]').click({ modifiers: ["Shift"] });
+  await player.page.locator('.stt-choice-dialog button[data-action="choice0"]').click({ modifiers: await rollModifiers(player, id, "Borin", true) });
   await waitForRoll(gm, id, ids.borin);
 
   // 12 beats Dexterity's DC 10, but not Strength's DC 15.
