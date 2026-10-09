@@ -8,6 +8,8 @@ All notable changes to Sogrom's Table Tools.
 
 - **Divine Intervention asks one character.** The request window picks who rolls with radio buttons, without the
   quick picks or **Select All**, and a request through the API for more than one actor is refused.
+- **Divine Intervention's card ends on the verdict.** Its footer says only whether the gods answer or remain silent,
+  without counting how many of one answered.
 
 ## 0.0.6
 

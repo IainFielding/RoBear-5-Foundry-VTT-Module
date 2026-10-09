@@ -275,8 +275,7 @@
       },
       "Summary": {
         "Standard": "{count} of {total} succeeded",
-        "Challenge": "{count} of {total} passed the challenge",
-        "Divine": "{count} of {total} answered"
+        "Challenge": "{count} of {total} passed the challenge"
       },
       "Divine": {
         "Answered": "The gods answer",
