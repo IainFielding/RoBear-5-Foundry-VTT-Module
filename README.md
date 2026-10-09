@@ -100,7 +100,7 @@ Sogrom's Table Tools is completely free. If it's added a little extra heroism to
 
 ## Credits
 
-Inspired by D&D campaigns DM'd by [Captain RoBear](https://www.youtube.com/channel/UCktEYryPmattKzrpo0_kGzA). Sogrom's Table Tools is not affiliated with, or endorsed by, its creators.
+Inspired by D&D campaigns DM'd by [Captain RoBear](https://www.youtube.com/channel/UCktEYryPmattKzrpo0_kGzA). Sogrom's Table Tools is not affiliated with, or endorsed by Captain RoBear in any capacty.
 
 The card art is made from images licensed from [Adobe Stock](https://stock.adobe.com) and [Pexels](https://www.pexels.com),
 which remain the property of their creators. No AI-generated imagery is used. [docs/art-sources.md](docs/art-sources.md)
