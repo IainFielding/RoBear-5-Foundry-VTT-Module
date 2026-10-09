@@ -10,7 +10,7 @@ contribute (sign-off, commit messages, pull requests) is in [CONTRIBUTING.md](..
 
 - [At a glance](#at-a-glance)
 - [The API](#the-api)
-  - [`requestRolls()`](#requestrolls)
+  - [`requestRolls(preset)`](#requestrollspreset)
   - [`createRequest(request)`](#createrequestrequest)
   - [The request object](#the-request-object)
   - [Validation](#validation)
@@ -46,18 +46,20 @@ The API object is assigned in the `init` hook, so it is available from `setup` o
 Only these two functions are public. The modules in `scripts/` export other helpers, which the tests import directly,
 but those are internal and may change in any release.
 
-### `requestRolls()`
+### `requestRolls(preset)`
 
 Opens the **Request Rolls** window, as the tankard button in the chat controls does. If the window is already
 open, it is brought to the front, keeping what the GM has filled in.
 
 | | |
 |---|---|
+| `preset` | Optional. `{ mode?, actors?, group? }`: the kind of request to start on (a key of the modes table below), and who rolls, either as `actors` (actor UUIDs) or as `group`, a quick pick: `"party"`, `"combat"`, `"hostile"`, `"selected"`, `"scene"`, or `"group.<actor ID>"` for another group actor. Anything left out keeps what the window would start with. On a window already open, it changes the mode and who rolls, keeping the rest. |
 | Returns | The `RollRequestConfig` application (an `ApplicationV2`), or `undefined` for a non-GM user. |
 | Who | GM only. For anyone else it does nothing. |
 
 ```js
 game.modules.get("sogrom-table-tools").api.requestRolls();
+game.modules.get("sogrom-table-tools").api.requestRolls({ mode: "standard", group: "party" });
 ```
 
 ### `createRequest(request)`

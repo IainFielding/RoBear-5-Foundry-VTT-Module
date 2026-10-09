@@ -12,6 +12,10 @@ All notable changes to Sogrom's Table Tools.
   modifier's roll counts, +1 for each other success. The card marks what each roll did for the team, and its summary
   shows the working. A new setting, **Team Challenge scoring by default**, picks where the window starts, and macros
   can pass `scoring`.
+- **Quick picks in Who Rolls.** One click ticks your party, everyone in the combat, just its hostile combatants, the
+  selected tokens, or everyone on the scene, and a second click unticks them. Each of your other group actors gets a
+  pick too. In Team vs Team, each side has its own, and the NPCs' side starts with the hostile combatants when a combat
+  is running. `requestRolls({ mode, group })` opens the window with a group ticked.
 
 ## 0.0.6
 

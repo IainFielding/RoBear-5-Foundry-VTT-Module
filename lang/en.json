@@ -357,6 +357,14 @@
         "DivineHint": "Each player picks this many numbers in a row, then rolls a d100 and must roll one of them.",
         "WhoRolls": "Who Rolls",
         "SelectAll": "Select or clear everyone",
+        "Picks": {
+          "Label": "Quick picks",
+          "Tooltip": "Tick everyone in {name}, or untick them if they all are.",
+          "Combat": "Combat: everyone",
+          "Hostile": "Combat: hostile",
+          "Selected": "Selected tokens",
+          "Scene": "Everyone on scene"
+        },
         "NoActors": "Select tokens, or give players characters, to choose who rolls.",
         "Options": "Options",
         "ShowDC": "Show DC to Players",

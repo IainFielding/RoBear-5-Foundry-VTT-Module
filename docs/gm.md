@@ -117,8 +117,22 @@ buttons.
 2. **Rolls.** Choose the roll: a plain die (a d20 by default, or a d6, d8, d10, d12 or d100), any skill or tool check,
    ability check, or saving throw. Then set the DC, or leave it blank for none.
 3. **Who rolls.** The actors of any tokens you have selected are ticked for you; otherwise the player characters
-   are. The list offers the selected tokens, the player characters, and the tokens on the current scene. The tick
-   button beside the heading selects them all.
+   are. The list offers the selected tokens, the player characters, the members of your groups, the combatants, and
+   the tokens on the current scene. The tick button beside the heading selects them all.
+
+   Above the list, **quick picks** tick a whole group in one click, and untick it if it's all ticked already:
+
+   | Quick pick | Who it ticks |
+   |---|---|
+   | Your party's name | The members of D&D 5e's primary party. Each of your other group actors gets a pick of its own, by its name. |
+   | **Combat: everyone** | Everyone in the current combat. Each unlinked token rolls for itself. |
+   | **Combat: hostile** | The combatants whose tokens are hostile, for when only the monsters need to roll. |
+   | **Selected tokens** | The tokens you have selected now, even ones selected after you opened the window. |
+   | **Everyone on scene** | Every token on the scene you're viewing. |
+
+   A pick only shows when there's someone in it, and it's highlighted while all of its members are ticked. In Team vs
+   Team, each side has its own picks, and ticking a group for one side takes its members off the other. When a combat
+   is running and no NPCs are selected, the NPCs' side starts with the hostile combatants.
 4. **Options.**
    - **Show DC to Players.** Unticked, players see "DC ?" on the card, and the DC is kept off their rolls so D&D 5e
      doesn't show them success or failure.
@@ -319,6 +333,9 @@ const tools = game.modules.get("sogrom-table-tools").api;
 
 // Open the request window, as the tankard button does.
 tools.requestRolls();
+
+// Open it on a Team Challenge, with the combat's hostile combatants ticked.
+tools.requestRolls({ mode: "team", group: "hostile" });
 
 // Ask the party's player characters for a DC 15 Athletics check.
 const party = game.actors.filter(a => a.hasPlayerOwner && (a.type === "character"));

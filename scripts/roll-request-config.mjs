@@ -42,8 +42,18 @@ const { FormDataExtended } = foundry.applications.ux;
 
 /**
  * @typedef {object} RequestPreset
- * @property {string} mode      The kind of request to start on, a key in MODES.
- * @property {string[]} actors  The UUIDs of who rolls.
+ * @property {string} [mode]      The kind of request to start on, a key in MODES.
+ * @property {string[]} [actors]  The UUIDs of who rolls.
+ * @property {string} [group]     Instead of `actors`, a quick pick whose members roll: "party", "combat", "hostile",
+ *   "selected", "scene", or "group.<actor ID>" for another group actor. See getQuickPicks.
+ */
+
+/**
+ * @typedef {object} QuickPick
+ * @property {string} id       "party", "group.<actor ID>", "combat", "hostile", "selected" or "scene".
+ * @property {string} label
+ * @property {string} icon
+ * @property {string[]} uuids  The actors it ticks.
  */
 
 export default class RollRequestConfig extends HandlebarsApplicationMixin(ApplicationV2) {
@@ -66,7 +76,8 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
     actions: {
       selectAll: RollRequestConfig.#onSelectAll,
       addChoice: RollRequestConfig.#onAddChoice,
-      removeChoice: RollRequestConfig.#onRemoveChoice
+      removeChoice: RollRequestConfig.#onRemoveChoice,
+      pickGroup: RollRequestConfig.#onPickGroup
     }
   };
 
@@ -155,6 +166,19 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
       row.full = row.alternatives.length >= MAX_CHOICES - 1;
     });
 
+    // Anyone a quick pick would tick is offered, even if they arrived after the window opened, such as a token selected
+    // since. They are added at the end, so the actors already listed keep their places.
+    const picks = getQuickPicks();
+    for ( const uuid of new Set(picks.flatMap(p => p.uuids)) ) {
+      const actor = this.#actors.some(a => a.uuid === uuid) ? null : fromUuidSync(uuid);
+      if ( actor ) this.#actors.push(actor);
+    }
+    const pickContext = (chosen, { exclude=null, side=null }={}) => picks.filter(p => p.id !== exclude).map(p => ({
+      id: p.id, label: p.label, icon: p.icon, count: p.uuids.length, side, hasSide: side !== null,
+      pressed: p.uuids.every(uuid => chosen.includes(uuid)),
+      tooltip: localize("STT.Request.Config.Picks.Tooltip", { name: p.label })
+    }));
+
     const choice = (actor, index, checked) => ({ index, name: actor.name, img: actor.img, checked });
     return Object.assign(context, {
       modes: Object.entries(MODES).map(([value, m]) => ({
@@ -177,10 +201,14 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
       })),
       scoringHint: localize(SCORING[draft.scoring].hint),
       actors: this.#actors.map((a, i) => choice(a, i, draft.actors.includes(a.uuid))),
+      picks: pickContext(draft.actors),
       sides: mode.contest ? mode.sides.map((label, side) => ({
         label: localize(label),
         side,
         single: draft.mode === "rolloff",
+        // A Roll-Off side is one actor, so it has no quick picks. The players don't pick the hostile combatants, and the
+        // NPCs don't pick the party.
+        picks: draft.mode === "rolloff" ? [] : pickContext(draft.teams[side], { exclude: side ? "party" : "hostile", side }),
         actors: this.#actors.map((a, i) => choice(a, i, draft.mode === "rolloff"
           ? draft.rivals[side] === a.uuid
           : draft.teams[side].includes(a.uuid)))
@@ -214,14 +242,17 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
     draft.sideRolls ??= {};
     for ( const [key, m] of Object.entries(MODES) ) if ( m.contest ) draft.sideRolls[key] ??= ["d20", "d20"];
     // Who rolls always starts from the current selection rather than the last request, and whether players see the
-    // DC always starts from the GM's setting.
+    // DC always starts from the GM's setting. In a combat, the NPCs' team starts as the hostile combatants unless NPCs
+    // are selected.
+    const npcs = selected.filter(a => !a.hasPlayerOwner).map(a => a.uuid);
+    const hostile = getQuickPicks().find(p => p.id === "hostile")?.uuids ?? [];
     Object.assign(draft, {
       showDC: game.settings.get(MODULE_ID, "showDCDefault"),
       actors: selected.length ? selected.map(a => a.uuid) : players,
-      teams: [players, selected.filter(a => !a.hasPlayerOwner).map(a => a.uuid)],
+      teams: [players, npcs.length ? npcs : hostile],
       rivals: [selected[0]?.uuid ?? null, selected[1]?.uuid ?? null]
     });
-    if ( this.#preset ) Object.assign(draft, { mode: this.#preset.mode, actors: [...this.#preset.actors] });
+    if ( this.#preset ) Object.assign(draft, resolvePreset(this.#preset, draft));
     return draft;
   }
 
@@ -231,13 +262,14 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
    * Switch the open window to a kind of request and who rolls, keeping the rest of what the GM has filled in.
    * @param {RequestPreset} preset
    */
-  applyPreset({ mode, actors }) {
+  applyPreset(preset) {
     this.#readForm();
+    const { mode, actors } = resolvePreset(preset, this.#draft);
     for ( const uuid of actors ) {
       const actor = fromUuidSync(uuid);
       if ( actor && !this.#actors.some(a => a.uuid === uuid) ) this.#actors.unshift(actor);
     }
-    Object.assign(this.#draft, { mode, actors: [...actors] });
+    Object.assign(this.#draft, { mode, actors });
     this.render({ parts: ["form"] });
   }
 
@@ -324,6 +356,32 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
     const boxes = [...list.querySelectorAll("input[type=checkbox]")];
     const checked = !boxes.every(b => b.checked);
     for ( const box of boxes ) box.checked = checked;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Tick everyone in a quick pick, or untick them if they all are. On one side of a Team vs Team, ticking them takes
+   * them off the other side, since no one can be on both.
+   * @this {RollRequestConfig}
+   * @param {PointerEvent} _event
+   * @param {HTMLElement} target
+   */
+  static #onPickGroup(_event, target) {
+    const draft = this.#readForm();
+    const pick = getQuickPicks().find(p => p.id === target.dataset.group);
+    if ( !pick ) return;
+    const side = target.dataset.side === undefined ? null : Number(target.dataset.side);
+    const chosen = side === null ? draft.actors : draft.teams[side];
+    const all = pick.uuids.every(uuid => chosen.includes(uuid));
+    const next = all ? chosen.filter(uuid => !pick.uuids.includes(uuid))
+      : [...chosen, ...pick.uuids.filter(uuid => !chosen.includes(uuid))];
+    if ( side === null ) draft.actors = next;
+    else {
+      draft.teams[side] = next;
+      if ( !all ) draft.teams[1 - side] = draft.teams[1 - side].filter(uuid => !pick.uuids.includes(uuid));
+    }
+    this.render({ parts: ["form"] });
   }
 
   /* -------------------------------------------- */
@@ -424,8 +482,8 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
 /* -------------------------------------------- */
 
 /**
- * Actors the GM might ask to roll: any asked for by name, those of the selected tokens, the player characters, then
- * the scene's other tokens.
+ * Actors the GM might ask to roll: any asked for by name, those of the selected tokens, the player characters, the
+ * members of the party and other groups, the combatants, then the scene's other tokens.
  * @param {string[]} [uuids]  Actors to offer first, such as the one who played a Divine Intervention card.
  * @returns {Actor5e[]}
  */
@@ -437,10 +495,61 @@ function getCandidates(uuids=[]) {
   for ( const actor of game.actors ) {
     if ( (actor.type === "character") && actor.hasPlayerOwner ) add(actor);
   }
+  // The quick picks end with the scene's tokens, so they come last.
+  for ( const pick of getQuickPicks() ) {
+    for ( const uuid of pick.uuids ) add(fromUuidSync(uuid));
+  }
+  return [...actors.values()];
+}
+
+/* -------------------------------------------- */
+
+/**
+ * The groups the GM can tick in one click, each only if it has someone in it: dnd5e's primary party, the world's other
+ * group actors, everyone in the current combat, its hostile combatants, the selected tokens, and everyone on the scene.
+ * Combatants and scene tokens are their tokens' actors, so each unlinked token rolls for itself.
+ * @returns {QuickPick[]}
+ */
+export function getQuickPicks() {
+  const picks = [];
+  const add = (id, label, icon, actors) => {
+    const uuids = [...new Set(actors.filter(Boolean).map(a => a.uuid))];
+    if ( uuids.length ) picks.push({ id, label, icon, uuids });
+  };
+  const members = group => group.system.members?.map(m => m.actor) ?? [];
+  const party = game.actors.party;
+  if ( party ) add("party", party.name, "fa-solid fa-users", members(party));
+  for ( const group of game.actors.filter(a => (a.type === "group") && (a !== party)) ) {
+    add(`group.${group.id}`, group.name, "fa-solid fa-people-group", members(group));
+  }
+  // The combat on the scene being viewed, or else the active one, as with the canvas turned off nothing is viewed.
+  const combat = game.combat ?? game.combats.find(c => c.active);
+  const combatants = combat?.combatants.contents ?? [];
+  add("combat", localize("STT.Request.Config.Picks.Combat"), "fa-solid fa-swords", combatants.map(c => c.actor));
+  add("hostile", localize("STT.Request.Config.Picks.Hostile"), "fa-solid fa-skull", combatants
+    .filter(c => c.token?.disposition === CONST.TOKEN_DISPOSITIONS.HOSTILE).map(c => c.actor));
+  add("selected", localize("STT.Request.Config.Picks.Selected"), "fa-solid fa-object-group",
+    canvas.tokens?.controlled.map(t => t.actor) ?? []);
   // The scene the GM is looking at, read from the documents so it works with the canvas turned off too.
   const scene = canvas.scene ?? game.scenes.viewed ?? game.scenes.active;
-  for ( const token of scene?.tokens ?? [] ) add(token.actor);
-  return [...actors.values()];
+  add("scene", localize("STT.Request.Config.Picks.Scene"), "fa-solid fa-map", scene?.tokens.map(t => t.actor) ?? []);
+  return picks;
+}
+
+/* -------------------------------------------- */
+
+/**
+ * The kind of request and who rolls that a preset asks for, filling in from the draft what it leaves out.
+ * @param {RequestPreset} preset
+ * @param {RequestDraft} draft
+ * @returns {{ mode: string, actors: string[] }}
+ */
+function resolvePreset({ mode, actors, group }, draft) {
+  const members = group ? getQuickPicks().find(p => p.id === group)?.uuids : null;
+  return {
+    mode: mode in MODES ? mode : draft.mode,
+    actors: [...(actors ?? members ?? draft.actors)]
+  };
 }
 
 /* -------------------------------------------- */

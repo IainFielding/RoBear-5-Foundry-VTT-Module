@@ -156,7 +156,7 @@ let rollIndex = null;
 
 Hooks.once("init", () => {
   registerSettings();
-  game.modules.get(MODULE_ID).api = { requestRolls: () => openRollRequest(), createRequest };
+  game.modules.get(MODULE_ID).api = { requestRolls: preset => openRollRequest(preset), createRequest };
 });
 Hooks.on("renderChatInput", onRenderChatInput);
 Hooks.on("getSceneControlButtons", onGetSceneControlButtons);

@@ -343,6 +343,110 @@ test("the request window refuses requests it cannot run", async ({ gm }) => {
 });
 
 /* -------------------------------------------- */
+/*  Quick Picks                                 */
+/* -------------------------------------------- */
+
+/**
+ * Make Aria and Borin dnd5e's primary party, "The Wanderers", and start a combat with the Goblin as a hostile combatant.
+ * @param {import("./lib/session.mjs").Session} gm
+ * @returns {Promise<{ party: string, disposition: number }>}  The party's ID, and the Goblin token's disposition before.
+ */
+function setUpPartyAndCombat(gm) {
+  return gm.eval(async () => {
+    const [aria, borin, goblin] = ["Aria", "Borin", "Goblin"].map(name => game.actors.getName(name));
+    const party = await Actor.create({
+      name: "The Wanderers", type: "group", system: { members: [{ actor: aria.id }, { actor: borin.id }] }
+    });
+    await game.settings.set("dnd5e", "primaryParty", { actor: party });
+    const scene = game.scenes.active;
+    const token = scene.tokens.getName("Goblin");
+    const disposition = token.disposition;
+    await token.update({ disposition: CONST.TOKEN_DISPOSITIONS.HOSTILE });
+    // Made active once it has a combatant: Foundry fails to start the turn of a combat created active and empty.
+    const combat = await Combat.create({ scene: scene.id });
+    await combat.createEmbeddedDocuments("Combatant", [{ tokenId: token.id, sceneId: scene.id, actorId: goblin.id }]);
+    await combat.update({ active: true });
+    return { party: party.id, disposition };
+  });
+}
+
+/**
+ * Undo setUpPartyAndCombat. The combat is deleted between tests anyway.
+ * @param {import("./lib/session.mjs").Session} gm
+ * @param {{ party: string, disposition: number }} setup
+ */
+function tearDownPartyAndCombat(gm, setup) {
+  return gm.eval(async ({ party, disposition }) => {
+    await foundry.applications.instances.get("stt-roll-request")?.close();
+    await game.settings.set("dnd5e", "primaryParty", { actor: null });
+    await game.actors.get(party)?.delete();
+    await game.scenes.active.tokens.getName("Goblin")?.update({ disposition });
+  }, setup);
+}
+
+/**
+ * Each quick pick in the window, as "id:pressed", and who is ticked.
+ * @param {import("playwright").Locator} app
+ */
+function readPicks(app) {
+  return app.evaluate(el => ({
+    picks: [...el.querySelectorAll(".stt-request-pick")].map(b => `${b.dataset.group}${b.dataset.side ? `@${b.dataset.side}` : ""}`
+      + `:${b.getAttribute("aria-pressed")}`),
+    labels: [...el.querySelectorAll(".stt-request-pick-label")].map(l => l.textContent.trim()),
+    ticked: [...el.querySelectorAll('input[type="checkbox"]:checked')]
+      .map(i => `${i.name.split(".").slice(0, -1).join(".")}:${i.closest("label").textContent.trim()}`)
+  }));
+}
+
+test("quick picks: the party and the combat's hostile combatants are ticked, or unticked, in one click", async ({ gm }) => {
+  const setup = await setUpPartyAndCombat(gm);
+  try {
+    const app = await openWindow(gm);
+    // The window starts on the last kind of request sent, which an earlier test may have made a Roll-Off.
+    await chooseMode(app, "standard");
+    let form = await readPicks(app);
+    assertEqual(form.labels, ["The Wanderers", "Combat: everyone", "Combat: hostile", "Everyone on scene"], "quick picks");
+    // The player characters start ticked, and they are the whole party.
+    assertEqual(form.picks, ["party:true", "combat:false", "hostile:false", "scene:false"], "which picks are ticked");
+
+    await app.locator('.stt-request-pick[data-group="party"]').click();
+    await app.locator('.stt-request-pick[data-group="hostile"]').click();
+    await gm.page.waitForTimeout(300);
+    form = await readPicks(app);
+    assertEqual(form.ticked, ["actors:Goblin"], "who is ticked after unticking the party and ticking the hostiles");
+    assertEqual(form.picks, ["party:false", "combat:true", "hostile:true", "scene:true"], "which picks are ticked after");
+
+    // In Team vs Team, the NPCs start as the hostile combatants, and each side has its own picks.
+    await chooseMode(app, "versus");
+    form = await readPicks(app);
+    assert(form.ticked.includes("teams.1:Goblin"), `The Goblin isn't on the NPCs' side: ${form.ticked.join(", ")}`);
+    assertEqual(form.picks, ["party@0:true", "combat@0:false", "scene@0:false", "combat@1:true", "hostile@1:true",
+      "scene@1:true"], "each side's picks");
+    // Ticking everyone on the scene for the players takes the Goblin off the NPCs' side.
+    await app.locator('.stt-request-pick[data-group="scene"][data-side="0"]').click();
+    await gm.page.waitForTimeout(300);
+    form = await readPicks(app);
+    assert(!form.ticked.includes("teams.1:Goblin"), "The Goblin is on both sides.");
+  } finally {
+    await tearDownPartyAndCombat(gm, setup);
+  }
+});
+
+test("quick picks: a macro can open the window with a group ticked", async ({ gm }) => {
+  const setup = await setUpPartyAndCombat(gm);
+  try {
+    await gm.eval(moduleId => game.modules.get(moduleId).api.requestRolls({ mode: "team", group: "hostile" }), MODULE_ID);
+    const app = gm.page.locator("#stt-roll-request");
+    await app.waitFor({ timeout: 10_000 });
+    const form = await readWindow(app);
+    assertEqual(form.checkedMode, "team", "the mode the macro asked for");
+    assertEqual(form.actors.filter(a => a.checked).map(a => a.name), ["Goblin"], "who the macro asked for");
+  } finally {
+    await tearDownPartyAndCombat(gm, setup);
+  }
+});
+
+/* -------------------------------------------- */
 /*  Standard Roll                               */
 /* -------------------------------------------- */
 
