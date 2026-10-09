@@ -331,3 +331,30 @@ test("compat: a natural 1 save takes the damage's maximum when RSReforged's Appl
     await game.actors.getName("Aria").update({ "system.attributes.hp.value": 50 });
   }, cast.token);
 });
+
+test("compat: a natural 20 save that Midi-QOL lists on its card is ringed in gold", async ({ gm, player }) => {
+  if ( !(await gm.eval(() => !!game.modules.get("midi-qol")?.active)) ) return;
+  for ( const session of [gm, player] ) await forceDice(session, Array.from({ length: 8 }, () => d20(20)));
+  const token = await gm.eval(async () => {
+    const scene = game.scenes.active;
+    const aria = game.actors.getName("Aria");
+    const [token] = await scene.createEmbeddedDocuments("Token", [{ name: "Aria", actorId: aria.id, actorLink: true, x: 300, y: 100 }]);
+    const goblin = game.actors.getName("Goblin");
+    if ( !goblin.items.getName("Sacred Flame") ) {
+      const spell = (await game.packs.get("dnd5e.spells").getDocuments({ name: "Sacred Flame" }))[0];
+      await goblin.createEmbeddedDocuments("Item", [game.items.fromCompendium(spell)]);
+    }
+    const activity = goblin.items.getName("Sacred Flame").system.activities.find(a => a.type === "save");
+    await globalThis.MidiQOL.completeActivityUse(activity, {
+      midiOptions: { targetUuids: [token.uuid], workflowOptions: { autoFastForward: "on" } }
+    });
+    return token.uuid;
+  });
+  try {
+    await waitFor(gm, () => [...document.querySelectorAll("#chat .chat-log .midi-qol-saves-display .midi-qol-save-total")]
+      .some(el => el.classList.contains("stt-natural-20") && (el.offsetParent !== null)), undefined,
+    "the save's total to be ringed in gold", 15_000);
+  } finally {
+    await gm.eval(token => fromUuidSync(token)?.delete().catch(() => {}), token);
+  }
+});

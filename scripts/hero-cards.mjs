@@ -329,6 +329,22 @@ function markNaturals(message, html) {
     const child = game.messages.get(summary.dataset.messageId);
     if ( child?.isContentVisible ) markRolls(child, [...summary.querySelectorAll(".dice-roll")]);
   }
+  markMidiSaves(html);
+}
+
+/**
+ * Midi-QOL lists the saves made against an activity on its card, one row for each target, showing each total and
+ * keeping the dice in a tooltip. Ring each total by the d20 its dice kept.
+ * @param {HTMLElement} html
+ */
+function markMidiSaves(html) {
+  for ( const row of html.querySelectorAll(".midi-qol-saves-display li[data-id]") ) {
+    const total = row.querySelector(".midi-qol-save-total");
+    const kept = [...row.querySelectorAll(".dice-rolls .roll.d20")]
+      .find(d => !d.classList.contains("discarded") && !d.classList.contains("rerolled"));
+    const natural = Number(kept?.textContent);
+    if ( total && [1, 20].includes(natural) ) total.classList.add(`stt-natural-${natural}`);
+  }
 }
 
 /**
