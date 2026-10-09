@@ -50,7 +50,7 @@ globalThis.foundry = {
 };
 
 globalThis.CONFIG = {
-  Dice: { D20Roll: class {}, BasicRoll: class {} },
+  Dice: { D20Roll: class {}, BasicRoll: class {}, DamageRoll: class {} },
   DND5E: {
     abilities: { str: { label: "Strength" }, dex: { label: "Dexterity" }, wis: { label: "Wisdom" } },
     skills: { ath: { label: "Athletics" }, acr: { label: "Acrobatics" } },

@@ -175,20 +175,58 @@ function registerSettings() {
  * Hero Cards feature. Shift-click still uses dnd5e's own behaviour.
  */
 function wrapItemUse() {
+  // Midi-QOL wraps the same method through libWrapper, without continuing the chain, so a plain patch underneath it
+  // would never run. A libWrapper WRAPPER always runs before it.
+  if ( game.modules.get("lib-wrapper")?.active ) {
+    globalThis.libWrapper.register(MODULE_ID, "CONFIG.Item.documentClass.prototype.use", useItem, "WRAPPER");
+    return;
+  }
   const proto = CONFIG.Item.documentClass.prototype;
   const use = proto.use;
-  proto.use = async function(config={}, dialog={}, message={}) {
-    if ( !isCardItem(this) || !this.actor || config.event?.shiftKey ) return use.call(this, config, dialog, message);
-    const options = this.system.activities
-      .filter(a => a.canUse && hasUsesLeft(a))
-      .map(activity => ({ activity, label: getCardLabel(activity), img: getCardArt(activity) }));
-    if ( !options.length ) {
-      ui.notifications.warn(localize("STT.Cards.NoneLeft"));
-      return;
-    }
-    const option = await chooseCard(options, localize("STT.Cards.ChooseFromSheet"));
-    if ( option ) return option.activity.use(config, dialog, message);
+  proto.use = function(...args) {
+    return useItem.call(this, use.bind(this), ...args);
   };
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Use an item, offering the card chooser for the Hero Cards feature in place of dnd5e's list of activities. The rest of
+ * the chain always runs, as a libWrapper WRAPPER must: with the chosen card as the item's only usable activity, so it is
+ * used without asking again, by dnd5e or by a module that takes over using items, such as Midi-QOL. With no card
+ * chosen, the item has no usable activity, and its chat card isn't posted, so nothing happens.
+ * @this {Item5e}
+ * @param {Function} wrapped  The rest of the chain.
+ * @param {object} [config]
+ * @param {object} [dialog]
+ * @param {object} [message]
+ * @returns {Promise<*>}
+ */
+async function useItem(wrapped, config={}, dialog={}, message={}) {
+  if ( !isCardItem(this) || !this.actor || config.event?.shiftKey ) return wrapped(config, dialog, message);
+  const options = this.system.activities
+    .filter(a => a.canUse && hasUsesLeft(a))
+    .map(activity => ({ activity, label: getCardLabel(activity), img: getCardArt(activity) }));
+  let chosen = null;
+  if ( options.length ) chosen = (await chooseCard(options, localize("STT.Cards.ChooseFromSheet")))?.activity ?? null;
+  else ui.notifications.warn(localize("STT.Cards.NoneLeft"));
+
+  // The other cards are put out of use until the chosen one starts, so the sheet lists them all again as it redraws.
+  const others = this.system.activities.filter(a => a !== chosen);
+  for ( const a of others ) Object.defineProperty(a, "canUse", { value: false, configurable: true });
+  let hook;
+  const restore = () => {
+    Hooks.off("dnd5e.preUseActivity", hook);
+    for ( const a of others ) delete a.canUse;
+  };
+  hook = Hooks.on("dnd5e.preUseActivity", activity => {
+    if ( activity.uuid === chosen?.uuid ) restore();
+  });
+  try {
+    return await wrapped(config, dialog, chosen ? message : { ...message, createMessage: false });
+  } finally {
+    restore();
+  }
 }
 
 /* -------------------------------------------- */

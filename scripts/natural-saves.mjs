@@ -7,8 +7,8 @@
  * from that roll. So each target starts in the tray at what its natural calls for, and the GM can still change it there
  * before applying it.
  *
- * RSReforged applies damage from Apply buttons of its own, without dnd5e's tray. Its damage is changed as it is applied
- * instead, by the same rule.
+ * RSReforged applies damage from Apply buttons of its own, without dnd5e's tray, and Midi-QOL rolls the saves and applies
+ * the damage itself. Their damage is changed as it is applied instead, by the same rule.
  */
 
 import { MODULE_ID, getNatural } from "./hero-cards.mjs";
@@ -56,11 +56,38 @@ function onPreCalculateDamage(actor, damages, options) {
     if ( own.maximize ) maximizeDamage(damages, options.originatingMessage);
     return;
   }
-  if ( !applying || !game.settings.get(MODULE_ID, "naturalSaves") ) return;
+  if ( !game.settings.get(MODULE_ID, "naturalSaves") ) return;
+  if ( options.midi ) return applyMidiNatural(actor, damages, options);
+  if ( !applying ) return;
   const natural = getNaturalFor(actor, applying);
   if ( !natural ) return;
   setNaturalOptions(options, natural, actor, damages);
   if ( natural === 1 ) maximizeDamage(damages, applying);
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Give a target of Midi-QOL's damage what its save's natural calls for. Midi marks each target whose save was a critical
+ * success or failure as it works out their damage, and halves the damage of a save that succeeded in its own handler of
+ * the same hook, which runs after this one.
+ * @param {Actor5e} actor
+ * @param {DamageDescription[]} damages       Changed in place.
+ * @param {DamageApplicationOptions} options  Changed in place.
+ */
+function applyMidiNatural(actor, damages, options) {
+  const { criticalSave, fumbleSave, itemCardUuid } = options.midi;
+  if ( criticalSave ) {
+    for ( const d of damages ) d.value = 0;
+    return;
+  }
+  if ( !fumbleSave ) return;
+  // A natural 1 takes the full damage, even on a total that met the DC.
+  Object.assign(options.midi, { save: false, saved: false, superSaver: false, semiSuperSaver: false });
+  setNaturalOptions(options, 1, actor, damages);
+  // Midi keeps the rolls of the activity's damage on its card.
+  const card = itemCardUuid ? fromUuidSync(itemCardUuid) : null;
+  if ( card ) maximizeDamage(damages, card);
 }
 
 /* -------------------------------------------- */

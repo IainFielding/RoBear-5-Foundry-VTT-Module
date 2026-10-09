@@ -168,14 +168,17 @@ test("compat: a requested roll is counted on the request card", async ({ gm, pla
   await waitForCard(gm, id, card => card.rows.find(r => r.name === "Aria")?.results.length > 0, "Aria's result on the card");
 });
 
-test("compat: a natural 1 save against a damaging spell takes the damage's maximum", async ({ gm, player }) => {
-  // Midi rolls the save and applies the damage itself; plain dnd5e and RSReforged leave both to the table, which the
-  // natural-saves tests already cover, so this one is only run with Midi.
-  const midi = await gm.eval(() => !!game.modules.get("midi-qol")?.active);
-  if ( !midi ) return;
-  // Whichever client Midi rolls on, the save shows a 1 and the 1d8 a 2.
-  for ( const session of [gm, player] ) await forceDice(session, [d20(1), [2, 8]]);
-  const result = await gm.eval(async () => {
+/**
+ * Have the Goblin cast Sacred Flame at Aria through Midi-QOL, every die showing its lowest, and return the damage Aria
+ * takes once Midi applies it: the save's d20 shows a 1, and the spell's d8 a 1, whose maximum is 8.
+ * @param {import("./lib/session.mjs").Session} gm
+ * @param {import("./lib/session.mjs").Session} player
+ * @returns {Promise<number>}
+ */
+async function midiSacredFlame(gm, player) {
+  // Whichever client Midi rolls on.
+  for ( const session of [gm, player] ) await forceDice(session, Array.from({ length: 8 }, () => d20(1)));
+  const token = await gm.eval(async () => {
     const scene = game.scenes.active;
     const aria = game.actors.getName("Aria");
     await aria.update({ "system.attributes.hp": { value: 50, max: 50 } });
@@ -186,20 +189,36 @@ test("compat: a natural 1 save against a damaging spell takes the damage's maxim
       await goblin.createEmbeddedDocuments("Item", [game.items.fromCompendium(spell)]);
     }
     const activity = goblin.items.getName("Sacred Flame").system.activities.find(a => a.type === "save");
-    const before = new Set(game.messages.keys());
-    await globalThis.MidiQOL.completeActivityUse(activity, { targetUuids: [token.uuid], workflowOptions: { autoFastForward: "on" } });
-    await new Promise(r => setTimeout(r, 4000));
-    const made = game.messages.contents.filter(m => !before.has(m.id));
-    const save = made.find(m => m.type === "save") ?? null;
-    return {
-      hp: aria.system.attributes.hp.value,
-      messages: made.map(m => m.type),
-      natural: save?.rolls[0]?.d20?.results.find(r => r.active)?.result ?? null
-    };
+    await globalThis.MidiQOL.completeActivityUse(activity, {
+      midiOptions: { targetUuids: [token.uuid], workflowOptions: { autoFastForward: "on" } }
+    });
+    return token.uuid;
   });
-  console.log(`      midi: ${JSON.stringify(result)}`);
-  assertEqual(result.natural, 1, "the save's natural (forced)");
-  assertEqual(50 - result.hp, 8, "damage taken by a natural 1 save against 1d8 (its maximum)");
+  try {
+    return await waitFor(gm, () => {
+      const hp = game.actors.getName("Aria").system.attributes.hp.value;
+      return hp < 50 ? 50 - hp : null;
+    }, undefined, "Midi to apply the damage", 15_000);
+  } finally {
+    await gm.eval(async token => {
+      await fromUuidSync(token)?.delete().catch(() => {});
+      await game.actors.getName("Aria").update({ "system.attributes.hp.value": 50 });
+    }, token);
+  }
+}
+
+test("compat: a natural 1 save against a damaging spell takes the damage's maximum", async ({ gm, player }) => {
+  // Midi rolls the save and applies the damage itself; plain dnd5e and RSReforged leave both to the table, which the
+  // natural-saves tests already cover, so this one is only run with Midi.
+  if ( !(await gm.eval(() => !!game.modules.get("midi-qol")?.active)) ) return;
+  assertEqual(await midiSacredFlame(gm, player), 8, "damage taken by a natural 1 save against Sacred Flame's 1d8");
+  // With the setting off, the damage is what was rolled.
+  await gm.eval(moduleId => game.settings.set(moduleId, "naturalSaves", false), MODULE_ID);
+  try {
+    assertEqual(await midiSacredFlame(gm, player), 1, "damage taken with the setting off");
+  } finally {
+    await gm.eval(moduleId => game.settings.set(moduleId, "naturalSaves", true), MODULE_ID);
+  }
 });
 
 /* -------------------------------------------- */

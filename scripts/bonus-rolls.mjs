@@ -156,12 +156,14 @@ async function onApplyBonusRequest(data, userId) {
 /**
  * @param {ChatMessage5e|void} message
  * @returns {boolean}  Whether this message is a bonus roll that can still be spent: a plain roll, such as a feature's
- *   die, rather than a check, save, attack or damage roll, and not one made for a roll request.
+ *   die, rather than a check, save, attack or damage roll, and not one made for a roll request. Midi-QOL keeps a
+ *   feature's die on the feature's card, along with any attack or damage, so a card holding only plain rolls counts.
  */
 export function isBonusRoll(message) {
   if ( !message?.rolls.length ) return false;
   if ( message.getFlag(MODULE_ID, "bonusUsed") || message.getFlag(MODULE_ID, "requestRoll") ) return false;
-  return getRollKind(message) === null;
+  const { D20Roll, DamageRoll } = CONFIG.Dice;
+  return (getRollKind(message) === null) && message.rolls.every(r => !(r instanceof D20Roll) && !(r instanceof DamageRoll));
 }
 
 /* -------------------------------------------- */
