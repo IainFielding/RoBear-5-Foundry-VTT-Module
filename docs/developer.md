@@ -107,7 +107,7 @@ interface RequestPart {
 | `team` | Team Challenge | 1 | | Scored by `scoring`. `average`: everyone's totals averaged, rounded down, against the DC; each natural 1 removes the highest roll, each natural 20 the lowest. `half`: succeeds if at least half meet the DC. `leader`: the roll with the highest modifier (total less the kept d20), +1 per other success, −1 per other failure, against the DC. `weakest`: the lowest modifier, +1 per other success. All but `average` need a `dc`. Allows `alternatives`. |
 | `challenge` | Skill Challenge | 3 | | Three rolls in turn, each with its own DC; `successes` of them needed. Allows `alternatives`. |
 | `rolloff` | Roll-Off | 2 (one per side) | Required, exactly one actor each | Higher total wins. An actor no player owns rolls as a private GM roll until the GM shows it. |
-| `versus` | Team vs Team | 2 (one per side) | Required, at least one actor each | Each side pooled like a Team Challenge; higher average wins. |
+| `versus` | Team vs Team | 2 (one per side) | Required, at least one actor each | Each side pooled like a Team Challenge; higher average wins. An actor no player owns rolls as a private GM roll until the GM shows it. |
 | `divine` | Divine Intervention | 1, which must be `d100` | | Exactly one actor. It picks `range` numbers in a row from 1 to 100, then must roll one of them. `dc` is ignored. |
 
 **Part types and keys**
@@ -378,6 +378,7 @@ in `settings-menus.mjs`. A setting is added to a menu through its class's `SETTI
 | `markNaturals` | Boolean | `true` | Ring natural 1s and 20s in chat and on request cards. |
 | `naturalSaves` | Boolean | `true` | A natural 20 on a save against an activity's damage takes none, and a natural 1 takes its maximum, ignoring resistances and immunities. |
 | `showPlayedCards` | Boolean | `true` | Show played cards' art on screen. |
+| `defaultDC` | Number or `null` | `null` | The DC each roll starts with in the request window; `null` for none. |
 | `showDCDefault` | Boolean | `false` | Whether **Show DC to Players** starts ticked, and the default for `createRequest`'s `showDC`. |
 | `attachRolls` | Boolean | `true` | Draw requested rolls on the request card and hide their own messages. Changing it redraws every request and roll. |
 | `popupPlayers` | Boolean | `false` | Open a pop-up for each player in a request. |

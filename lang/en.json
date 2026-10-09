@@ -68,6 +68,10 @@
         "Name": "Show the DC to players by default",
         "Hint": "Decides whether players can see the DC by default when you create a roll request. You can override it for any request. Hiding the DC removes it from the chat card."
       },
+      "DefaultDC": {
+        "Name": "DC by default",
+        "Hint": "The DC each roll starts with when you open the request window. Leave it blank for none, so you set a DC only when you want one, there or later from the card."
+      },
       "TeamScoring": {
         "Name": "Team Challenge scoring by default",
         "Hint": "How a Team Challenge's rolls are scored when you open the request window. You can change it for any request."
@@ -306,6 +310,8 @@
         "Shown": "Shown",
         "ShowNPC": "Show NPC roll",
         "NPCShown": "NPC roll shown",
+        "ShowNPCs": "Show NPC rolls",
+        "NPCsShown": "NPC rolls shown",
         "ShownTooltip": "Players can see this. Click to hide it.",
         "HiddenTooltip": "Only you can see this."
       },

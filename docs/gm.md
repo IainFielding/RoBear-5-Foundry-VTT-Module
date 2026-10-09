@@ -66,10 +66,11 @@ can open them, and each setting applies to the whole world.
 
 ### Roll Requests
 
-<img src="images/gm-settings-roll-requests.webp" alt="The Roll Request Settings window, with its six settings" width="420">
+<img src="images/gm-settings-roll-requests.webp" alt="The Roll Request Settings window, with its seven settings" width="420">
 
 | Setting | Default | What it does |
 |---|---|---|
+| **DC by default** | Blank | The DC each roll starts with when you open the request window. Leave it blank for none; you can still set or change the DC for each request, or later from the card. |
 | **Show the DC to players by default** | Off | Whether **Show DC to Players** starts ticked in the request window. You can still change it for each request. |
 | **Team Challenge scoring by default** | Average of the rolls | How a Team Challenge is scored when you open the request window. You can still change it for each request. See [Team Challenge](#team-challenge). |
 | **Attach rolls to the request card** | On | The rolls made for a request show on its card rather than as messages of their own, as D&D 5e does for an item's saves. Click a result to see its dice. |
@@ -116,7 +117,9 @@ buttons.
 1. **Kind of roll.** Pick one of the six kinds described below. The fields below change to suit it, and anything
    you've filled in carries over when you switch.
 2. **Rolls.** Choose the roll: a plain die (a d20 by default, or a d6, d8, d10, d12 or d100), any skill or tool check,
-   ability check, or saving throw. Then set the DC, or leave it blank for none.
+   ability check, or saving throw. The DC starts blank each time you open the window, or as the **DC by default**
+   setting if you've set one: set one, or leave it blank for none and set it later from the card. A Skill Challenge, and a Team Challenge not scored by its average, need
+   one before you can send them.
 3. **Who rolls.** The actors of any tokens you have selected are ticked for you; otherwise the player characters
    are. The list offers the selected tokens, the player characters, the members of your groups, the combatants, and
    the tokens on the current scene. The tick button beside the heading selects them all.
@@ -228,7 +231,10 @@ again.
 Pick a **Players** team and an **NPCs** team, and a roll for each (a d20 by default, or any check, save or tool). Each
 team's rolls are pooled like a Team Challenge, natural 1s and 20s included, and the higher average wins.
 
-<img src="images/gm-versus.webp" alt="A Team vs Team card: Players (Aria 13, Borin 16) average 14, NPCs (Goblin 10) average 10. Players win" width="300">
+As in a Roll-Off, each NPC's roll is a private GM roll: players see "?" for the NPCs, and no winner, until you click
+**Show NPC rolls** on the card, and you can hide them again.
+
+<img src="images/gm-versus.webp" alt="A Team vs Team card: Players (Aria 13, Borin 16) average 14, NPCs (Goblin 10) average 10. Players win, and a Show NPC Rolls button" width="300">
 
 #### Divine Intervention
 
@@ -275,8 +281,8 @@ their own. Click a result to see its dice. Notes on any cards played show under 
 
 ### Private rolls and what "hidden" means
 
-- With **Private GM Roll**, each player sees only their own results. In a private Roll-Off, **Show NPC roll** shows the
-  NPC's roll only to the players in the request, not to everyone.
+- With **Private GM Roll**, each player sees only their own results. In a private Roll-Off or Team vs Team, **Show NPC roll**
+  (or **Show NPC rolls**) shows the NPCs' rolls only to the players in the request, not to everyone.
 - **Hidden isn't secret.** The DC, and results you haven't shown yet, are hidden on the chat card, but they still
   reach every player's Foundry as part of the request. A player who opens the browser console can read them. That's
   how Foundry shares chat messages, so the hiding keeps the table honest rather than keeping a secret.

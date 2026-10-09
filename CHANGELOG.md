@@ -8,6 +8,14 @@ All notable changes to Sogrom's Table Tools.
 
 - **Results wait for Dice So Nice.** A roll shows as rolling on the request card and pop-up until its 3D dice land,
   so the total, the pass or fail and the summary no longer give the result away while the dice are still moving.
+- **Team vs Team keeps the NPCs' rolls hidden.** As in a Roll-Off, each NPC's roll is a private GM roll, so players
+  see "?" for the NPCs, and no winner, until the GM clicks **Show NPC rolls** on the card.
+- **DCs start blank.** The request window no longer fills in DC 15, nor the last request's DCs: the GM sets a DC only
+  if they want one, or sets it later from the card. A new **DC by default** setting, under Roll Requests, sets the
+  DC each roll starts with instead.
+- **Who rolls is in order of name.** The request window lists the selected tokens, the player characters, the group
+  members and combatants, and the scene's other tokens each in order of name, rather than in the order the world
+  happened to hold them in.
 
 ## 0.0.7
 

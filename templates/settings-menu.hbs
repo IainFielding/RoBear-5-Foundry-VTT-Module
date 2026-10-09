@@ -9,6 +9,8 @@
                 <option value="{{choice.value}}" {{#if choice.selected}}selected{{/if}}>{{choice.label}}</option>
                 {{/each}}
             </select>
+            {{else if number}}
+            <input type="number" id="{{id}}" name="{{key}}" value="{{value}}" min="0" step="1" placeholder="—">
             {{else}}
             <input type="checkbox" id="{{id}}" name="{{key}}" {{checked value}}>
             {{/if}}

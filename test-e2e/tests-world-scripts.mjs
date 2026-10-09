@@ -11,7 +11,7 @@ const MENUS = {
   diceRolling: { id: "stt-settings-dice-rolling", settings: ["markNaturals", "naturalSaves"] },
   rollRequests: {
     id: "stt-settings-roll-requests",
-    settings: ["showDCDefault", "teamScoring", "attachRolls", "popupPlayers", "popupGM", "deathSavePrompt"]
+    settings: ["defaultDC", "showDCDefault", "teamScoring", "attachRolls", "popupPlayers", "popupGM", "deathSavePrompt"]
   },
   worldScripts: {
     id: "stt-settings-world-scripts",
@@ -112,7 +112,7 @@ test("settings menus: four buttons for the GM, each holding its own settings and
     }, { moduleId: MODULE_ID, key });
     const app = gm.page.locator(`#${id}`);
     await app.waitFor({ timeout: 10_000 });
-    const names = await app.locator('input[type="checkbox"], select').evaluateAll(inputs => inputs.map(i => i.name));
+    const names = await app.locator('input[type="checkbox"], input[type="number"], select').evaluateAll(inputs => inputs.map(i => i.name));
     assertEqual(names, settings, `${key} settings`);
     await app.locator('[data-action="close"]').click();
     await app.waitFor({ state: "detached", timeout: 5000 });
@@ -139,6 +139,32 @@ test("settings menus: ticking a box and saving changes that setting, and only th
       .map(key => [key, game.settings.get(moduleId, key)])
   ), MODULE_ID);
   assertEqual(after, { ...before, rarityColours: true }, "Gameplay Enhancements after saving");
+});
+
+test("settings menus: the DC by default starts blank, saves a number, and clears again", async ({ gm }) => {
+  const open = async () => {
+    await gm.eval(moduleId => new (game.settings.menus.get(`${moduleId}.rollRequests`).type)().render({ force: true }),
+      MODULE_ID);
+    const app = gm.page.locator(`#${MENUS.rollRequests.id}`);
+    await app.waitFor({ timeout: 10_000 });
+    return app;
+  };
+  const save = async (app, value) => {
+    await app.locator('input[name="defaultDC"]').fill(value);
+    await app.locator('button[type="submit"]').click();
+    await app.waitFor({ state: "detached", timeout: 5000 });
+    return gm.eval(moduleId => game.settings.get(moduleId, "defaultDC"), MODULE_ID);
+  };
+  try {
+    let app = await open();
+    assertEqual(await app.locator('input[name="defaultDC"]').inputValue(), "", "the DC by default, to start with");
+    assertEqual(await save(app, "14"), 14, "the setting after saving 14");
+    app = await open();
+    assertEqual(await app.locator('input[name="defaultDC"]').inputValue(), "14", "the DC by default once saved");
+    assertEqual(await save(app, ""), null, "the setting after clearing it");
+  } finally {
+    await gm.eval(moduleId => game.settings.set(moduleId, "defaultDC", null), MODULE_ID);
+  }
 });
 
 /* -------------------------------------------- */
