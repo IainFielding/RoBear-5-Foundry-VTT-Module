@@ -2,7 +2,16 @@
 
 All notable changes to Sogrom's Table Tools.
 
-## Unreleased
+## 0.0.6
+
+For Foundry VTT v14 and the D&D 5e system 6.x.
+
+### Hero Cards
+
+- **Divine Intervention, played from the sheet, tells the GM.** The GM is whispered a note with a **Set Up Divine
+  Intervention** button, which opens the request window set to Divine Intervention with that character the one to
+  roll.
+- **The card window lines up.** Every card's art starts at the same height, whether its name takes one line or two.
 
 ### Roll requests
 
@@ -25,20 +34,9 @@ All notable changes to Sogrom's Table Tools.
 - **Midi-QOL, partly supported.** The Hero Cards feature opens the card chooser from the sheet again, instead of
   Midi's list of activities. Damage Midi applies itself follows **Natural 1s and 20s on saves against damage**, and a
   feature's die on a Midi card can be added to a roll from the right-click menu. Natural 1s and 20s are ringed on the
-  saves Midi lists on its card, and a card played on a roll in chat no longer rolls the card's own die a second time
-  through Midi's workflow. A card played after Midi has resolved
-  a roll doesn't change the hits, saves or damage Midi has already applied: see Other modules in the GM guide.
-
-## 0.0.6
-
-For Foundry VTT v14 and the D&D 5e system 6.x.
-
-### Hero Cards
-
-- **Divine Intervention, played from the sheet, tells the GM.** The GM is whispered a note with a **Set Up Divine
-  Intervention** button, which opens the request window set to Divine Intervention with that character the one to
-  roll.
-- **The card window lines up.** Every card's art starts at the same height, whether its name takes one line or two.
+  saves Midi lists on its card, and a card played on a roll in chat doesn't roll its own die again through Midi's
+  workflow. A card played after Midi has resolved a roll doesn't change the hits, saves or damage Midi
+  has already applied: see Other modules in the GM guide.
 
 ### Settings
 
@@ -50,7 +48,7 @@ For Foundry VTT v14 and the D&D 5e system 6.x.
 
 - **A new README** introduces the module, with links to the guides.
 - **The guides have moved into `docs/`**: the player guide (the old README), the GM guide and the developer guide.
-- **Screenshots retaken** for the settings and the card window.
+- **Screenshots retaken** for the settings, the card window and the request window.
 
 ### Smaller download
 
