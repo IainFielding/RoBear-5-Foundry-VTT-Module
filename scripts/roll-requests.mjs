@@ -121,7 +121,7 @@ let rollIndex = null;
 
 Hooks.once("init", () => {
   registerSettings();
-  game.modules.get(MODULE_ID).api = { requestRolls: openRollRequest, createRequest };
+  game.modules.get(MODULE_ID).api = { requestRolls: () => openRollRequest(), createRequest };
 });
 Hooks.on("renderChatInput", onRenderChatInput);
 Hooks.on("getSceneControlButtons", onGetSceneControlButtons);
@@ -165,17 +165,19 @@ function registerSettings() {
 /**
  * Open the roll request window, or bring it to the front if it is already open, keeping what the GM has filled in.
  * A second window would replace the first under the same ID, leaving the first orphaned.
+ * @param {RequestPreset} [preset]  The kind of request and who rolls, set over what the window would start with.
  * @returns {RollRequestConfig|void}
  */
-export function openRollRequest() {
+export function openRollRequest(preset) {
   if ( !game.user.isGM ) return;
   const open = foundry.applications.instances.get(RollRequestConfig.DEFAULT_OPTIONS.id);
   if ( open?.rendered ) {
     if ( open.minimized ) open.maximize();
     open.bringToFront();
+    if ( preset ) open.applyPreset(preset);
     return open;
   }
-  const app = new RollRequestConfig();
+  const app = new RollRequestConfig({ preset });
   app.render({ force: true });
   return app;
 }
@@ -195,7 +197,7 @@ function onRenderChatInput(_app, elements) {
   button.className = "ui-control icon fa-solid fa-beer-mug-empty stt-request-control";
   button.dataset.tooltipText = localize("STT.Request.WindowTitle");
   button.setAttribute("aria-label", localize("STT.Request.WindowTitle"));
-  button.addEventListener("click", openRollRequest);
+  button.addEventListener("click", () => openRollRequest());
   controls.prepend(button);
 }
 
@@ -213,7 +215,7 @@ function onGetSceneControlButtons(controls) {
     title: "STT.Request.WindowTitle",
     icon: "fa-solid fa-beer-mug-empty",
     button: true,
-    onChange: openRollRequest
+    onChange: () => openRollRequest()
   };
 }
 
@@ -863,11 +865,31 @@ function onRenderChatMessage(message, html) {
     html.classList.add("stt-attached-roll");
     return;
   }
-  const request = getRequest(message);
   const content = html.querySelector(".message-content");
+  const divineSetup = message.getFlag(MODULE_ID, "divineSetup");
+  if ( divineSetup && content && game.user.isGM ) content.append(createDivineSetupButton(divineSetup));
+  const request = getRequest(message);
   if ( !request || !content ) return;
   html.classList.add("stt-request-message");
   content.replaceChildren(renderRequest(message, request));
+}
+
+/* -------------------------------------------- */
+
+/**
+ * The GM's button on the note that a Divine Intervention card was played: it opens the request window set to Divine
+ * Intervention, with the card's player the one to roll.
+ * @param {string} actorUuid
+ * @returns {HTMLButtonElement}
+ */
+function createDivineSetupButton(actorUuid) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "stt-card-button stt-divine-setup";
+  button.innerHTML = `<i class="fa-solid fa-hands-praying" inert></i> ${foundry.utils.escapeHTML(
+    localize("STT.Cards.DivineSetup.Button"))}`;
+  button.addEventListener("click", () => openRollRequest({ mode: "divine", actors: [actorUuid] }));
+  return button;
 }
 
 /* -------------------------------------------- */

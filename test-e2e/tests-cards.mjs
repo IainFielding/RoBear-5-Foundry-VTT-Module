@@ -719,6 +719,39 @@ test("played cards: a card played from the sheet is shown on screen, with a shor
   }, null, "the description to open");
 });
 
+test("sheet: Divine Intervention whispers the GM a button that opens the request window set up for it", async ({ gm, player }) => {
+  await useFeature(player);
+  const dialog = player.page.locator(".stt-card-dialog.application").last();
+  await dialog.locator(".stt-card-choice", { hasText: "Divine Intervention" }).click();
+  await player.page.locator(".application.activity-usage button", { hasText: "Use Ability" }).click();
+
+  const note = await waitFor(gm, () => game.messages.contents.findLast(m => m.getFlag("sogrom-table-tools", "divineSetup"))
+    ?.id, null, "the note to the GM", 5000);
+  assertEqual(await gm.eval(id => {
+    const m = game.messages.get(id);
+    const gms = game.users.filter(u => u.isGM).map(u => u.id);
+    return [m.getFlag("sogrom-table-tools", "divineSetup") === game.actors.getName("Aria").uuid,
+      m.whisper.length > 0 && m.whisper.every(u => gms.includes(u))];
+  }, note), [true, true], "the note's actor, and that only GMs are whispered");
+
+  // Only the GM gets the button.
+  const button = id => `#chat .chat-log li.chat-message[data-message-id="${id}"] .stt-divine-setup`;
+  await waitFor(player, id => !!document.querySelector(`#chat li.chat-message[data-message-id="${id}"]`), note,
+    "the note in the player's chat");
+  assertEqual(await player.page.locator(button(note)).count(), 0, "set-up buttons for the player");
+
+  await gm.page.locator(button(note)).click();
+  const app = gm.page.locator("#stt-roll-request");
+  await app.waitFor({ timeout: 5000 });
+  const form = await app.evaluate(el => ({
+    mode: el.querySelector('input[name="mode"]:checked')?.value,
+    actors: [...el.querySelectorAll('input[name^="actors."]:checked')]
+      .map(box => box.closest("label")?.textContent.trim())
+  }));
+  assertEqual(form, { mode: "divine", actors: ["Aria"] }, "the request window");
+  await gm.eval(() => foundry.applications.instances.get("stt-roll-request")?.close());
+});
+
 test("cards: a roll keeps its note once no card is left to play on it", async ({ player }) => {
   await forceDice(player, [d20(5)]);
   const id = await roll(player, "Aria", "skill");

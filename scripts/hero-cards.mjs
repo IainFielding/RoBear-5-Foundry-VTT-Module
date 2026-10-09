@@ -6,6 +6,7 @@
 export const MODULE_ID = "sogrom-table-tools";
 const CARDS_ITEM_ID = "xFVsPIjSASjXaqUO";
 const CARDS_IDENTIFIER = "hero-cards";
+const DIVINE_CARD_ID = "c4kwzmakUx2o9UFQ";
 const IMAGE_PATH = `modules/${MODULE_ID}/assets/images`;
 
 /**
@@ -321,10 +322,12 @@ async function onUpdateChatMessage(message, changes) {
 /* -------------------------------------------- */
 
 /**
- * Using the Advantage card from the sheet grants advantage on the next d20 test.
+ * Using the Advantage card from the sheet grants advantage on the next d20 test. Playing Divine Intervention asks the
+ * GM to set up its roll.
  * @param {Activity} activity
  */
 async function onPostUseActivity(activity) {
+  if ( isDivineCard(activity) ) return askForDivineIntervention(activity.actor);
   if ( (getCardKey(activity) !== "advantage") || retroactiveUses.has(activity.uuid) ) return;
   const actor = activity.actor;
   if ( !actor ) return;
@@ -408,6 +411,35 @@ export function getRollKind(message) {
 function getCardKey(activity) {
   const name = activity.name?.trim().toLowerCase();
   return Object.entries(CARDS).find(([, c]) => c.ids.includes(activity.id) || c.names.includes(name))?.[0];
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {Activity} activity
+ * @returns {boolean}  Is this the Divine Intervention card?
+ */
+function isDivineCard(activity) {
+  if ( !activity.item || !isCardItem(activity.item) ) return false;
+  return (activity.id === DIVINE_CARD_ID) || (activity.name?.trim().toLowerCase() === "divine intervention");
+}
+
+/* -------------------------------------------- */
+
+/**
+ * Whisper the GMs a note that Divine Intervention was played, with a button that opens the request window set up
+ * for it (see roll-requests.mjs).
+ * @param {Actor5e|void} actor  Who played the card.
+ */
+async function askForDivineIntervention(actor) {
+  if ( !actor ) return;
+  const content = `<p>${foundry.utils.escapeHTML(localize("STT.Cards.DivineSetup.Played", { name: actor.name }))}</p>`;
+  await ChatMessage.create({
+    speaker: ChatMessage.getSpeaker({ actor }),
+    content,
+    whisper: ChatMessage.getWhisperRecipients("GM").map(u => u.id),
+    flags: { [MODULE_ID]: { divineSetup: actor.uuid } }
+  });
 }
 
 /* -------------------------------------------- */

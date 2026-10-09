@@ -76,8 +76,8 @@ the end of both consoles.
 
 - `tests-death-saves.mjs`: death save requests at the start of a dying creature's turn: who is asked, the pop-ups,
   once a round, stable creatures, and removing a request when the creature is healed.
-- `tests-world-scripts.mjs`: the four settings menus, each holding its own settings, and the five World Altering
-  Scripts, each checked off and then on: the Bloodied tint, faded unprepared spells, rarity tints on item rows,
+- `tests-world-scripts.mjs`: the four settings menus, each holding its own settings, and the five Gameplay
+  Enhancements, each checked off and then on: the Bloodied tint, faded unprepared spells, rarity tints on item rows,
   labels on compact chat card buttons, and the one-tab activity layout.
 
 The rules themselves also have unit tests in `../test`, which `npm test` runs without Foundry.

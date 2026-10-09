@@ -188,6 +188,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  /* Art at the top of every card in a row, whether its name takes one line or two. */
+  justify-content: flex-start;
   gap: 6px;
   width: 110px;
   height: auto;

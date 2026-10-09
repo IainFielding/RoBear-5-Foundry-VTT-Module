@@ -1,5 +1,5 @@
 /**
- * End-to-end tests for the settings menus and the World Altering Scripts: Bloodied Token Tint, Fade Unprepared Spells,
+ * End-to-end tests for the settings menus and the Gameplay Enhancements: Bloodied Token Tint, Fade Unprepared Spells,
  * Item Rarity Colours, Chat Button Labels and One-Tab Activities.
  */
 
@@ -124,7 +124,7 @@ test("settings menus: ticking a box and saving changes that setting, and only th
     ["bloodiedTint", "fadeUnprepared", "rarityColours", "chatButtonLabels", "oneTabActivities"]
       .map(key => [key, game.settings.get(moduleId, key)])
   ), MODULE_ID);
-  assert(Object.values(before).every(v => v === false), "A World Altering Script started on.");
+  assert(Object.values(before).every(v => v === false), "A Gameplay Enhancement started on.");
 
   await gm.eval(moduleId => new (game.settings.menus.get(`${moduleId}.worldScripts`).type)().render({ force: true }),
     MODULE_ID);
@@ -138,11 +138,11 @@ test("settings menus: ticking a box and saving changes that setting, and only th
     ["bloodiedTint", "fadeUnprepared", "rarityColours", "chatButtonLabels", "oneTabActivities"]
       .map(key => [key, game.settings.get(moduleId, key)])
   ), MODULE_ID);
-  assertEqual(after, { ...before, rarityColours: true }, "World Altering Scripts after saving");
+  assertEqual(after, { ...before, rarityColours: true }, "Gameplay Enhancements after saving");
 });
 
 /* -------------------------------------------- */
-/*  World Altering Scripts                      */
+/*  Gameplay Enhancements                       */
 /* -------------------------------------------- */
 
 test("world scripts: every one is off by default", async ({ gm }) => {

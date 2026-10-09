@@ -1,6 +1,6 @@
 /**
- * Settings menus: the module's settings, grouped into Hero Cards, Dice Rolling, Roll Requests and World Altering
- * Scripts, each opened from a button in Configure Settings rather than listed there.
+ * Settings menus: the module's settings, grouped into Hero Cards, Dice Rolling, Roll Requests and Gameplay
+ * Enhancements, each opened from a button in Configure Settings rather than listed there.
  */
 
 import { MODULE_ID } from "./hero-cards.mjs";

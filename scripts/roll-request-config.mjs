@@ -39,6 +39,12 @@ const { FormDataExtended } = foundry.applications.ux;
  * @property {[string|null, string|null]} rivals  Each side of a Roll-Off.
  */
 
+/**
+ * @typedef {object} RequestPreset
+ * @property {string} mode      The kind of request to start on, a key in MODES.
+ * @property {string[]} actors  The UUIDs of who rolls.
+ */
+
 export default class RollRequestConfig extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /** @override */
@@ -87,6 +93,21 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
    */
   #draft = null;
 
+  /**
+   * The kind of request and who rolls, set over the starting draft when the window first opens.
+   * @type {RequestPreset|null}
+   */
+  #preset = null;
+
+  /**
+   * @param {object} [options]
+   * @param {RequestPreset} [options.preset]  The kind of request and who rolls, to start with.
+   */
+  constructor({ preset, ...options }={}) {
+    super(options);
+    this.#preset = preset ?? null;
+  }
+
   /* -------------------------------------------- */
   /*  Rendering                                   */
   /* -------------------------------------------- */
@@ -94,7 +115,7 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
   /** @inheritDoc */
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
-    this.#actors ??= getCandidates();
+    this.#actors ??= getCandidates(this.#preset?.actors);
     this.#draft ??= this.#getInitialDraft();
     const draft = this.#draft;
     const mode = MODES[draft.mode];
@@ -184,12 +205,30 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
     for ( const [key, m] of Object.entries(MODES) ) if ( m.contest ) draft.sideRolls[key] ??= ["d20", "d20"];
     // Who rolls always starts from the current selection rather than the last request, and whether players see the
     // DC always starts from the GM's setting.
-    return Object.assign(draft, {
+    Object.assign(draft, {
       showDC: game.settings.get(MODULE_ID, "showDCDefault"),
       actors: selected.length ? selected.map(a => a.uuid) : players,
       teams: [players, selected.filter(a => !a.hasPlayerOwner).map(a => a.uuid)],
       rivals: [selected[0]?.uuid ?? null, selected[1]?.uuid ?? null]
     });
+    if ( this.#preset ) Object.assign(draft, { mode: this.#preset.mode, actors: [...this.#preset.actors] });
+    return draft;
+  }
+
+  /* -------------------------------------------- */
+
+  /**
+   * Switch the open window to a kind of request and who rolls, keeping the rest of what the GM has filled in.
+   * @param {RequestPreset} preset
+   */
+  applyPreset({ mode, actors }) {
+    this.#readForm();
+    for ( const uuid of actors ) {
+      const actor = fromUuidSync(uuid);
+      if ( actor && !this.#actors.some(a => a.uuid === uuid) ) this.#actors.unshift(actor);
+    }
+    Object.assign(this.#draft, { mode, actors: [...actors] });
+    this.render({ parts: ["form"] });
   }
 
   /* -------------------------------------------- */
@@ -364,12 +403,15 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
 /* -------------------------------------------- */
 
 /**
- * Actors the GM might ask to roll: those of the selected tokens, the player characters, then the scene's other tokens.
+ * Actors the GM might ask to roll: any asked for by name, those of the selected tokens, the player characters, then
+ * the scene's other tokens.
+ * @param {string[]} [uuids]  Actors to offer first, such as the one who played a Divine Intervention card.
  * @returns {Actor5e[]}
  */
-function getCandidates() {
+function getCandidates(uuids=[]) {
   const actors = new Map();
   const add = actor => actor && !actors.has(actor.uuid) && actors.set(actor.uuid, actor);
+  for ( const uuid of uuids ) add(fromUuidSync(uuid));
   for ( const token of canvas.tokens?.controlled ?? [] ) add(token.actor);
   for ( const actor of game.actors ) {
     if ( (actor.type === "character") && actor.hasPlayerOwner ) add(actor);

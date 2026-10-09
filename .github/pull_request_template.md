@@ -43,7 +43,7 @@ Foundry itself, so please also say what you clicked through in a real world.
 - [ ] Every commit is signed off (`git commit -s`) — see [CONTRIBUTING.md](../CONTRIBUTING.md)
 - [ ] No AI tool attribution in commit messages (`Co-Authored-By: Claude ...` and similar)
 - [ ] Compendium packs were edited with Foundry closed, or rebuilt with the Foundry CLI
-- [ ] Updated the README if the change is user-visible
+- [ ] Updated the guides in docs/ (and the README, if it changes a headline feature) if the change is user-visible
 - [ ] No unrelated changes bundled in
 
 ## Screenshots

@@ -2,6 +2,33 @@
 
 All notable changes to Sogrom's Table Tools.
 
+## 0.0.6
+
+For Foundry VTT v14 and the D&D 5e system 6.x.
+
+### Hero Cards
+
+- **Divine Intervention, played from the sheet, tells the GM.** The GM is whispered a note with a **Set Up Divine
+  Intervention** button, which opens the request window set to Divine Intervention with that character the one to
+  roll.
+- **The card window lines up.** Every card's art starts at the same height, whether its name takes one line or two.
+
+### Settings
+
+- **World Altering Scripts are now Gameplay Enhancements**, in Configure Settings and in the guides. The settings
+  themselves are unchanged, and worlds keep what they had turned on.
+- **Clearer hint for Chat Button Labels**, saying what it fixes.
+
+### Documentation
+
+- **A new README** introduces the module, with links to the guides.
+- **The guides have moved into `docs/`**: the player guide (the old README), the GM guide and the developer guide.
+- **Screenshots retaken** for the settings and the card window.
+
+### Smaller download
+
+- **Unused font weights removed**: Spectral's light and medium weights, which nothing used, about 150 KB.
+
 ## 0.0.5: First release
 
 For Foundry VTT v14 and the D&D 5e system 6.x.
@@ -35,12 +62,11 @@ For Foundry VTT v14 and the D&D 5e system 6.x.
   right-click menu.
 - **Fighter's Indomitable** is offered on a failed save, under both the 2014 and 2024 rules.
 
-### World Altering Scripts
+### Gameplay Enhancements
 
-- **Five optional scripts**, each off until the GM turns it on: Bloodied Token Tint, Fade Unprepared Spells, Item
+- **Five optional enhancements**, each off until the GM turns it on: Bloodied Token Tint, Fade Unprepared Spells, Item
   Rarity Colours, Chat Button Labels and One-Tab Activities.
 
 ### Settings
 
-- **Grouped into four menus** in Configure Settings: Hero Cards, Dice Rolling, Roll Requests and World Altering
-  Scripts.
+- **Grouped into four menus** in Configure Settings: Hero Cards, Dice Rolling, Roll Requests and Gameplay Enhancements.

@@ -23,14 +23,14 @@
           "Hint": "Configure roll request behaviour, including DC visibility, roll display options, pop-up prompts, and automatic death save requests."
         },
         "WorldScripts": {
-          "Name": "World Altering Scripts",
-          "Label": "World Altering Scripts",
+          "Name": "Gameplay Enhancements",
+          "Label": "Gameplay Enhancements",
           "Hint": "Optional quality-of-life improvements for tokens, character sheets, chat cards, and activity windows. Enable only the features you want to use."
         }
       },
       "BloodiedTint": {
         "Name": "Bloodied Token Tint",
-        "Hint": "Highlights Bloodied creatures with a red tint and matching token ring colours, making them easier to spot during play."
+        "Hint": "Automaticaly Highlights Bloodied creatures with a red tint and matching token ring colours, making them easier to spot during play."
       },
       "FadeUnprepared": {
         "Name": "Fade Unprepared Spells",
@@ -38,7 +38,7 @@
       },
       "ChatButtonLabels": {
         "Name": "Chat Button Labels",
-        "Hint": "Display text labels alongside chat card icons, making actions easier to identify at a glance."
+        "Hint": "Fixes the small attack and damage buttons from dnd 6.0 update, adds words making them much easier to see and use."
       },
       "OneTabActivities": {
         "Name": "One-Tab Activities",
@@ -58,7 +58,7 @@
       },
       "NaturalSaves": {
         "Name": "Natural 1s and 20s on saves against damage",
-        "Hint": "By default, a natural 20 on a saving throw against a spell's or feature's damage means no damage is taken. A natural 1 deals the maximum possible damage instead, treating every damage die as though it rolled its highest value (for example, 36 from 6d6), and ignoring any resistances or immunities. The Apply tray is automatically populated with these results, but the GM remains free to adjust them before applying damage."
+        "Hint": "Natural 20 on a saving throw against a spell's or feature's damage means no damage is taken. A natural 1 deals the maximum possible damage instead, treating every damage die as though it rolled its highest value (for example, 36 from 6d6), and ignoring any resistances or immunities. The Apply tray is automatically populated with these results, but the GM remains free to adjust them before applying damage."
       },
       "ShowPlayedCards": {
         "Name": "Show Played Cards on Screen",
@@ -103,6 +103,10 @@
       "DialogTitle": "Use a Hero Card",
       "LegacyLabel": "Hero Cards:",
       "Plays": "{name} plays",
+      "DivineSetup": {
+        "Played": "{name} played Divine Intervention. Set up their roll when you're ready.",
+        "Button": "Set Up Divine Intervention"
+      },
       "Log": {
         "Entry": "{card}: {detail}",
         "Inspiration": "added {formula} ({bonus}): {before} + {bonus} = {after}",

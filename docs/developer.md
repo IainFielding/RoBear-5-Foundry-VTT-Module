@@ -3,8 +3,8 @@
 This guide is for macro authors, module developers and contributors. It documents the module's public API, the data it
 stores on documents, its settings and socket messages, and how the code and tests are laid out.
 
-What the module does from the table's side is in the [player guide](README.md) and the [GM Guide](GM.md). How to
-contribute (sign-off, commit messages, pull requests) is in [CONTRIBUTING.md](CONTRIBUTING.md).
+What the module does from the table's side is in the [player guide](player.md) and the [GM Guide](gm.md). How to
+contribute (sign-off, commit messages, pull requests) is in [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Contents
 
@@ -292,6 +292,12 @@ them out from its roll messages each time it draws.
 | `revealed` | `boolean` | The GM's **Show to players** button | Whether players see the results and summary. Unset means hidden. A death save request is posted with it set. |
 | `deathSave` | `{ actor: string, combat: string, round: number }` | `death-saves.mjs` | Marks a death save request posted at the start of a turn: the actor's UUID, and the combat and round it was posted for, so a turn started again posts no second request. |
 
+### On a Divine Intervention note
+
+| Flag | Type | Written by | Meaning |
+|---|---|---|---|
+| `divineSetup` | `string` | `hero-cards.mjs`, on the player's client | The UUID of the actor who played the Divine Intervention card from their sheet. The note is whispered to the GMs, whose Foundry adds a button that opens the request window set to Divine Intervention for that actor. A player could write the flag on a message of their own, but all it can do is preset the GM's window. |
+
 ### On a roll made for a request
 
 | Flag | Type | Meaning |
@@ -459,11 +465,11 @@ scripts/
   bonus-rolls.mjs           Adding another feature's die to a roll, and the socket messages for it.
   class-features.mjs        Fighter's Indomitable.
   natural-saves.mjs         Natural 1s and 20s on saves against an activity's damage.
-  bloodied-tint.mjs         World Altering Scripts: the red tint on D&D 5e's Bloodied effect.
-  fade-unprepared.mjs       World Altering Scripts: fading unprepared spells on actor sheets.
-  rarity-colours.mjs        World Altering Scripts: tinting item rows on actor sheets by rarity.
-  chat-button-labels.mjs    World Altering Scripts: labels on compact chat cards' icon buttons.
-  one-tab-activities.mjs    World Altering Scripts: an activity sheet's tabs side by side.
+  bloodied-tint.mjs         Gameplay Enhancements: the red tint on D&D 5e's Bloodied effect.
+  fade-unprepared.mjs       Gameplay Enhancements: fading unprepared spells on actor sheets.
+  rarity-colours.mjs        Gameplay Enhancements: tinting item rows on actor sheets by rarity.
+  chat-button-labels.mjs    Gameplay Enhancements: labels on compact chat cards' icon buttons.
+  one-tab-activities.mjs    Gameplay Enhancements: an activity sheet's tabs side by side.
   settings-menus.mjs        The settings menus (ApplicationV2).
 templates/roll-request.hbs  The request window's form.
 templates/settings-menu.hbs A settings menu's form.
@@ -475,7 +481,7 @@ src/packs/                  Compendium sources, as YAML. Built into packs/ (not 
 test/                       Unit tests (Vitest), with Foundry shims in test/helpers.
 test-e2e/                   End-to-end tests and the screenshot script, driving a real Foundry with Playwright.
 tools/                      Pack build/extract and manifest validation.
-docs/images/                Screenshots for the guides.
+docs/                       The player, GM and developer guides, the art sources, and the screenshots in images/.
 ```
 
 ## Development
@@ -488,7 +494,7 @@ npm run check      # manifest validation, lint and unit tests, as CI runs them
 ```
 
 Link the repository into Foundry's `Data/modules` folder as `sogrom-table-tools`, then build the compendiums. See
-[CONTRIBUTING.md](CONTRIBUTING.md#getting-set-up) for the commands.
+[CONTRIBUTING.md](../CONTRIBUTING.md#getting-set-up) for the commands.
 
 ### Compendium packs
 
@@ -510,7 +516,7 @@ npm run extract:packs   # packs/ → YAML, after editing the packs in Foundry; t
 | `npm run lint` | ESLint, with no warnings allowed. |
 
 The end-to-end harness needs a local Foundry install: copy `test-e2e/config.example.mjs` to `test-e2e/config.mjs`
-and set the paths. [test-e2e/README.md](test-e2e/README.md) explains the setup, the test world and its fixtures, and
+and set the paths. [test-e2e/README.md](../test-e2e/README.md) explains the setup, the test world and its fixtures, and
 what each file tests. Add tests for new features, and run both suites before opening a pull request.
 
 ### Screenshots
@@ -532,5 +538,5 @@ guides use.
 Publishing a GitHub release, tagged `v1.2.3` or `1.2.3`, runs `.github/workflows/main.yml`. It fills in the version
 and URLs in `module.json`,
 runs `npm run check`, builds the packs, and attaches `module.json` and `module.zip` to the release. The archive holds
-only what the module needs at runtime, as listed in the workflow's `zip` step; the guides (the README included), the
-screenshots and the dev tooling aren't in it. Record user-facing changes in [CHANGELOG.md](CHANGELOG.md).
+only what the module needs at runtime, as listed in the workflow's `zip` step; the README, the guides in docs/, the
+screenshots and the dev tooling aren't in it. Record user-facing changes in [CHANGELOG.md](../CHANGELOG.md).
