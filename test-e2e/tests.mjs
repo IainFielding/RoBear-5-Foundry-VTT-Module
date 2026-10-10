@@ -822,7 +822,7 @@ test("party challenge: everyone rolls in rounds until the party has enough succe
 
   await forceDice(player, [d20(2)]);
   await clickRoll(player, id, "Borin", { fastForward: true });
-  card = await waitForCard(gm, id, c => c.summary?.startsWith("Successes 1/3"), "the GM's tally after a round");
+  card = await waitForCard(gm, id, c => c.summary?.includes("Failures 1/2"), "the GM's tally after a round");
   assertEqual(card.summary, "Successes 1/3 · Failures 1/2 Show to players", "the GM's tally after a round");
   card = await waitForCard(player, id, c => row(c, "Aria").rollButtons === 1, "the second round to open");
   assertEqual(card.summary, null, "the player's tally before it is shown");
