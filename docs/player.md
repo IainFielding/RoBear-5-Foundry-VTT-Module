@@ -103,6 +103,8 @@ By default:
 - On initiative, a natural 20 puts you first in the initiative order and a natural 1 puts you last, whatever your
   total.
 
+<img src="images/initiative-naturals.webp" alt="The combat tracker: Aria first with a natural 20 in gold, above Borin's higher total, and the Goblin last with a natural 1 in red" width="300">
+
 Your GM can customise these rules, so the exact behaviour at your table may differ.
 
 ## Adding another feature's die to a roll
