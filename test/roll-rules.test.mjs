@@ -66,6 +66,15 @@ describe("Team Challenge pooling", () => {
     expect(poolTeamRolls(entries([["A", 25, 20]]))).toMatchObject({ average: 25, removed: new Map() });
   });
 
+  it("rounds the average down to the decimal places asked for, as Team vs Team does to one", () => {
+    const rolls = entries([["A", 12, 8], ["B", 15, 11], ["C", 11, 5]]);
+    expect(poolTeamRolls(rolls).average).toBe(12);
+    expect(poolTeamRolls(rolls, 1).average).toBe(12.6);
+    // An average already exact to one place stays as it is.
+    expect(poolTeamRolls(entries([["A", 12, 8], ["B", 11, 5]]), 1).average).toBe(11.5);
+    expect(poolTeamRolls(entries([["A", 8, 8], ["B", 9, 9], ["C", 7, 7], ["D", 9, 9], ["E", 8, 8]]), 1).average).toBe(8.2);
+  });
+
   it("ignores rolls without a d20, such as a d100", () => {
     expect(poolTeamRolls(entries([["A", 1, undefined], ["B", 20, undefined]])).removed.size).toBe(0);
   });
@@ -351,6 +360,10 @@ describe("Checking a request before it is posted", () => {
     expect(errorFor({ ...valid.standard, parts: [{ type: "skill", key: "ath", dc: 15 }] })).toBeNull();
   });
 
+  it("accepts each roll visibility: public, a private GM roll, or a blind one", () => {
+    for ( const rollMode of ["public", "gm", "blind"] ) expect(errorFor({ ...valid.standard, rollMode })).toBeNull();
+  });
+
   it("refuses a request with no one to roll", () => {
     expect(errorFor({ ...valid.standard, actors: [] })).toBe(refusal("NoActors"));
   });
@@ -411,7 +424,7 @@ describe("Checking a request before it is posted", () => {
   it("refuses an unknown roll, a DC that isn't a number, or an unknown visibility", () => {
     expect(errorFor({ ...valid.standard, parts: [{ type: "d7", dc: null }] })).toBe("Unknown kind of roll: d7.");
     expect(errorFor({ ...valid.standard, parts: [{ type: "d20", dc: "hard" }] })).toBe(refusal("DC", { dc: "hard" }));
-    expect(errorFor({ ...valid.standard, rollMode: "blind" })).toBe(refusal("RollMode", { rollMode: "blind" }));
+    expect(errorFor({ ...valid.standard, rollMode: "self" })).toBe(refusal("RollMode", { rollMode: "self" }));
   });
 
   it("accepts a choice of rolls in a standard roll, team challenge or skill challenge step", () => {
@@ -531,6 +544,18 @@ describe("Posting a request", () => {
     expect(posted.content).toBe("<p>Death Save</p>");
   });
 
+  it("starts a public Standard Roll with its DC shown as shown, since players can work its result out", async () => {
+    const revealed = async (request, flags) => (await postRequest({
+      mode: "standard", actors: ["A"], parts: [{ type: "d20", dc: 10 }], ...request
+    }, flags)).flags["sogrom-table-tools"].revealed;
+    expect(await revealed({ showDC: true })).toBe(true);
+    expect(await revealed({ showDC: false })).toBeUndefined();
+    expect(await revealed({ showDC: true, rollMode: "gm" })).toBeUndefined();
+    expect(await revealed({ showDC: true, mode: "team" })).toBeUndefined();
+    // Whoever posts it can still start it hidden.
+    expect(await revealed({ showDC: true }, { revealed: false })).toBe(false);
+  });
+
   it("refuses a request that can't be rolled, posting nothing", async () => {
     let posted = false;
     globalThis.ChatMessage = { create: async () => (posted = true) };
@@ -591,6 +616,12 @@ describe("Group outcomes", () => {
   it("never settles a side with no one on it", () => {
     expect(getGroupOutcome([], new Map(), true)).toMatchObject({ complete: false, hidden: false });
     expect(getGroupOutcome([], new Map(), false).score).toBeUndefined();
+  });
+
+  it("tells close Team vs Team averages apart, rounding each down to one decimal place", () => {
+    const sides = results({ A: roll(12, 8), B: roll(15, 11), C: roll(11, 5), D: roll(12, 8) });
+    const score = uuids => getGroupOutcome(uuids, sides, true, { places: 1 }).score;
+    expect([score(["A", "B", "C"]), score(["D"])]).toEqual([12.6, 12]);
   });
 
   it("scores a team by its pooled average, with the 1 and 20 rule", () => {

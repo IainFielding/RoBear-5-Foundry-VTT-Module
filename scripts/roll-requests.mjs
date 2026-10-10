@@ -102,6 +102,11 @@ export const SCORING = {
 export const DIVINE_RANGE = { min: 1, max: 50, initial: 16 };
 
 /**
+ * Who sees a request's rolls: everyone, the GM and whoever made the roll, or, in a blind roll, only the GM.
+ */
+export const ROLL_MODES = ["public", "gm", "blind"];
+
+/**
  * Plain dice that can be rolled instead of a check.
  */
 export const DICE = {
@@ -112,6 +117,11 @@ export const DICE = {
   d12: { label: "d12", formula: "1d12" },
   d100: { label: "d100", formula: "1d100" }
 };
+
+/**
+ * Decimal places a Team vs Team side's average is rounded down to, so close averages are told apart, not tied.
+ */
+export const VERSUS_PLACES = 1;
 
 /**
  * Number of rolls in a skill challenge.
@@ -380,7 +390,7 @@ function refreshRequest(message, changes) {
  * @property {string} [scoring]      For a Team Challenge, how its rolls are scored: a key in SCORING. Requests posted
  *   before there was a choice have none, and are averaged.
  * @property {boolean} showDC        Show the DC to players.
- * @property {"public"|"gm"} rollMode
+ * @property {"public"|"gm"|"blind"} rollMode  Who sees each roll: everyone, the GM and whoever made it, or only the GM.
  */
 
 /**
@@ -398,7 +408,8 @@ export async function createRequest(request) {
 /**
  * Post a roll request to chat, as createRequest does, with other flags of the module's set on its message too.
  * @param {RollRequest} request
- * @param {object} [flags]  Other flags under the module's scope, such as `revealed`.
+ * @param {object} [flags]  Other flags under the module's scope, such as `revealed`. A request whose result is open
+ *   starts shown unless `revealed` is given.
  * @returns {Promise<ChatMessage5e>}
  * @throws {Error}  If the request can't be rolled: see validateRequest.
  */
@@ -409,11 +420,23 @@ export async function postRequest(request, flags={}) {
   validateRequest(request);
   // Only the rolls the mode uses are kept: the card would otherwise offer a Roll button for each extra one.
   request.parts = request.parts.slice(0, getPartCount(request));
+  if ( isOpenResult(request) ) flags = { revealed: true, ...flags };
   return ChatMessage.create({
     speaker: { alias: "Sogrom's Table Tools" },
     content: `<p>${foundry.utils.escapeHTML(getRequestTitle(request))}</p>`,
     flags: { [MODULE_ID]: { ...flags, request } }
   });
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {RollRequest} request
+ * @returns {boolean}  Whether players can work out the request's result for themselves, so there is nothing to hold
+ *   back until the GM shows it: a public Standard Roll with its DC shown.
+ */
+export function isOpenResult(request) {
+  return (request.mode === "standard") && !!request.showDC && (request.rollMode === "public");
 }
 
 /* -------------------------------------------- */
@@ -462,7 +485,7 @@ export function validateRequest(request) {
   check(Array.isArray(actors) && actors.every(uuid => uuid && (typeof uuid === "string"))
     && (new Set(actors).size === actors.length), "STT.Request.Invalid.Actors");
   check(actors.length, "STT.Request.Invalid.NoActors");
-  check(["public", "gm"].includes(request.rollMode), "STT.Request.Invalid.RollMode", { rollMode: request.rollMode });
+  check(ROLL_MODES.includes(request.rollMode), "STT.Request.Invalid.RollMode", { rollMode: request.rollMode });
 
   const contest = isContest(request);
   if ( contest ) {
@@ -862,10 +885,11 @@ export function getChallengeState(results, needed) {
  * Pool a team's rolls. Each natural 1 removes the highest remaining roll, and each natural 20 the lowest. Where there
  * are too many to leave any roll behind, 1s and 20s cancel out in pairs first, and at least one roll is always kept.
  * @param {{ uuid: string, total: number, natural: number }[]} entries  One per actor.
+ * @param {number} [places=0]  Decimal places the average is rounded down to.
  * @returns {{ average: number, exact: number, removed: Map<string, string> }}
  *   The average rounded down, the exact average, and why each removed actor's roll was removed.
  */
-export function poolTeamRolls(entries) {
+export function poolTeamRolls(entries, places=0) {
   if ( !entries.length ) return { average: NaN, exact: NaN, removed: new Map() };
   const sorted = [...entries].sort((a, b) => a.total - b.total);
   const fumbles = entries.filter(e => e.natural === 1);
@@ -889,8 +913,10 @@ export function poolTeamRolls(entries) {
   });
 
   const pool = sorted.filter(e => !removed.has(e.uuid));
-  const exact = pool.reduce((sum, e) => sum + e.total, 0) / pool.length;
-  return { average: Math.floor(exact), exact, removed };
+  const sum = pool.reduce((total, e) => total + e.total, 0);
+  // Scaled before dividing, so an average that is exact to that many places isn't rounded down past itself.
+  const scale = 10 ** places;
+  return { average: Math.floor((sum * scale) / pool.length) / scale, exact: sum / pool.length, removed };
 }
 
 /* -------------------------------------------- */
@@ -918,12 +944,13 @@ export function poolTeamRolls(entries) {
  * @param {{ uuid: string, total: number, natural: number }[]} entries  One per actor.
  * @param {string} [scoring="average"]  A key in SCORING.
  * @param {number|null} [dc]
+ * @param {number} [places=0]  Decimal places an average is rounded down to.
  * @returns {TeamScore}
  */
-export function scoreTeam(entries, scoring="average", dc=null) {
+export function scoreTeam(entries, scoring="average", dc=null, places=0) {
   const hasDC = Number.isNumeric(dc);
   if ( !SCORING[scoring]?.needsDC || !hasDC || !entries.length ) {
-    const { average, exact, removed } = poolTeamRolls(entries);
+    const { average, exact, removed } = poolTeamRolls(entries, places);
     return { scoring: "average", score: average, exact, removed, notes: new Map(), success: hasDC ? average >= dc : null };
   }
   const passed = entries.filter(e => e.total >= dc).length;
@@ -982,9 +1009,10 @@ export function scoreTeam(entries, scoring="average", dc=null) {
  * @param {object} [options]
  * @param {string} [options.scoring="average"]  How a team is scored: a key in SCORING.
  * @param {number|null} [options.dc]            The DC a team's rolls are judged against.
+ * @param {number} [options.places=0]           Decimal places a team's average is rounded down to.
  * @returns {GroupOutcome}
  */
-export function getGroupOutcome(uuids, results, pooled, { scoring="average", dc=null }={}) {
+export function getGroupOutcome(uuids, results, pooled, { scoring="average", dc=null, places=0 }={}) {
   const none = { removed: new Map(), notes: new Map() };
   // A group with no one in it never has a result.
   if ( !uuids?.length ) return { complete: false, hidden: false, ...none };
@@ -995,7 +1023,7 @@ export function getGroupOutcome(uuids, results, pooled, { scoring="average", dc=
   if ( !complete || hidden ) return { complete, hidden, ...none };
   if ( !pooled ) return { complete, hidden, score: entries[0].result.total, ...none };
   const rolls = entries.map(({ uuid, result }) => ({ uuid, total: result.total, natural: result.natural }));
-  return { complete, hidden, ...scoreTeam(rolls, scoring, dc) };
+  return { complete, hidden, ...scoreTeam(rolls, scoring, dc, places) };
 }
 
 /* -------------------------------------------- */
@@ -1009,7 +1037,9 @@ export function getGroupOutcome(uuids, results, pooled, { scoring="average", dc=
  * @returns {GroupOutcome|null}  Null when the request's rolls are not pooled.
  */
 export function getRowGroup(message, request, results, side) {
-  if ( request.mode === "versus" ) return getGroupOutcome(request.sides[side], results, true);
+  if ( request.mode === "versus" ) {
+    return getGroupOutcome(request.sides[side], results, true, { places: VERSUS_PLACES });
+  }
   if ( request.mode !== "team" ) return null;
   const team = getGroupOutcome(request.actors, results, true, { scoring: getScoring(request), dc: request.parts[0].dc });
   // Which rolls a natural 1 or 20 took out of the pool, and what each roll did for the team, are part of the result, so
@@ -1253,7 +1283,7 @@ export async function changeDC(message, part, choice=0) {
  */
 function renderContest(card, message, request, results) {
   const pooled = request.mode === "versus";
-  const groups = request.sides.map(uuids => getGroupOutcome(uuids, results, pooled));
+  const groups = request.sides.map(uuids => getGroupOutcome(uuids, results, pooled, { places: VERSUS_PLACES }));
   const settled = groups.every(isSettled);
   const [a, b] = groups.map(g => g.score);
   const winner = !settled ? undefined : (a > b ? 0 : (b > a ? 1 : null));
@@ -1704,8 +1734,11 @@ function renderSummary(message, request, results, team) {
   // The GM decides when players see how many succeeded.
   const revealed = !!message.getFlag(MODULE_ID, "revealed");
   if ( !revealed && !game.user.isGM ) return;
-  const count = rows.filter(r => r[0].success).length;
-  summary.append(textElement("span", localize("STT.Request.Summary.Standard", { count, total: rows.length })));
+  // Where only some choices have a DC, a roll made without one neither succeeded nor failed, so it isn't counted.
+  const judged = rows.filter(r => r[0].success !== null);
+  if ( !judged.length ) return;
+  const count = judged.filter(r => r[0].success).length;
+  summary.append(textElement("span", localize("STT.Request.Summary.Standard", { count, total: judged.length })));
   if ( game.user.isGM ) summary.append(renderRevealButton(message, revealed));
   return summary;
 }
@@ -1849,12 +1882,14 @@ function isHiddenRival(request, actor) {
  * for a private one only to the players in it, so showing them never makes them more public than the request itself.
  * @param {RollRequest} request
  * @param {Map<string, (PartResult|null)[]>} results
- * @returns {HTMLButtonElement|void}  Nothing until an NPC has rolled, or if there is no player to show it to.
+ * @returns {HTMLButtonElement|void}  Nothing until an NPC has rolled, in a blind request, or if there is no player to
+ *   show it to.
  */
 function renderRivalRevealButton(request, results) {
   const rolls = request.actors.filter(uuid => isHiddenRival(request, fromUuidSync(uuid)))
     .map(uuid => results.get(uuid)[0]?.message).filter(Boolean);
-  if ( !rolls.length ) return;
+  // In a blind request players don't see even their own rolls, so the NPCs' aren't shown to them either.
+  if ( !rolls.length || (request.rollMode === "blind") ) return;
   const gms = ChatMessage.getWhisperRecipients("GM").map(u => u.id);
   let shownTo = [];
   if ( request.rollMode === "gm" ) {

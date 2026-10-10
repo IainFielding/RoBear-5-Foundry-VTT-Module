@@ -4,7 +4,7 @@
 
 import { MODULE_ID, localize } from "./hero-cards.mjs";
 import {
-  CHALLENGE_PARTS, DICE, DIVINE_RANGE, MAX_CHOICES, MODES, SCORING, createRequest, getChoices, getPartLabel
+  CHALLENGE_PARTS, DICE, DIVINE_RANGE, MAX_CHOICES, MODES, ROLL_MODES, SCORING, createRequest, getChoices, getPartLabel
 } from "./roll-requests.mjs";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -34,8 +34,10 @@ const { FormDataExtended } = foundry.applications.ux;
  * @property {number} successes
  * @property {string} scoring  How a Team Challenge is scored: a key in SCORING.
  * @property {boolean} showDC
- * @property {"public"|"gm"} rollMode
+ * @property {"public"|"gm"|"blind"} rollMode
  * @property {string[]} actors                 Who rolls, outside a contest.
+ * @property {string|null} divine              Who prays in Divine Intervention, kept apart so picking them leaves
+ *   who rolls in the other modes alone. Null until one is picked, when it is the first of those who roll.
  * @property {[string[], string[]]} teams      Each team in Team vs Team.
  * @property {[string|null, string|null]} rivals  Each side of a Roll-Off.
  */
@@ -200,9 +202,9 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
         value, label: localize(s.label), selected: value === draft.scoring
       })),
       scoringHint: localize(SCORING[draft.scoring].hint),
-      // Divine Intervention asks one actor, so only the first of those chosen in another mode stays ticked.
+      // Divine Intervention asks one actor: the one picked for it, or else the first of those chosen in another mode.
       actors: this.#actors.map((a, i) => choice(a, i, draft.mode === "divine"
-        ? draft.actors[0] === a.uuid
+        ? (draft.divine ?? draft.actors[0]) === a.uuid
         : draft.actors.includes(a.uuid))),
       picks: pickContext(draft.actors),
       sides: mode.contest ? mode.sides.map((label, side) => ({
@@ -259,6 +261,7 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
     Object.assign(draft, {
       showDC: game.settings.get(MODULE_ID, "showDCDefault"),
       actors: selected.length ? selected.map(a => a.uuid) : players,
+      divine: null,
       teams: [players, npcs.length ? npcs : hostile],
       rivals: [selected[0]?.uuid ?? null, selected[1]?.uuid ?? null]
     });
@@ -274,12 +277,12 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
    */
   applyPreset(preset) {
     this.#readForm();
-    const { mode, actors } = resolvePreset(preset, this.#draft);
-    for ( const uuid of actors ) {
+    const resolved = resolvePreset(preset, this.#draft);
+    for ( const uuid of resolved.actors ?? [resolved.divine] ) {
       const actor = fromUuidSync(uuid);
       if ( actor && !this.#actors.some(a => a.uuid === uuid) ) this.#actors.unshift(actor);
     }
-    Object.assign(this.#draft, { mode, actors });
+    Object.assign(this.#draft, resolved);
     this.render({ parts: ["form"] });
   }
 
@@ -316,11 +319,11 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
       draft.range = Math.clamp(Math.round(Number(data.range) || DIVINE_RANGE.initial), DIVINE_RANGE.min, DIVINE_RANGE.max);
     }
     if ( "showDC" in data ) draft.showDC = !!data.showDC;
-    draft.rollMode = data.rollMode === "gm" ? "gm" : "public";
+    draft.rollMode = ROLL_MODES.includes(data.rollMode) ? data.rollMode : "public";
 
     if ( shown === "rolloff" ) draft.rivals = [0, 1].map(s => this.#actors[data.rivals?.[s]]?.uuid ?? null);
     else if ( shown === "versus" ) draft.teams = [0, 1].map(s => chosen(data.teams?.[s]));
-    else if ( shown === "divine" ) draft.actors = [this.#actors[data.actor]?.uuid].filter(Boolean);
+    else if ( shown === "divine" ) draft.divine = this.#actors[data.actor]?.uuid ?? null;
     else draft.actors = chosen(data.actors);
 
     if ( data.mode in MODES ) draft.mode = data.mode;
@@ -467,7 +470,8 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
       const parts = draft.sideRolls[draft.mode].map(roll => toPart({ roll, dc: null }));
       Object.assign(request, { parts, sides, actors: sides.flat() });
     } else {
-      if ( !draft.actors.length ) throw new Error(localize("STT.Request.Config.ChooseActor"));
+      const actors = draft.mode === "divine" ? [draft.divine ?? draft.actors[0]].filter(Boolean) : draft.actors;
+      if ( !actors.length ) throw new Error(localize("STT.Request.Config.ChooseActor"));
       const count = draft.mode === "challenge" ? CHALLENGE_PARTS : 1;
       const parts = draft.mode === "standard" ? [toPart(draft.standard)] : draft.parts.slice(0, count).map(toPart);
       if ( (draft.mode === "challenge") && parts.some(p => getChoices(p).some(c => c.dc === null)) ) {
@@ -477,7 +481,7 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
         if ( SCORING[draft.scoring].needsDC && (parts[0].dc === null) ) throw new Error(localize("STT.Request.Config.ScoringDC"));
         request.scoring = draft.scoring;
       }
-      Object.assign(request, { parts, actors: draft.actors });
+      Object.assign(request, { parts, actors });
       if ( draft.mode === "divine" ) {
         Object.assign(request, { parts: [{ type: "d100", key: null, dc: null }], range: draft.range });
       }
@@ -555,14 +559,16 @@ export function getQuickPicks() {
  * The kind of request and who rolls that a preset asks for, filling in from the draft what it leaves out.
  * @param {RequestPreset} preset
  * @param {RequestDraft} draft
- * @returns {{ mode: string, actors: string[] }}
+ * @returns {{ mode: string, actors?: string[], divine?: string }}  Who rolls, or for Divine Intervention, which
+ *   asks one actor, the one who prays, leaving who rolls in the other modes as it was.
  */
 function resolvePreset({ mode, actors, group }, draft) {
   const members = group ? getQuickPicks().find(p => p.id === group)?.uuids : null;
-  return {
-    mode: mode in MODES ? mode : draft.mode,
-    actors: [...(actors ?? members ?? draft.actors)]
-  };
+  const resolved = { mode: mode in MODES ? mode : draft.mode };
+  const chosen = actors ?? members;
+  if ( (resolved.mode === "divine") && chosen?.[0] ) resolved.divine = chosen[0];
+  else resolved.actors = [...(chosen ?? draft.actors)];
+  return resolved;
 }
 
 /* -------------------------------------------- */

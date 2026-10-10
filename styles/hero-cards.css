@@ -6,7 +6,6 @@
   display: block;
   width: 100%;
   margin-top: 6px;
-  border-color: #a428e6;
 }
 
 :is(.chat-message, .stt-request-popup) .stt-card-button.icon {
@@ -472,12 +471,11 @@
 /*  Class Features on Rolls                     */
 /* -------------------------------------------- */
 
-/* Use Indomitable on a failed save: in teal, as an action the roll invites, where the card button is purple. */
+/* Use Indomitable on a failed save. */
 :is(.chat-message, .stt-request-popup) .stt-feature-button {
   display: block;
   width: 100%;
   margin-top: 6px;
-  border-color: #4fb3a8;
 }
 
 :is(.chat-message, .stt-request-popup) .stt-feature-button.icon {
@@ -487,7 +485,4 @@
   min-height: 0;
   margin: 0;
   flex: none;
-  background: var(--cc-panel-2, #2a2e35);
-  border-radius: 0;
-  color: #4fb3a8;
 }

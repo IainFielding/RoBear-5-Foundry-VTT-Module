@@ -196,7 +196,7 @@
       "Modes": {
         "Standard": {
           "Label": "Standard Roll",
-          "Hint": "Each actor rolls once against the DC."
+          "Hint": "Each actor rolls once, against a DC if you set one."
         },
         "Team": {
           "Label": "Team Challenge",
@@ -212,7 +212,7 @@
         },
         "Versus": {
           "Label": "Team vs Team",
-          "Hint": "Two teams are averaged like a Team Challenge, and the higher average wins."
+          "Hint": "Two teams are averaged like a Team Challenge, to one decimal place, and the higher average wins."
         },
         "Divine": {
           "Label": "Divine Intervention",
@@ -358,7 +358,7 @@
         "EmptySide": "Each side of a contest needs at least one actor.",
         "RollOffSide": "Each side of a Roll-Off needs exactly one actor.",
         "SideNotActor": "Everyone on a side of a contest must also be in the request's actors.",
-        "RollMode": "Unknown roll visibility: {rollMode}. Use \"public\" or \"gm\".",
+        "RollMode": "Unknown roll visibility: {rollMode}. Use \"public\", \"gm\" or \"blind\".",
         "Roll": "Unknown kind of roll: {type}.",
         "Key": "Unknown {type} for a roll: {key}. Use one of: {keys}.",
         "DC": "A DC must be a number, or null for none: {dc}.",
@@ -399,11 +399,12 @@
         "NoActors": "Select tokens, or give players characters, to choose who rolls.",
         "Options": "Options",
         "ShowDC": "Show DC to Players",
-        "ShowDCHint": "Unticked, players see \"DC ?\" on the card. The DC still reaches their Foundry with the request, so this keeps the table honest rather than keeping a secret.",
+        "ShowDCHint": "Unticked, players see \"DC ?\" on the card. The DC still reaches their Foundry with the request, so this keeps the table honest rather than keeping a secret. Ticked, a public Standard Roll shows players who passed straight away.",
         "Visibility": "Roll Visibility",
         "Public": "Public",
         "Private": "Private GM Roll",
-        "PrivateHint": "With private rolls, each player sees only their own results.",
+        "Blind": "Blind GM Roll",
+        "PrivateHint": "With private rolls, each player sees only their own results. With blind rolls, only you see any of them.",
         "Send": "Send Request",
         "ChooseSide": "Choose who rolls for the {side}.",
         "BothSides": "No one can be on both sides.",

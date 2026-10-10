@@ -584,9 +584,6 @@
   height: 24px;
   min-height: 0;
   margin: 0;
-  background: var(--cc-panel-2);
-  border-radius: 0;
-  color: #c77dff;
 }
 
 :is(.chat-message, .stt-request-popup) .stt-request-badge {

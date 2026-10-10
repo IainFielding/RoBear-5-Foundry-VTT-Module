@@ -88,7 +88,7 @@ interface RollRequest {
   scoring?: "average" | "half" | "leader" | "weakest"; // "team" only: how it's scored (default: the "teamScoring" setting)
   range?: number;            // "divine" only: how many numbers its one actor picks, 1–50 (default 16)
   showDC?: boolean;          // show the DC to players (default: the "showDCDefault" setting)
-  rollMode?: "public" | "gm"; // "gm" is a private GM roll (default "public")
+  rollMode?: "public" | "gm" | "blind"; // "gm" is a private GM roll, "blind" a blind one (default "public")
 }
 
 interface RequestPart {
@@ -107,7 +107,7 @@ interface RequestPart {
 | `team` | Team Challenge | 1 | | Scored by `scoring`. `average`: everyone's totals averaged, rounded down, against the DC; each natural 1 removes the highest roll, each natural 20 the lowest. `half`: succeeds if at least half meet the DC. `leader`: the roll with the highest modifier (total less the kept d20), +1 per other success, −1 per other failure, against the DC. `weakest`: the lowest modifier, +1 per other success. All but `average` need a `dc`. Allows `alternatives`. |
 | `challenge` | Skill Challenge | 3 | | Three rolls in turn, each with its own DC; `successes` of them needed. Allows `alternatives`. |
 | `rolloff` | Roll-Off | 2 (one per side) | Required, exactly one actor each | Higher total wins. An actor no player owns rolls as a private GM roll until the GM shows it. |
-| `versus` | Team vs Team | 2 (one per side) | Required, at least one actor each | Each side pooled like a Team Challenge; higher average wins. An actor no player owns rolls as a private GM roll until the GM shows it. |
+| `versus` | Team vs Team | 2 (one per side) | Required, at least one actor each | Each side pooled like a Team Challenge, its average rounded down to one decimal place; higher average wins. An actor no player owns rolls as a private GM roll until the GM shows it. |
 | `divine` | Divine Intervention | 1, which must be `d100` | | Exactly one actor. It picks `range` numbers in a row from 1 to 100, then must roll one of them. `dc` is ignored. |
 
 **Part types and keys**
@@ -150,7 +150,7 @@ language), and posts nothing:
 | `mode` isn't one of the six | Unknown kind of roll request: {mode}. |
 | `actors` isn't an array of unique, non-empty strings | A roll request's actors must be a list of actor UUIDs, each named once. |
 | `actors` is empty | A roll request needs at least one actor to roll. |
-| `rollMode` isn't `"public"` or `"gm"` | Unknown roll visibility: {rollMode}. Use "public" or "gm". |
+| `rollMode` isn't `"public"`, `"gm"` or `"blind"` | Unknown roll visibility: {rollMode}. Use "public", "gm" or "blind". |
 | A contest's `sides` aren't two non-empty arrays | Each side of a contest needs at least one actor. |
 | A `rolloff` side has more than one actor | Each side of a Roll-Off needs exactly one actor. |
 | Someone on a side isn't in `actors` | Everyone on a side of a contest must also be in the request's actors. |
@@ -307,7 +307,7 @@ them out from its roll messages each time it draws.
 | Flag | Type | Written by | Meaning |
 |---|---|---|---|
 | `request` | `RollRequest` | `createRequest`, or the window | The request, with defaults filled in. Only honoured on a GM's message. Changing the DC from the card rewrites `request.parts[n].dc`, or an alternative's `dc`. |
-| `revealed` | `boolean` | The GM's **Show to players** button | Whether players see the results and summary. Unset means hidden. A death save request is posted with it set. |
+| `revealed` | `boolean` | The GM's **Show to players** button | Whether players see the results and summary. Unset means hidden. A death save request is posted with it set, as is a public `standard` request with `showDC`, whose result players can work out for themselves. |
 | `deathSave` | `{ actor: string, combat: string, round: number }` | `death-saves.mjs` | Marks a death save request posted at the start of a turn: the actor's UUID, and the combat and round it was posted for, so a turn started again posts no second request. |
 
 ### On a Divine Intervention note

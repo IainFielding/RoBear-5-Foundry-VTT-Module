@@ -205,6 +205,7 @@
                 <select name="rollMode">
                     <option value="public" {{#if (eq rollMode "public")}}selected{{/if}}>{{localize "STT.Request.Config.Public"}}</option>
                     <option value="gm" {{#if (eq rollMode "gm")}}selected{{/if}}>{{localize "STT.Request.Config.Private"}}</option>
+                    <option value="blind" {{#if (eq rollMode "blind")}}selected{{/if}}>{{localize "STT.Request.Config.Blind"}}</option>
                 </select>
             </div>
             <p class="hint">{{localize "STT.Request.Config.PrivateHint"}}</p>

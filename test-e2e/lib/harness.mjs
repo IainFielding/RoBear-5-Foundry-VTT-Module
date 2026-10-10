@@ -158,15 +158,16 @@ export function unusedDice(session) {
 }
 
 /**
- * Post a request as the GM, straight through the module's API, and wait for both users to render it.
+ * Post a request as the GM, as the module's API does, and wait for both users to render it. Its result starts hidden,
+ * even where a public Standard Roll with its DC shown would start shown, so each test shows it when it means to.
  * @param {TestContext} ctx
  * @param {object} request
  * @returns {Promise<string>}  The request message's ID.
  */
 export async function postRequest({ gm, player }, request) {
   const id = await gm.eval(async ({ moduleId, request }) => {
-    const { createRequest } = await import(`/modules/${moduleId}/scripts/roll-requests.mjs`);
-    return (await createRequest({ successes: 2, showDC: true, rollMode: "public", ...request })).id;
+    const { postRequest } = await import(`/modules/${moduleId}/scripts/roll-requests.mjs`);
+    return (await postRequest({ successes: 2, showDC: true, rollMode: "public", ...request }, { revealed: false })).id;
   }, { moduleId: MODULE_ID, request });
   for ( const session of [gm, player] ) {
     await waitFor(session, id => !!document.querySelector(`#chat .chat-log [data-message-id="${id}"] .stt-request`),

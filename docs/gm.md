@@ -149,8 +149,10 @@ buttons.
    is running and no NPCs are selected, the NPCs' side starts with the hostile combatants.
 4. **Options.**
    - **Show DC to Players.** Unticked, players see "DC ?" on the card, and the DC is kept off their rolls so D&D 5e
-     doesn't show them success or failure.
-   - **Roll Visibility.** **Public**, or **Private GM Roll**, where each player sees only their own results.
+     doesn't show them success or failure. Ticked, a public Standard Roll shows players who passed straight away.
+   - **Roll Visibility.** **Public**; **Private GM Roll**, where each player sees only their own results; or **Blind
+     GM Roll**, where only you see any of them, for a roll such as Perception, Insight or Stealth whose result the
+     player shouldn't know.
 5. **Send Request** posts the request to chat.
 
 **Offering a choice of rolls.** In a Standard Roll, Team Challenge or Skill Challenge, click **+** beside a roll to
@@ -171,8 +173,11 @@ and on the buttons they choose from, or "DC ?" if you're keeping the DC hidden.
 
 #### Standard Roll
 
-Each actor rolls once against the DC. You see straight away who passed and how many succeeded. Players don't, until
-you click **Show to players**, and you can hide it again.
+Each actor rolls once, against a DC if you set one. You see straight away who passed and how many succeeded. Players
+don't, until you click **Show to players**, and you can hide it again.
+
+A public roll with **Show DC to Players** ticked starts already shown, since players can see the DC and the totals
+for themselves. Click **Shown** to hide it.
 
 <table>
 <tr><th>What you see</th><th>What players see</th></tr>
@@ -215,6 +220,8 @@ and its summary shows the working, such as "Aria leads: 21, +1 helped, −2 hind
 Only you see the result until you click **Show to players**. A Hero Card played on a roll, or a changed DC, scores the
 team again, so playing Inspiration on a helper can make them the leader.
 
+<img src="images/gm-request-window-team.webp" alt="The request window set to Team Challenge, with an Athletics roll at DC 13 and its Scoring set to Average of the rolls" width="520">
+
 <img src="images/gm-team-challenge.webp" alt="A Team Challenge card: Aria's natural 20 ringed in gold, Borin's 4 greyed out as removed, Goblin 11. Team average 15, 1 removed, Success" width="300">
 
 #### Roll-Off
@@ -239,10 +246,13 @@ again.
 #### Team vs Team
 
 Pick a **Players** team and an **NPCs** team, and a roll for each (a d20 by default, or any check, save or tool). Each
-team's rolls are pooled like a Team Challenge, natural 1s and 20s included, and the higher average wins.
+team's rolls are pooled like a Team Challenge, natural 1s and 20s included, and the higher average wins. The averages
+are rounded down to one decimal place, so 12.6 beats 12.3; only averages equal to that place tie.
 
 As in a Roll-Off, each NPC's roll is a private GM roll: players see "?" for the NPCs, and no winner, until you click
 **Show NPC rolls** on the card, and you can hide them again.
+
+<img src="images/gm-request-window-versus.webp" alt="The request window set to Team vs Team, with Aria and Borin on the Players team and the Goblin on the NPCs team, each team rolling a d20" width="520">
 
 <img src="images/gm-versus.webp" alt="A Team vs Team card: Players (Aria 13, Borin 16) average 14, NPCs (Goblin 10) average 10. Players win, and a Show NPC Rolls button" width="300">
 
@@ -293,6 +303,8 @@ their own. Click a result to see its dice. Notes on any cards played show under 
 
 - With **Private GM Roll**, each player sees only their own results. In a private Roll-Off or Team vs Team, **Show NPC roll**
   (or **Show NPC rolls**) shows the NPCs' rolls only to the players in the request, not to everyone.
+- With **Blind GM Roll**, players see "?" for every result, their own included, so they can't play a Hero Card on a
+  roll they made blind. In a blind Roll-Off or Team vs Team there's no button to show the NPCs' rolls.
 - **Hidden isn't secret.** The DC, and results you haven't shown yet, are hidden on the chat card, but they still
   reach every player's Foundry as part of the request. A player who opens the browser console can read them. That's
   how Foundry shares chat messages, so the hiding keeps the table honest rather than keeping a secret.

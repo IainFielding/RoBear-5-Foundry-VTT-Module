@@ -253,6 +253,15 @@ test("the request window keeps what was filled in when the mode changes", async 
     assertEqual((await readWindow(app)).rollValues, ["d20", "d20"], "team vs team rolls after setting a roll-off");
     await chooseMode(app, "rolloff");
     assertEqual((await readWindow(app)).rollValues, ["d20", "d100"], "roll-off rolls after visiting team vs team");
+
+    // Divine Intervention's one actor is its own, so picking them leaves who rolls in the other modes alone.
+    const actors = async () => (await readWindow(app)).actors.map(a => `${a.name}:${a.checked}`);
+    await chooseMode(app, "divine");
+    await app.locator(".stt-request-actor-choice", { hasText: "Borin" }).click();
+    await chooseMode(app, "standard");
+    assertEqual(await actors(), ["Aria:true", "Borin:true", "Goblin:false"], "who rolls after picking who prays");
+    await chooseMode(app, "divine");
+    assertEqual(await actors(), ["Aria:false", "Borin:true", "Goblin:false"], "who prays after switching back");
   } finally {
     await gm.eval(() => foundry.applications.instances.get("stt-roll-request")?.close());
   }
@@ -556,6 +565,38 @@ test("standard roll: the summary is hidden from players until the GM shows it", 
 
   await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-reveal`).click();
   await waitForCard(player, id, c => !c.summary, "the summary to be hidden again");
+});
+
+test("standard roll: a public roll with its DC shown starts shown, and the GM can hide it", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const id = await gm.eval(async ({ moduleId, aria }) => (await game.modules.get(moduleId).api.createRequest({
+    mode: "standard", parts: [{ type: "skill", key: "ath", dc: 12 }], actors: [aria], showDC: true
+  })).id, { moduleId: MODULE_ID, aria: ids.aria });
+  await waitForCard(player, id, c => row(c, "Aria"), "the request");
+  await forceDice(player, [d20(5)]);
+  await clickRoll(player, id, "Aria", { fastForward: true });
+
+  let card = await waitForCard(player, id, c => c.summary, "the player's summary, shown from the start");
+  assertEqual([card.summary, row(card, "Aria").classes], ["0 of 1 succeeded", ["failure"]], "the player's card");
+  card = await waitForCard(gm, id, c => c.reveal, "the GM's reveal button");
+  assertEqual(card.reveal, "Shown", "the GM's reveal button");
+
+  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-reveal`).click();
+  card = await waitForCard(player, id, c => !c.summary, "the summary to be hidden");
+  assertEqual(row(card, "Aria").classes, [], "the player's row once hidden");
+});
+
+test("standard roll: a blind roll is hidden from the player who made it", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const id = await postRequest(ctx, { mode: "standard", parts: [athletics(1)], actors: [ids.aria], rollMode: "blind" });
+  await forceDice(player, [d20(14)]);
+  await clickRoll(player, id, "Aria", { fastForward: true });
+
+  let card = await waitForCard(gm, id, c => row(c, "Aria").results.length, "the GM's result");
+  assertEqual(row(card, "Aria").results[0].classes, ["success"], "the GM's result");
+  card = await waitForCard(player, id, c => row(c, "Aria").results.length, "the player's result");
+  assertEqual([row(card, "Aria").results[0], row(card, "Aria").rollButtons, row(card, "Aria").cardButton],
+    [{ text: "?", classes: [] }, 0, false], "the player's own roll, hidden from them");
 });
 
 test("standard roll: a hidden DC stays off the card and off the player's roll", async (ctx) => {

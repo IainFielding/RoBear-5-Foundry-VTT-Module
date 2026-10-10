@@ -2,7 +2,27 @@
 
 All notable changes to Sogrom's Table Tools.
 
-## 0.1.1
+## 0.1.3
+
+### Roll requests
+
+- **Blind GM Roll.** A third **Roll Visibility**, beside Public and Private GM Roll: only the GM sees the results,
+  for a roll such as Perception, Insight or Stealth whose result the player shouldn't know.
+- **A public roll with its DC shown starts shown.** In a Standard Roll with **Show DC to Players** ticked, players
+  see who passed straight away, as they could already work it out. The GM can still hide it.
+- **Team vs Team tells close averages apart.** Each team's average is rounded down to one decimal place rather than
+  to a whole number, so 12.6 beats 12.3 instead of tying.
+- **Picking who prays keeps who rolls.** Choosing Divine Intervention's one character no longer unticks everyone
+  else in the other kinds of roll.
+- **The Standard Roll summary counts only rolls made against a DC.** Where only some of a choice of rolls have a DC,
+  a roll made without one is no longer counted as a failure in "X of Y succeeded".
+
+### Hero Cards
+
+- **Plain buttons on rolls.** The **Hero Card** and **Use Indomitable** buttons on a roll in chat and on a request
+  card are styled as D&D 5e's own buttons are, in its light and dark themes, without their purple and teal borders.
+
+## 0.1.2
 
 ### Licence
 
@@ -18,8 +38,6 @@ All notable changes to Sogrom's Table Tools.
 
 ### Roll requests
 
-- **Results wait for Dice So Nice.** A roll shows as rolling on the request card and pop-up until its 3D dice land,
-  so the total, the pass or fail and the summary no longer give the result away while the dice are still moving.
 - **Team vs Team keeps the NPCs' rolls hidden.** As in a Roll-Off, each NPC's roll is a private GM roll, so players
   see "?" for the NPCs, and no winner, until the GM clicks **Show NPC rolls** on the card.
 - **DCs start blank.** The request window no longer fills in DC 15, nor the last request's DCs: the GM sets a DC only
@@ -28,6 +46,13 @@ All notable changes to Sogrom's Table Tools.
 - **Who rolls is in order of name.** The request window lists the selected tokens, the player characters, the group
   members and combatants, and the scene's other tokens each in order of name, rather than in the order the world
   happened to hold them in.
+
+## 0.1.1
+
+### Roll requests
+
+- **Results wait for Dice So Nice.** A roll shows as rolling on the request card and pop-up until its 3D dice land,
+  so the total, the pass or fail and the summary no longer give the result away while the dice are still moving.
 
 ## 0.0.7
 
