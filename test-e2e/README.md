@@ -107,3 +107,12 @@ The rules themselves also have unit tests in `../test`, which `npm test` runs wi
 `screenshots.mjs` uses the same harness to take the screenshots in `docs/images` for the user guides, with forced
 dice so every run takes the same pictures. `npm run docs:screenshots` takes them all, and
 `npm run docs:screenshots -- divine` only those whose name contains "divine".
+
+## Memory
+
+`leak-check.mjs` uses the same harness to see whether a browser's memory grows as roll requests come and go. Each
+request is made from the window, rolled by all three actors, shown, and cleared from chat; each browser's heap, DOM
+nodes and event listeners are measured three times, with garbage collected first. `npm run test:leaks` makes 40
+requests between measurements, and `npm run test:leaks -- 100` makes 100. It fails if listeners, attached nodes or
+open windows grow by one or more a request. The heap grows by a few KB a request with plain chat messages too, so its
+figure is only for comparing runs.
