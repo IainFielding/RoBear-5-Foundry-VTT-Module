@@ -756,13 +756,13 @@ export function createCardButton(message, { compact=false }={}) {
 /**
  * @param {ChatMessage5e} message
  * @returns {HTMLElement[]}  Notes describing cards already spent on this message, each with a thumbnail of the card,
- *   shown full size on hover. Notes written before 2.0.0 are plain text.
+ *   shown full size on hover. Older notes are plain text.
  */
 export function renderLog(message) {
   return (message.getFlag(MODULE_ID, "log") ?? []).map(entry => {
     const p = document.createElement("p");
     p.className = "supplement stt-card-log";
-    // Notes written before 2.0.0 are plain text, so they need a label to say where they came from.
+    // Older notes are plain text, so they need a label to say where they came from.
     if ( typeof entry === "string" ) {
       const strong = document.createElement("strong");
       strong.textContent = localize("STT.Cards.LegacyLabel");

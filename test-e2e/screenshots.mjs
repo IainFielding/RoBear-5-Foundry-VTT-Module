@@ -232,6 +232,8 @@ shot("card window from the sheet, played card, and its chat record", async ({ pl
   await dialog.locator(".stt-card-choice").first().waitFor({ timeout: 10_000 });
   await player.page.waitForTimeout(1000);
   await capture(player, "card-window", dialog);
+  // The module's image on Foundry's setup screen, named in module.json, is shipped with the module.
+  fs.copyFileSync(path.join(OUT, "card-window.webp"), "assets/card-window.webp");
 
   await dialog.locator(".stt-card-choice", { hasText: "Relentless" }).first().click();
   // dnd5e may ask how to use the activity: accept its defaults.

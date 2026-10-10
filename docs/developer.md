@@ -28,7 +28,7 @@ contribute (sign-off, commit messages, pull requests) is in [CONTRIBUTING.md](..
 | | |
 |---|---|
 | Module ID | `sogrom-table-tools` |
-| Requires | Foundry VTT v14, D&D 5e 6.x (verified on 6.0.5) |
+| Requires | Foundry VTT v14, D&D 5e 6.x (verified on 6.0.6) |
 | API | `game.modules.get("sogrom-table-tools").api`, set during `init` |
 | Flag scope | `sogrom-table-tools` |
 | Socket | `module.sogrom-table-tools` |
@@ -130,9 +130,7 @@ chooses between up to four rolls. The roll message records which was made in `re
 
 In `standard` and `challenge`, an alternative may give a `dc` of its own: a number, or `null` for none. An
 alternative with no `dc` key shares the part's `dc`, as every alternative used to, so older requests and macros
-score as they did. In `team`, whose rolls are averaged against one DC, an alternative can't give a `dc`. Use
-`getChoiceDC(part, choice)` from `scripts/roll-requests.mjs` if you need the DC a roll was made against; it is internal,
-like the module's other exports.
+score as they did. In `team`, whose rolls are averaged against one DC, an alternative can't give a `dc`.
 
 **Defaults.** `withDefaults` fills in a missing or `null` value for `rollMode` (`"public"`), `showDC` (the
 `showDCDefault` setting), `successes` (`2`, for `challenge`), `scoring` (the `teamScoring` setting, for `team`) and
@@ -155,7 +153,7 @@ language), and posts nothing:
 | A `rolloff` side has more than one actor | Each side of a Roll-Off needs exactly one actor. |
 | Someone on a side isn't in `actors` | Everyone on a side of a contest must also be in the request's actors. |
 | Fewer `parts` than the mode uses | A roll request is missing a roll. |
-| `alternatives` in a mode without choices, three or more of them, or not objects | Only a Standard Roll, Team Challenge or Skill Challenge can offer a choice of rolls, and at most 4 to choose from, given as a list of alternatives. |
+| `alternatives` in a mode without choices, more than three of them, or not objects | Only a Standard Roll, Team Challenge or Skill Challenge can offer a choice of rolls, and at most 4 to choose from, given as a list of alternatives. |
 | An alternative with a `dc` in a `team` request | A Team Challenge's rolls are averaged against one DC, so its alternatives can't have DCs of their own. |
 | A `team` request's `scoring` isn't one of the four | Unknown way to score a Team Challenge: {scoring}. Use one of: {scorings}. |
 | A `team` request scored by `half`, `leader` or `weakest` with no `dc` | A Team Challenge scored by its successes needs a DC. |
@@ -348,7 +346,7 @@ interface LogEntry {
 }
 ```
 
-Entries written before 2.0.0 are plain strings, and are still drawn.
+Older entries are plain strings, and are still drawn.
 
 The roll's `rolls` are rewritten in place in the same update, so the message keeps its place in chat and dnd5e works
 out hit, miss and save results again.
@@ -380,6 +378,7 @@ in `settings-menus.mjs`. A setting is added to a menu through its class's `SETTI
 | `showPlayedCards` | Boolean | `true` | Show played cards' art on screen. |
 | `defaultDC` | Number or `null` | `null` | The DC each roll starts with in the request window; `null` for none. |
 | `showDCDefault` | Boolean | `false` | Whether **Show DC to Players** starts ticked, and the default for `createRequest`'s `showDC`. |
+| `teamScoring` | String | `"average"` | How a Team Challenge is scored when the request window opens, and the default for `createRequest`'s `scoring`: `"average"`, `"half"`, `"leader"` or `"weakest"`. |
 | `attachRolls` | Boolean | `true` | Draw requested rolls on the request card and hide their own messages. Changing it redraws every request and roll. |
 | `popupPlayers` | Boolean | `false` | Open a pop-up for each player in a request. |
 | `popupGM` | Boolean | `false` | Open a pop-up for the GM, for actors no player owns. |
@@ -435,11 +434,12 @@ Sogrom's Table Tools fires no hooks of its own. It listens to these:
 
 | Hook | Script | Why |
 |---|---|---|
-| `init` | `hero-cards.mjs`, `roll-requests.mjs`, `roll-request-popup.mjs`, `death-saves.mjs`, `settings-menus.mjs` | Register settings and their menus, and set the API. |
+| `init` | Every script with a setting, and `settings-menus.mjs` | Register settings and their menus, and set the API. |
 | `setup` | `hero-cards.mjs`, `natural-saves.mjs` | Wrap `Item#use` and the damage tray's target options (see below). |
-| `ready` | `bonus-rolls.mjs`, `roll-request-popup.mjs` | Start listening on the socket, and open pop-ups for recent requests. |
+| `ready` | `bonus-rolls.mjs`, `roll-request-popup.mjs`, `natural-saves.mjs`, `welcome.mjs`, `chat-button-labels.mjs`, `one-tab-activities.mjs` | Start listening on the socket, open pop-ups for recent requests, watch RSReforged's Apply buttons, post a welcome or what's new card that is due, and apply the two layout settings. |
 | `dnd5e.renderChatMessage` | `hero-cards.mjs`, `roll-requests.mjs`, `bonus-rolls.mjs`, `class-features.mjs` | Add card buttons, natural 1/20 rings, notes, request cards, and the Indomitable button. |
 | `createChatMessage`, `updateChatMessage`, `deleteChatMessage` | `hero-cards.mjs`, `roll-requests.mjs`, `roll-request-popup.mjs` | Show played cards, redraw request cards, and open or close pop-ups. |
+| `diceSoNiceRollComplete` | `roll-requests.mjs`, `roll-request-popup.mjs` | Redraw a request card and its pop-up once a roll's 3D dice have landed. |
 | `dnd5e.preCalculateDamage` | `natural-saves.mjs` | Raise each damage to its maximum for a target the damage tray marked for it. |
 | `preDeleteChatMessage` | `roll-requests.mjs` | Stop players deleting a roll made for a request. |
 | `getChatMessageContextOptions` | `bonus-rolls.mjs`, `class-features.mjs` | Add **Add to a roll…**, **Subtract from a roll…** and **Use Indomitable** to the right-click menu. |
@@ -453,10 +453,11 @@ Sogrom's Table Tools fires no hooks of its own. It listens to these:
 | `dnd5e.postUseActivity` | `hero-cards.mjs` | Note an Advantage card played from the sheet. |
 | `dnd5e.preRollD20TestV2`, `dnd5e.postD20TestRollConfiguration` | `hero-cards.mjs` | Apply, then clear, that pending advantage. |
 
-**`Item#use` is wrapped.** dnd5e has no hook before its list of an item's activities, so Sogrom's Table Tools replaces
+**`Item#use` is wrapped.** dnd5e has no hook before its list of an item's activities, so Sogrom's Table Tools wraps
 `CONFIG.Item.documentClass.prototype.use` at `setup`. For a Hero Cards item it opens the card window instead.
-Shift-click, or any other item, goes to the original. A module that wraps `Item#use` itself sees the module's wrapper
-as the original.
+Shift-click, or any other item, goes to the original. With libWrapper active, the wrapper is registered through it as
+a `WRAPPER`, so it runs before a module that takes the method over, as Midi-QOL does. Without libWrapper, the method
+is replaced directly, and a module that wraps `Item#use` itself sees the module's wrapper as the original.
 
 **The damage tray's target options are wrapped.** dnd5e's `damage-application` element keeps each target's options
 private, so Sogrom's Table Tools replaces its `getTargetOptions` at `setup`, giving each target its starting options the first time
@@ -492,15 +493,18 @@ scripts/
   chat-button-labels.mjs    Gameplay Enhancements: labels on compact chat cards' icon buttons.
   one-tab-activities.mjs    Gameplay Enhancements: an activity sheet's tabs side by side.
   settings-menus.mjs        The settings menus (ApplicationV2).
+  welcome.mjs               The welcome and what's new cards whispered to the GMs.
 templates/roll-request.hbs  The request window's form.
 templates/settings-menu.hbs A settings menu's form.
+templates/welcome.hbs       The welcome and what's new cards.
 styles/                     fonts.css (Cinzel and Spectral, shipped in assets/fonts), hero-cards.css, roll-requests.css,
-                            world-scripts.css.
+                            world-scripts.css, settings-menus.css, welcome.css.
 lang/en.json                Every string the module shows.
-assets/                     Card art, campaign art and fonts.
+assets/                     Card art, campaign art, fonts, and the module's image on Foundry's setup screen.
 src/packs/                  Compendium sources, as YAML. Built into packs/ (not committed).
 test/                       Unit tests (Vitest), with Foundry shims in test/helpers.
-test-e2e/                   End-to-end tests and the screenshot script, driving a real Foundry with Playwright.
+test-e2e/                   End-to-end tests, the screenshot script and the memory check, driving a real Foundry with
+                            Playwright.
 tools/                      Pack build/extract and manifest validation.
 docs/                       The player, GM and developer guides, the art sources, and the screenshots in images/.
 ```

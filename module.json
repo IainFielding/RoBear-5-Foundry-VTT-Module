@@ -6,6 +6,10 @@
   "manifest": "#{MANIFEST}#",
   "download": "#{DOWNLOAD}#",
   "url": "#{URL}#",
+  "bugs": "https://github.com/IainFielding/Sogroms-Table-Tools/issues",
+  "changelog": "https://github.com/IainFielding/Sogroms-Table-Tools/blob/main/CHANGELOG.md",
+  "readme": "https://github.com/IainFielding/Sogroms-Table-Tools#readme",
+  "license": "LICENSE",
   "compatibility": {
     "minimum": "14",
     "verified": "14"
@@ -17,7 +21,7 @@
         "type": "system",
         "compatibility": {
           "minimum": "6.0.0",
-          "verified": "6.0.5"
+          "verified": "6.0.6"
         }
       }
     ]
@@ -45,6 +49,13 @@
     "scripts/one-tab-activities.mjs",
     "scripts/settings-menus.mjs",
     "scripts/welcome.mjs"
+  ],
+  "media": [
+    {
+      "type": "setup",
+      "url": "modules/sogrom-table-tools/assets/card-window.webp",
+      "loop": false
+    }
   ],
   "socket": true,
   "languages": [

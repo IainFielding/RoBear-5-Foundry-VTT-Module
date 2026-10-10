@@ -32,6 +32,13 @@ export const WHATS_NEW = [
       "STT.Welcome.New.DefaultDC",
       "STT.Welcome.New.Cards"
     ]
+  },
+  {
+    version: "1.0.0",
+    lines: [
+      "STT.Welcome.New.BlindRoll",
+      "STT.Welcome.New.ShownDC"
+    ]
   }
 ];
 

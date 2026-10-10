@@ -91,7 +91,7 @@ https://github.com/IainFielding/Sogroms-Table-Tools/releases/latest/download/mod
 Then enable it in your world's **Manage Modules**, and drag the **Hero Cards** feature from the
 **Items (Sogrom's Table Tools)** compendium onto each character who should have them.
 
-**Requires** Foundry VTT v14 and the D&D 5e system 6.x (tested on 6.0.5).
+**Requires** Foundry VTT v14 and the D&D 5e system 6.x (tested on 6.0.6).
 
 ## Support
 

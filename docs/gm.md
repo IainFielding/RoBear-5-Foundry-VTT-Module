@@ -25,7 +25,7 @@ can do everything a player can.
 1. **Install.** In Foundry's setup screen, go to **Add-on Modules → Install Module**. Search for "Sogrom's Table Tools" or paste
    the manifest URL:
    `https://github.com/IainFielding/Sogroms-Table-Tools/releases/latest/download/module.json`
-2. **Enable** Sogrom's Table Tools in your world's **Manage Modules**. It needs Foundry VTT v14 and D&D 5e 6.x (tested on 6.0.5).
+2. **Enable** Sogrom's Table Tools in your world's **Manage Modules**. It needs Foundry VTT v14 and D&D 5e 6.x (tested on 6.0.6).
 3. **Give out the cards.** Drag the **Hero Cards** feature from the **Items (Sogrom's Table Tools)** compendium onto each
    character who should have them. Each card is an activity on that feature with one use, recovered on a long rest.
    To give a card back early, reset its uses on the character sheet.
@@ -36,7 +36,7 @@ tankard to open the request window. After an update that adds features, you get 
 A patch release says nothing. Turn the cards off with **Welcome and What's New Cards**, under
 [Gameplay Enhancements](#gameplay-enhancements).
 
-<img src="images/gm-welcome.webp" alt="The welcome card: where to find things, with a Hero Cards link and a tankard button, what's new in 0.1.1, and buttons for Hero Cards, Dice Rolling, Roll Requests and Gameplay Enhancements" width="300">
+<img src="images/gm-welcome.webp" alt="The welcome card: where to find things, with a Hero Cards link and a tankard button, what's new in 1.0.0, and buttons for Hero Cards, Dice Rolling, Roll Requests and Gameplay Enhancements" width="300">
 
 The compendiums sit in a **Sogrom's Table Tools** folder in the Compendium sidebar. Players can view them.
 
