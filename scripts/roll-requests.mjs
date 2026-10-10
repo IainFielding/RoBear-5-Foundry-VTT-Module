@@ -1704,8 +1704,11 @@ function renderSummary(message, request, results, team) {
   // The GM decides when players see how many succeeded.
   const revealed = !!message.getFlag(MODULE_ID, "revealed");
   if ( !revealed && !game.user.isGM ) return;
-  const count = rows.filter(r => r[0].success).length;
-  summary.append(textElement("span", localize("STT.Request.Summary.Standard", { count, total: rows.length })));
+  // Where only some choices have a DC, a roll made without one neither succeeded nor failed, so it isn't counted.
+  const judged = rows.filter(r => r[0].success !== null);
+  if ( !judged.length ) return;
+  const count = judged.filter(r => r[0].success).length;
+  summary.append(textElement("span", localize("STT.Request.Summary.Standard", { count, total: judged.length })));
   if ( game.user.isGM ) summary.append(renderRevealButton(message, revealed));
   return summary;
 }
