@@ -718,6 +718,22 @@ export function findCombatant(message) {
 }
 
 /* -------------------------------------------- */
+
+/**
+ * Give a combatant the total of its initiative roll, once a card or a bonus has changed the roll, with the natural 1
+ * or 20 the roll now shows, which decides its place in the initiative order (see natural-initiative.mjs).
+ * @param {ChatMessage5e} message  An initiative roll message.
+ */
+export async function updateInitiative(message) {
+  const roll = message.rolls[0];
+  const natural = getNatural(roll);
+  await findCombatant(message)?.update({
+    initiative: roll.total,
+    flags: { [MODULE_ID]: { natural: [1, 20].includes(natural) ? natural : 0 } }
+  }).catch(reportError);
+}
+
+/* -------------------------------------------- */
 /*  Rendering                                   */
 /* -------------------------------------------- */
 
@@ -983,9 +999,7 @@ async function applyCard(message, { key, activity, label }) {
     throw err;
   }
   // The roll now holds the card's effect, so the card stays spent even if the tracker can't be updated.
-  if ( getRollKind(message) === "initiative" ) {
-    await findCombatant(message)?.update({ initiative: message.rolls[0].total }).catch(reportError);
-  }
+  if ( getRollKind(message) === "initiative" ) await updateInitiative(message);
 }
 
 /* -------------------------------------------- */

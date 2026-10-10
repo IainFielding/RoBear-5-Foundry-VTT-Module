@@ -93,6 +93,19 @@
   pointer-events: none;
 }
 
+/* A natural 20 or 1 on initiative, in the combat tracker: the colours of the rings in chat, without the rings, on the
+   initiative of a combatant its natural has put first or last. */
+.combat-tracker .token-initiative.stt-natural-20 :is(span, input) {
+  color: #f5c542;
+  font-weight: bold;
+  text-shadow: 0 0 6px rgba(245, 197, 66, 0.8);
+}
+
+.combat-tracker .token-initiative.stt-natural-1 :is(span, input) {
+  color: #c96a5a;
+  font-weight: bold;
+}
+
 /* -------------------------------------------- */
 /*  Card Dialog — "Arcane Midnight", the theme  */
 /*  of the Simple D&D 5e Character Creator's    */

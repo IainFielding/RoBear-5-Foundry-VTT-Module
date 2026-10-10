@@ -100,6 +100,8 @@ By default:
 - Damage rolls aren't affected by these restrictions.
 - On a saving throw against a spell's or feature's damage, a natural 20 takes no damage and a natural 1 takes the
   maximum: every die counts as its highest, and your resistances and immunities don't reduce it.
+- On initiative, a natural 20 puts you first in the initiative order and a natural 1 puts you last, whatever your
+  total.
 
 Your GM can customise these rules, so the exact behaviour at your table may differ.
 

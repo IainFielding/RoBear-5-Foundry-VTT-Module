@@ -94,6 +94,10 @@ the end of both consoles.
   with nothing more rolled. With the setting off, damage is left to dnd5e. The canvas is
   off in the harness, so the damage tray is asked about each token rather than listing them itself.
 
+- `tests-natural-initiative.mjs`: natural 1s and 20s on initiative. A natural 20 goes first in the initiative order
+  and a natural 1 last, for the GM and the player, whatever the totals around them. An initiative typed over one has
+  no natural, and with the setting off totals alone decide the order.
+
 - `tests-death-saves.mjs`: death save requests at the start of a dying creature's turn: who is asked, the pop-ups,
   once a round, stable creatures, and removing a request when the creature is healed.
 - `tests-world-scripts.mjs`: the four settings menus, each holding its own settings, the GM's welcome card, and the five Gameplay

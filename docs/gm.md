@@ -65,12 +65,13 @@ can open them, and each setting applies to the whole world.
 
 ### Dice Rolling
 
-<img src="images/gm-settings-dice-rolling.webp" alt="The Dice Rolling Settings window, with its two settings" width="420">
+<img src="images/gm-settings-dice-rolling.webp" alt="The Dice Rolling Settings window" width="420">
 
 | Setting | Default | What it does |
 |---|---|---|
 | **Ring natural 1s and 20s** | On | A roll whose d20 shows a natural 20 is ringed in gold in chat, and a natural 1 in red: checks, saving throws and attacks, a save summarised inside the card of the spell that called for it, and a result on a request card. Turn it off for plain totals. |
 | **Natural 1s and 20s on saves against damage** | On | When a spell or feature calls for a save and deals damage, a natural 20 on the save takes no damage, and a natural 1 takes the damage's maximum, every die at its highest (36 from 6d6), ignoring resistances and immunities. Each starts that way in the damage's **Apply** tray, where you can still change it. Turn it off for D&D 5e's own rules. |
+| **Natural 1s and 20s on initiative** | On | A creature whose initiative roll shows a natural 20 goes first in the initiative order, above any higher total, and one whose roll shows a natural 1 goes last, below any lower total. Each keeps the initiative it rolled, shown in gold or red in the combat tracker, and several natural 20s, or several natural 1s, are ordered among themselves by it. A Hero Card or a bonus that changes the roll's d20 moves the creature to match, and an initiative you type in has no natural. Turn it off to order everyone by their totals alone. |
 
 ### Roll Requests
 

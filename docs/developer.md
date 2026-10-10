@@ -364,6 +364,12 @@ out hit, miss and save results again.
 | `advantage` | `true` | The Advantage card was played from the sheet. The next d20 test gets advantage, and the flag is cleared once that roll is confirmed. |
 | `stable` | `boolean` | Set in the same update as a death save that stabilizes the actor, while `deathSavePrompt` is on, since dnd5e clears the successes and leaves nothing else to show it. Set to `false` when the actor is healed or takes a death save failure. While `true`, no death save is asked for. |
 
+### On a combatant
+
+| Flag | Type | Meaning |
+|---|---|---|
+| `natural` | `20 \| 1 \| 0` | The natural 20 or 1 its initiative roll shows, or `0` for neither. Set in the same update as its initiative, and again when a card or a bonus changes the roll. While `naturalInitiative` is on, a `20` sorts it first in the initiative order and a `1` last. |
+
 ## Settings
 
 All are world settings, read with `game.settings.get("sogrom-table-tools", key)`. None is listed in **Configure
@@ -375,6 +381,7 @@ in `settings-menus.mjs`. A setting is added to a menu through its class's `SETTI
 | `lockNaturals` | Boolean | `true` | No card can be played on a natural 1 or 20. |
 | `markNaturals` | Boolean | `true` | Ring natural 1s and 20s in chat and on request cards. |
 | `naturalSaves` | Boolean | `true` | A natural 20 on a save against an activity's damage takes none, and a natural 1 takes its maximum, ignoring resistances and immunities. |
+| `naturalInitiative` | Boolean | `true` | A natural 20 on initiative goes first in the initiative order, and a natural 1 last. Changing it sorts every combat again. |
 | `showPlayedCards` | Boolean | `true` | Show played cards' art on screen. |
 | `defaultDC` | Number or `null` | `null` | The DC each roll starts with in the request window; `null` for none. |
 | `showDCDefault` | Boolean | `false` | Whether **Show DC to Players** starts ticked, and the default for `createRequest`'s `showDC`. |
@@ -434,7 +441,7 @@ Sogrom's Table Tools fires no hooks of its own. It listens to these:
 
 | Hook | Script | Why |
 |---|---|---|
-| `init` | Every script with a setting, and `settings-menus.mjs` | Register settings and their menus, and set the API. |
+| `init` | Every script with a setting, and `settings-menus.mjs` | Register settings and their menus, and set the API. `natural-initiative.mjs` also wraps `Combat#_sortCombatants` and `Combatant#getInitiativeRoll` here, as Foundry sorts each combat's turns before `setup`. |
 | `setup` | `hero-cards.mjs`, `natural-saves.mjs` | Wrap `Item#use` and the damage tray's target options (see below). |
 | `ready` | `bonus-rolls.mjs`, `roll-request-popup.mjs`, `natural-saves.mjs`, `welcome.mjs`, `chat-button-labels.mjs`, `one-tab-activities.mjs` | Start listening on the socket, open pop-ups for recent requests, watch RSReforged's Apply buttons, post a welcome or what's new card that is due, and apply the two layout settings. |
 | `dnd5e.renderChatMessage` | `hero-cards.mjs`, `roll-requests.mjs`, `bonus-rolls.mjs`, `class-features.mjs` | Add card buttons, natural 1/20 rings, notes, request cards, and the Indomitable button. |
@@ -444,6 +451,8 @@ Sogrom's Table Tools fires no hooks of its own. It listens to these:
 | `preDeleteChatMessage` | `roll-requests.mjs` | Stop players deleting a roll made for a request. |
 | `getChatMessageContextOptions` | `bonus-rolls.mjs`, `class-features.mjs` | Add **Add to a roll…**, **Subtract from a roll…** and **Use Indomitable** to the right-click menu. |
 | `renderChatInput` | `roll-requests.mjs` | Add the GM's tankard button to the chat controls. |
+| `preUpdateCombatant` | `natural-initiative.mjs` | Add the `natural` flag to an update that changes a combatant's initiative. |
+| `renderCombatTracker` | `natural-initiative.mjs` | Colour the initiative of a combatant a natural 1 or 20 has moved. |
 | `combatTurnChange` | `death-saves.mjs` | On the active GM's client, post a death save request for the creature whose turn started, while `deathSavePrompt` is on. |
 | `dnd5e.rollDeathSave` | `death-saves.mjs` | Add the `stable` flag to the updates of a save that stabilizes the actor. |
 | `preUpdateActor`, `updateActor` | `death-saves.mjs` | Clear the `stable` flag when the actor is healed or takes a failure, and remove its unrolled death save requests when it is healed. |
@@ -487,6 +496,7 @@ scripts/
   bonus-rolls.mjs           Adding another feature's die to a roll, and the socket messages for it.
   class-features.mjs        Fighter's Indomitable.
   natural-saves.mjs         Natural 1s and 20s on saves against an activity's damage.
+  natural-initiative.mjs    Natural 1s and 20s on initiative: first and last in the initiative order.
   bloodied-tint.mjs         Gameplay Enhancements: the red tint on D&D 5e's Bloodied effect.
   fade-unprepared.mjs       Gameplay Enhancements: fading unprepared spells on actor sheets.
   rarity-colours.mjs        Gameplay Enhancements: tinting item rows on actor sheets by rarity.

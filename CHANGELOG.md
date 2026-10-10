@@ -2,6 +2,15 @@
 
 All notable changes to Sogrom's Table Tools.
 
+## 1.1.0
+
+### Dice rolling
+
+- **Natural 1s and 20s on initiative.** A creature whose initiative roll shows a natural 20 goes first in the
+  initiative order, above any higher total, and one whose roll shows a natural 1 goes last. Each keeps the initiative
+  it rolled, shown in gold or red in the combat tracker. On by default; turn it off with **Natural 1s and 20s on
+  initiative**, under **Dice Rolling**.
+
 ## 1.0.0
 
 The first stable release, for Foundry VTT v14 and the D&D 5e system 6.x, tested on 6.0.6. It changes nothing in how
