@@ -253,6 +253,15 @@ test("the request window keeps what was filled in when the mode changes", async 
     assertEqual((await readWindow(app)).rollValues, ["d20", "d20"], "team vs team rolls after setting a roll-off");
     await chooseMode(app, "rolloff");
     assertEqual((await readWindow(app)).rollValues, ["d20", "d100"], "roll-off rolls after visiting team vs team");
+
+    // Divine Intervention's one actor is its own, so picking them leaves who rolls in the other modes alone.
+    const actors = async () => (await readWindow(app)).actors.map(a => `${a.name}:${a.checked}`);
+    await chooseMode(app, "divine");
+    await app.locator(".stt-request-actor-choice", { hasText: "Borin" }).click();
+    await chooseMode(app, "standard");
+    assertEqual(await actors(), ["Aria:true", "Borin:true", "Goblin:false"], "who rolls after picking who prays");
+    await chooseMode(app, "divine");
+    assertEqual(await actors(), ["Aria:false", "Borin:true", "Goblin:false"], "who prays after switching back");
   } finally {
     await gm.eval(() => foundry.applications.instances.get("stt-roll-request")?.close());
   }
