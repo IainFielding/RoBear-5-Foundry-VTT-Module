@@ -2,6 +2,28 @@
 
 All notable changes to Sogrom's Table Tools.
 
+## 1.0.0
+
+The first stable release, for Foundry VTT v14 and the D&D 5e system 6.x, tested on 6.0.6. It changes nothing in how
+the module plays since 0.1.3.
+
+### Installing
+
+- **Listed in Foundry's package browser.** Search for **Sogrom's Table Tools** under **Add-on Modules → Install
+  Module**, without pasting a manifest URL.
+- **A picture on the setup screen.** The module shows the Hero Card window as its image in Foundry's list of modules,
+  with links to its readme, changelog and issues.
+
+### Welcome card
+
+- **What's new in 1.0.0.** GMs updating from an earlier release are whispered a short note of what's been added.
+
+### For macro and module authors
+
+- **The API is stable.** `requestRolls` and `createRequest`, and the request object they take, will keep working
+  across 1.x releases. The [developer guide](docs/developer.md) documents them; the scripts' other exports stay
+  internal.
+
 ## 0.1.3
 
 ### Roll requests
