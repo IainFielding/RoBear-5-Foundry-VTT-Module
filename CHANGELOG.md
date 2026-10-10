@@ -2,6 +2,28 @@
 
 All notable changes to Sogrom's Table Tools.
 
+## 0.1.3
+
+### Roll requests
+
+- **Party Challenge, a skill challenge for the whole party.** Everyone makes the roll once a round, and each roll is
+  a success or a failure for them all: the party succeeds at **Successes Needed** (4 by default) and fails at
+  **Failures to Fail** (3 by default). A new round opens once everyone has rolled in the one before. The GM sees the
+  running tally, and shows it to players when they choose.
+- **Party Challenge takes Team Challenge's place in the request window.** The window offers six kinds of roll again.
+  A macro can still post a Team Challenge, or open the window on one with `requestRolls({ mode: "team" })`, and Team
+  Challenge cards already in chat work as before.
+- **Blind GM Roll.** A third **Roll Visibility**, beside Public and Private GM Roll: only the GM sees the results,
+  for a roll such as Perception, Insight or Stealth whose result the player shouldn't know.
+- **A public roll with its DC shown starts shown.** In a Standard Roll with **Show DC to Players** ticked, players
+  see who passed straight away, as they could already work it out. The GM can still hide it.
+- **Team vs Team tells close averages apart.** Each team's average is rounded down to one decimal place rather than
+  to a whole number, so 12.6 beats 12.3 instead of tying.
+- **Picking who prays keeps who rolls.** Choosing Divine Intervention's one character no longer unticks everyone
+  else in the other kinds of roll.
+- **The Standard Roll summary counts only rolls made against a DC.** Where only some of a choice of rolls have a DC,
+  a roll made without one is no longer counted as a failure in "X of Y succeeded".
+
 ## 0.1.1
 
 ### Licence
