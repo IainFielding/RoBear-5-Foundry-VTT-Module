@@ -586,6 +586,19 @@ test("standard roll: a public roll with its DC shown starts shown, and the GM ca
   assertEqual(row(card, "Aria").classes, [], "the player's row once hidden");
 });
 
+test("standard roll: a blind roll is hidden from the player who made it", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const id = await postRequest(ctx, { mode: "standard", parts: [athletics(1)], actors: [ids.aria], rollMode: "blind" });
+  await forceDice(player, [d20(14)]);
+  await clickRoll(player, id, "Aria", { fastForward: true });
+
+  let card = await waitForCard(gm, id, c => row(c, "Aria").results.length, "the GM's result");
+  assertEqual(row(card, "Aria").results[0].classes, ["success"], "the GM's result");
+  card = await waitForCard(player, id, c => row(c, "Aria").results.length, "the player's result");
+  assertEqual([row(card, "Aria").results[0], row(card, "Aria").rollButtons, row(card, "Aria").cardButton],
+    [{ text: "?", classes: [] }, 0, false], "the player's own roll, hidden from them");
+});
+
 test("standard roll: a hidden DC stays off the card and off the player's roll", async (ctx) => {
   const { gm, player, ids } = ctx;
   const id = await postRequest(ctx, { mode: "standard", parts: [athletics(12)], actors: [ids.aria], showDC: false });

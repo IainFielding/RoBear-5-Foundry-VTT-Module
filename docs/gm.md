@@ -150,7 +150,9 @@ buttons.
 4. **Options.**
    - **Show DC to Players.** Unticked, players see "DC ?" on the card, and the DC is kept off their rolls so D&D 5e
      doesn't show them success or failure. Ticked, a public Standard Roll shows players who passed straight away.
-   - **Roll Visibility.** **Public**, or **Private GM Roll**, where each player sees only their own results.
+   - **Roll Visibility.** **Public**; **Private GM Roll**, where each player sees only their own results; or **Blind
+     GM Roll**, where only you see any of them, for a roll such as Perception, Insight or Stealth whose result the
+     player shouldn't know.
 5. **Send Request** posts the request to chat.
 
 **Offering a choice of rolls.** In a Standard Roll, Team Challenge or Skill Challenge, click **+** beside a roll to
@@ -297,6 +299,8 @@ their own. Click a result to see its dice. Notes on any cards played show under 
 
 - With **Private GM Roll**, each player sees only their own results. In a private Roll-Off or Team vs Team, **Show NPC roll**
   (or **Show NPC rolls**) shows the NPCs' rolls only to the players in the request, not to everyone.
+- With **Blind GM Roll**, players see "?" for every result, their own included, so they can't play a Hero Card on a
+  roll they made blind. In a blind Roll-Off or Team vs Team there's no button to show the NPCs' rolls.
 - **Hidden isn't secret.** The DC, and results you haven't shown yet, are hidden on the chat card, but they still
   reach every player's Foundry as part of the request. A player who opens the browser console can read them. That's
   how Foundry shares chat messages, so the hiding keeps the table honest rather than keeping a secret.

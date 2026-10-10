@@ -4,7 +4,7 @@
 
 import { MODULE_ID, localize } from "./hero-cards.mjs";
 import {
-  CHALLENGE_PARTS, DICE, DIVINE_RANGE, MAX_CHOICES, MODES, SCORING, createRequest, getChoices, getPartLabel
+  CHALLENGE_PARTS, DICE, DIVINE_RANGE, MAX_CHOICES, MODES, ROLL_MODES, SCORING, createRequest, getChoices, getPartLabel
 } from "./roll-requests.mjs";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -34,7 +34,7 @@ const { FormDataExtended } = foundry.applications.ux;
  * @property {number} successes
  * @property {string} scoring  How a Team Challenge is scored: a key in SCORING.
  * @property {boolean} showDC
- * @property {"public"|"gm"} rollMode
+ * @property {"public"|"gm"|"blind"} rollMode
  * @property {string[]} actors                 Who rolls, outside a contest.
  * @property {string|null} divine              Who prays in Divine Intervention, kept apart so picking them leaves
  *   who rolls in the other modes alone. Null until one is picked, when it is the first of those who roll.
@@ -319,7 +319,7 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
       draft.range = Math.clamp(Math.round(Number(data.range) || DIVINE_RANGE.initial), DIVINE_RANGE.min, DIVINE_RANGE.max);
     }
     if ( "showDC" in data ) draft.showDC = !!data.showDC;
-    draft.rollMode = data.rollMode === "gm" ? "gm" : "public";
+    draft.rollMode = ROLL_MODES.includes(data.rollMode) ? data.rollMode : "public";
 
     if ( shown === "rolloff" ) draft.rivals = [0, 1].map(s => this.#actors[data.rivals?.[s]]?.uuid ?? null);
     else if ( shown === "versus" ) draft.teams = [0, 1].map(s => chosen(data.teams?.[s]));

@@ -88,7 +88,7 @@ interface RollRequest {
   scoring?: "average" | "half" | "leader" | "weakest"; // "team" only: how it's scored (default: the "teamScoring" setting)
   range?: number;            // "divine" only: how many numbers its one actor picks, 1–50 (default 16)
   showDC?: boolean;          // show the DC to players (default: the "showDCDefault" setting)
-  rollMode?: "public" | "gm"; // "gm" is a private GM roll (default "public")
+  rollMode?: "public" | "gm" | "blind"; // "gm" is a private GM roll, "blind" a blind one (default "public")
 }
 
 interface RequestPart {
@@ -150,7 +150,7 @@ language), and posts nothing:
 | `mode` isn't one of the six | Unknown kind of roll request: {mode}. |
 | `actors` isn't an array of unique, non-empty strings | A roll request's actors must be a list of actor UUIDs, each named once. |
 | `actors` is empty | A roll request needs at least one actor to roll. |
-| `rollMode` isn't `"public"` or `"gm"` | Unknown roll visibility: {rollMode}. Use "public" or "gm". |
+| `rollMode` isn't `"public"`, `"gm"` or `"blind"` | Unknown roll visibility: {rollMode}. Use "public", "gm" or "blind". |
 | A contest's `sides` aren't two non-empty arrays | Each side of a contest needs at least one actor. |
 | A `rolloff` side has more than one actor | Each side of a Roll-Off needs exactly one actor. |
 | Someone on a side isn't in `actors` | Everyone on a side of a contest must also be in the request's actors. |

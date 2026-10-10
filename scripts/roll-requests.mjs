@@ -102,6 +102,11 @@ export const SCORING = {
 export const DIVINE_RANGE = { min: 1, max: 50, initial: 16 };
 
 /**
+ * Who sees a request's rolls: everyone, the GM and whoever made the roll, or, in a blind roll, only the GM.
+ */
+export const ROLL_MODES = ["public", "gm", "blind"];
+
+/**
  * Plain dice that can be rolled instead of a check.
  */
 export const DICE = {
@@ -385,7 +390,7 @@ function refreshRequest(message, changes) {
  * @property {string} [scoring]      For a Team Challenge, how its rolls are scored: a key in SCORING. Requests posted
  *   before there was a choice have none, and are averaged.
  * @property {boolean} showDC        Show the DC to players.
- * @property {"public"|"gm"} rollMode
+ * @property {"public"|"gm"|"blind"} rollMode  Who sees each roll: everyone, the GM and whoever made it, or only the GM.
  */
 
 /**
@@ -480,7 +485,7 @@ export function validateRequest(request) {
   check(Array.isArray(actors) && actors.every(uuid => uuid && (typeof uuid === "string"))
     && (new Set(actors).size === actors.length), "STT.Request.Invalid.Actors");
   check(actors.length, "STT.Request.Invalid.NoActors");
-  check(["public", "gm"].includes(request.rollMode), "STT.Request.Invalid.RollMode", { rollMode: request.rollMode });
+  check(ROLL_MODES.includes(request.rollMode), "STT.Request.Invalid.RollMode", { rollMode: request.rollMode });
 
   const contest = isContest(request);
   if ( contest ) {
@@ -1877,12 +1882,14 @@ function isHiddenRival(request, actor) {
  * for a private one only to the players in it, so showing them never makes them more public than the request itself.
  * @param {RollRequest} request
  * @param {Map<string, (PartResult|null)[]>} results
- * @returns {HTMLButtonElement|void}  Nothing until an NPC has rolled, or if there is no player to show it to.
+ * @returns {HTMLButtonElement|void}  Nothing until an NPC has rolled, in a blind request, or if there is no player to
+ *   show it to.
  */
 function renderRivalRevealButton(request, results) {
   const rolls = request.actors.filter(uuid => isHiddenRival(request, fromUuidSync(uuid)))
     .map(uuid => results.get(uuid)[0]?.message).filter(Boolean);
-  if ( !rolls.length ) return;
+  // In a blind request players don't see even their own rolls, so the NPCs' aren't shown to them either.
+  if ( !rolls.length || (request.rollMode === "blind") ) return;
   const gms = ChatMessage.getWhisperRecipients("GM").map(u => u.id);
   let shownTo = [];
   if ( request.rollMode === "gm" ) {

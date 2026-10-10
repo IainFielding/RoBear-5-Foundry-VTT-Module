@@ -360,6 +360,10 @@ describe("Checking a request before it is posted", () => {
     expect(errorFor({ ...valid.standard, parts: [{ type: "skill", key: "ath", dc: 15 }] })).toBeNull();
   });
 
+  it("accepts each roll visibility: public, a private GM roll, or a blind one", () => {
+    for ( const rollMode of ["public", "gm", "blind"] ) expect(errorFor({ ...valid.standard, rollMode })).toBeNull();
+  });
+
   it("refuses a request with no one to roll", () => {
     expect(errorFor({ ...valid.standard, actors: [] })).toBe(refusal("NoActors"));
   });
@@ -420,7 +424,7 @@ describe("Checking a request before it is posted", () => {
   it("refuses an unknown roll, a DC that isn't a number, or an unknown visibility", () => {
     expect(errorFor({ ...valid.standard, parts: [{ type: "d7", dc: null }] })).toBe("Unknown kind of roll: d7.");
     expect(errorFor({ ...valid.standard, parts: [{ type: "d20", dc: "hard" }] })).toBe(refusal("DC", { dc: "hard" }));
-    expect(errorFor({ ...valid.standard, rollMode: "blind" })).toBe(refusal("RollMode", { rollMode: "blind" }));
+    expect(errorFor({ ...valid.standard, rollMode: "self" })).toBe(refusal("RollMode", { rollMode: "self" }));
   });
 
   it("accepts a choice of rolls in a standard roll, team challenge or skill challenge step", () => {
