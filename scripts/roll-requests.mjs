@@ -179,6 +179,14 @@ function registerSettings() {
     type: Boolean,
     default: false
   });
+  game.settings.register(MODULE_ID, "defaultDC", {
+    name: "STT.Settings.DefaultDC.Name",
+    hint: "STT.Settings.DefaultDC.Hint",
+    scope: "world",
+    config: false,
+    type: new foundry.data.fields.NumberField({ nullable: true, integer: true, min: 0, initial: null }),
+    default: null
+  });
   game.settings.register(MODULE_ID, "teamScoring", {
     name: "STT.Settings.TeamScoring.Name",
     hint: "STT.Settings.TeamScoring.Hint",
@@ -1826,18 +1834,19 @@ function onAsyncClick(button, action) {
 /**
  * @param {RollRequest} request
  * @param {Actor5e|void} actor
- * @returns {boolean}  Whether this actor's roll is kept from players until the GM shows it: an NPC in a roll-off.
+ * @returns {boolean}  Whether this actor's roll is kept from players until the GM shows it: an NPC in a roll-off or a
+ *   Team vs Team.
  */
 function isHiddenRival(request, actor) {
-  return (request.mode === "rolloff") && !!actor && !actor.hasPlayerOwner;
+  return ["rolloff", "versus"].includes(request.mode) && !!actor && !actor.hasPlayerOwner;
 }
 
 /* -------------------------------------------- */
 
 /**
- * A GM button to show the NPC's roll-off roll to players, or to hide it again. The roll is a private GM roll until it
- * is shown. It is then shown as the request's other rolls are: to everyone for a public request, or for a private
- * one only to the players in it, so showing it never makes it more public than the request itself.
+ * A GM button to show the NPCs' rolls in a roll-off or Team vs Team to players, or to hide them again. Each is a private
+ * GM roll until it is shown. They are then shown as the request's other rolls are: to everyone for a public request, or
+ * for a private one only to the players in it, so showing them never makes them more public than the request itself.
  * @param {RollRequest} request
  * @param {Map<string, (PartResult|null)[]>} results
  * @returns {HTMLButtonElement|void}  Nothing until an NPC has rolled, or if there is no player to show it to.
@@ -1857,7 +1866,10 @@ function renderRivalRevealButton(request, results) {
   }
   const revealed = rolls.every(m => !m.whisper.length || m.whisper.some(id => !gms.includes(id)));
   const whisper = revealed ? gms : shownTo;
-  return renderToggleButton(revealed, { hidden: "STT.Request.Reveal.ShowNPC", shown: "STT.Request.Reveal.NPCShown" },
+  const labels = request.mode === "versus"
+    ? { hidden: "STT.Request.Reveal.ShowNPCs", shown: "STT.Request.Reveal.NPCsShown" }
+    : { hidden: "STT.Request.Reveal.ShowNPC", shown: "STT.Request.Reveal.NPCShown" };
+  return renderToggleButton(revealed, labels,
     () => ChatMessage.updateDocuments(rolls.map(m => ({ _id: m.id, whisper }))));
 }
 
@@ -1888,7 +1900,7 @@ async function rollForRequest(message, actor, part, event, choice=0) {
   // The DC is never sent with the roll: dnd5e would show the person rolling whether they beat it, before the GM
   // shows the result. The request card scores each roll against the request's DC itself.
   const requestRoll = { request: message.id, actor: actor.uuid, part, choice };
-  // An NPC's roll in a roll-off is a private GM roll, until the GM shows it from the request card.
+  // An NPC's roll in a roll-off or Team vs Team is a private GM roll, until the GM shows it from the request card.
   const rollMode = isHiddenRival(request, actor) ? "gm" : request.rollMode;
   const messageConfig = { rollMode, data: { flags: { [MODULE_ID]: { requestRoll } } } };
 

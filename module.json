@@ -43,7 +43,8 @@
     "scripts/rarity-colours.mjs",
     "scripts/chat-button-labels.mjs",
     "scripts/one-tab-activities.mjs",
-    "scripts/settings-menus.mjs"
+    "scripts/settings-menus.mjs",
+    "scripts/welcome.mjs"
   ],
   "socket": true,
   "languages": [
@@ -58,7 +59,8 @@
     "styles/hero-cards.css",
     "styles/roll-requests.css",
     "styles/world-scripts.css",
-    "styles/settings-menus.css"
+    "styles/settings-menus.css",
+    "styles/welcome.css"
   ],
   "packs": [
     {

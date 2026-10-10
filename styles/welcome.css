@@ -1,0 +1,63 @@
+/*
+ * The GM's welcome and what's new card (welcome.mjs): short lists, then a button for each settings menu, two to a row.
+ */
+/* Foundry's own chat headings are sized for a page, not a card this narrow. */
+.chat-message .stt-welcome h3 {
+  margin: 0 0 4px;
+  font-size: var(--font-size-16);
+  line-height: 1.25;
+}
+
+.chat-message .stt-welcome h4 {
+  margin: 8px 0 2px;
+  border: none;
+  font-size: var(--font-size-14);
+  line-height: 1.25;
+}
+
+.chat-message .stt-welcome p {
+  margin: 4px 0;
+}
+
+.chat-message .stt-welcome-list {
+  margin: 2px 0 6px;
+  padding-left: 1.1rem;
+}
+
+.chat-message .stt-welcome-list li {
+  margin: 3px 0;
+}
+
+/* The request button, in the line of text that says where it is. */
+.chat-message .stt-welcome-tankard {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: 1.5em;
+  min-height: 0;
+  margin: 0 2px;
+  padding: 0 5px;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+.chat-message .stt-welcome-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 4px 0;
+}
+
+.chat-message .stt-welcome-buttons button {
+  flex: 1 1 45%;
+  height: auto;
+  padding: 4px 6px;
+  font-size: var(--font-size-12);
+  white-space: nowrap;
+}
+
+.chat-message .stt-welcome-foot {
+  font-size: var(--font-size-11);
+  opacity: 0.8;
+}

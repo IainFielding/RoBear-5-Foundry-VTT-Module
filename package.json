@@ -1,6 +1,7 @@
 {
   "name": "sogrom-table-tools",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "description": "Dev tooling (lint, manifest validation, unit and end-to-end tests) for the Sogrom's Table Tools Foundry module. Not shipped in the module archive.",
   "scripts": {

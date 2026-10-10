@@ -4,10 +4,30 @@ All notable changes to Sogrom's Table Tools.
 
 ## 0.1.1
 
+### Licence
+
+- **Now under the MIT License.** The code and the module's own content can be reused, changed and shared. The card
+  art, made from licensed stock images, and the fonts keep their own terms, set out in LICENSE.
+
+### Welcome card
+
+- **A welcome card for GMs.** The first time the module runs in a world, the GMs are whispered a card saying where
+  things are, with a button for each group of settings. Its **Hero Cards** link drags straight onto a character, and
+  its tankard opens the request window. After an update that adds features, they get a short note of
+  what's new instead. The **Welcome and What's New Cards** setting, under Gameplay Enhancements, turns them off.
+
 ### Roll requests
 
 - **Results wait for Dice So Nice.** A roll shows as rolling on the request card and pop-up until its 3D dice land,
   so the total, the pass or fail and the summary no longer give the result away while the dice are still moving.
+- **Team vs Team keeps the NPCs' rolls hidden.** As in a Roll-Off, each NPC's roll is a private GM roll, so players
+  see "?" for the NPCs, and no winner, until the GM clicks **Show NPC rolls** on the card.
+- **DCs start blank.** The request window no longer fills in DC 15, nor the last request's DCs: the GM sets a DC only
+  if they want one, or sets it later from the card. A new **DC by default** setting, under Roll Requests, sets the
+  DC each roll starts with instead.
+- **Who rolls is in order of name.** The request window lists the selected tokens, the player characters, the group
+  members and combatants, and the scene's other tokens each in order of name, rather than in the order the world
+  happened to hold them in.
 
 ## 0.0.7
 

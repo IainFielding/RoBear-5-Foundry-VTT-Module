@@ -188,7 +188,7 @@ test("the request window shows each mode's own fields", async ({ gm }) => {
     assertEqual(form.rollSelects.length, 1, "standard roll pickers");
     assertEqual(form.rollValues, ["d20"], "standard roll to start with");
     assertEqual(form.dice, ["d20", "d6", "d8", "d10", "d12", "d100"], "standard dice");
-    assertEqual(form.dcInputs, ["15"], "standard DC");
+    assertEqual(form.dcInputs, [""], "standard DC, blank to start with");
     assertEqual(form.actors.map(a => `${a.name}:${a.checked}`), ["Aria:true", "Borin:true", "Goblin:false"],
       "who rolls, with the player characters ticked");
     assertEqual(form.showDC, true, "Show DC option");
@@ -197,7 +197,7 @@ test("the request window shows each mode's own fields", async ({ gm }) => {
     await chooseMode(app, "challenge");
     form = await readWindow(app);
     assertEqual(form.rollSelects.length, 3, "skill challenge roll pickers");
-    assertEqual(form.dcInputs.length, 3, "skill challenge DCs");
+    assertEqual(form.dcInputs, ["", "", ""], "skill challenge DCs, blank to start with");
     assertEqual(form.successes, true, "successes needed");
 
     await chooseMode(app, "rolloff");
@@ -271,6 +271,15 @@ test("sending a standard request posts it to chat and closes the window", async 
   assertEqual(request.parts, [{ type: "skill", key: "acr", dc: 13 }], "parts");
   assertEqual(request.actors, [ids.aria, ids.borin, ids.goblin], "actors");
   await waitFor(gm, () => !document.getElementById("stt-roll-request"), null, "the window to close");
+
+  // The next request starts from the same roll, but with its DC blank again.
+  const next = await openWindow(gm);
+  try {
+    assertEqual(await next.locator('select[name="standard.roll"]').inputValue(), "skill.acr", "the roll on reopening");
+    assertEqual(await next.locator('input[name="standard.dc"]').inputValue(), "", "the DC on reopening");
+  } finally {
+    await gm.eval(() => foundry.applications.instances.get("stt-roll-request")?.close());
+  }
 });
 
 test("the Show DC to Players box starts from the GM's setting", async ({ gm }) => {
@@ -287,6 +296,22 @@ test("the Show DC to Players box starts from the GM's setting", async ({ gm }) =
     await gm.eval(async moduleId => {
       await foundry.applications.instances.get("stt-roll-request")?.close();
       await game.settings.set(moduleId, "showDCDefault", false);
+    }, MODULE_ID);
+  }
+});
+
+test("the DC starts from the GM's DC by default setting", async ({ gm }) => {
+  await gm.eval(moduleId => game.settings.set(moduleId, "defaultDC", 14), MODULE_ID);
+  try {
+    const app = await openWindow(gm);
+    await chooseMode(app, "standard");
+    assertEqual((await readWindow(app)).dcInputs, ["14"], "the standard DC with the setting at 14");
+    await chooseMode(app, "challenge");
+    assertEqual((await readWindow(app)).dcInputs, ["14", "14", "14"], "the skill challenge DCs with the setting at 14");
+  } finally {
+    await gm.eval(async moduleId => {
+      await foundry.applications.instances.get("stt-roll-request")?.close();
+      await game.settings.set(moduleId, "defaultDC", null);
     }, MODULE_ID);
   }
 });
@@ -984,13 +1009,15 @@ test("roll-off: a d100 against a skill check, the higher total winning", async (
 });
 
 /**
- * Show the NPC's hidden roll-off roll to players from the GM's request card, and wait for the player to see it.
+ * Show the NPCs' hidden roll-off or Team vs Team rolls to players from the GM's request card, and wait for the player
+ * to see them.
  * @param {import("./lib/session.mjs").Session} gm
  * @param {import("./lib/session.mjs").Session} player
  * @param {string} id
+ * @param {string} [label="Show NPC roll"]  The GM's button.
  */
-async function revealRival(gm, player, id) {
-  await waitForCard(gm, id, c => c.reveal === "Show NPC roll", "the GM's Show NPC roll button");
+async function revealRival(gm, player, id, label="Show NPC roll") {
+  await waitForCard(gm, id, c => c.reveal === label, `the GM's ${label} button`);
   await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-reveal`).click();
   await waitForCard(player, id, c => c.rows.every(r => r.results.every(p => p.text !== "?")), "the NPC roll to be shown");
 }
@@ -1110,12 +1137,43 @@ test("team vs team: each team pooled with the 1 and 20 rule, the higher average 
   await clickRoll(player, id, "Borin", { fastForward: true });
   await forceDice(gm, [d20(12)]);
   await clickRoll(gm, id, "Goblin", { fastForward: true });
+  await waitForRoll(gm, id, ids.goblin, 1);
+  await revealRival(gm, player, id, "Show NPC rolls");
 
-  const card = await waitForCard(player, id, c => c.summary, "the winner");
+  const card = await waitForCard(player, id, c => c.summary?.includes("win"), "the winner");
   assertEqual(card.sides.map(s => [s.name, s.score, s.classes[0]]), [["Players", "20", "success"], ["NPCs", "12", "failure"]],
     "sides");
   assertEqual(card.summary, "Players 20 · NPCs 12 Players win", "summary");
   assertEqual(row(card, "Borin").classes, ["removed"], "Borin's low roll, removed by Aria's natural 20");
+});
+
+test("team vs team: the NPCs' rolls are private to the GM until the GM shows them", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const id = await postRequest(ctx, {
+    mode: "versus", parts: [athletics(null), athletics(null)],
+    sides: [[ids.aria], [ids.goblin]], actors: [ids.aria, ids.goblin]
+  });
+  await forceDice(player, [d20(11)]);
+  await clickRoll(player, id, "Aria", { fastForward: true });
+  await forceDice(gm, [d20(16)]);
+  await clickRoll(gm, id, "Goblin", { fastForward: true });
+  await waitForRoll(gm, id, ids.goblin, 1);
+
+  let card = await waitForCard(player, id, c => c.summary, "the player's summary");
+  assertEqual(row(card, "Goblin").results, [{ text: "?", classes: [] }], "the Goblin's result, for the player");
+  assertEqual(card.sides.map(s => s.score), ["11", null], "the team scores, for the player");
+  assertEqual(card.summary, "The result is hidden.", "the player's summary before the GM shows the NPC rolls");
+  card = await waitForCard(gm, id, c => c.summary?.includes("win"), "the GM's summary");
+  assertEqual(card.summary, "Players 11 · NPCs 16 NPCs win Show NPC rolls", "the GM's summary");
+
+  await revealRival(gm, player, id, "Show NPC rolls");
+  card = await waitForCard(player, id, c => c.summary?.includes("win"), "the player's winner");
+  assertEqual(card.summary, "Players 11 · NPCs 16 NPCs win", "the player's summary once shown");
+  await waitForCard(gm, id, c => c.reveal === "NPC rolls shown", "the GM's button to show they are shown");
+
+  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-reveal`).click();
+  card = await waitForCard(player, id, c => row(c, "Goblin").results[0].text === "?", "the NPC rolls to be hidden again");
+  assertEqual(card.summary, "The result is hidden.", "the player's summary once hidden again");
 });
 
 /* -------------------------------------------- */

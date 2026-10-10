@@ -527,6 +527,16 @@ shot("the module's settings", async ({ gm }) => {
   await capture(gm, "gm-settings", app);
 });
 
+shot("the welcome card", async ({ gm }) => {
+  const id = await gm.eval(async moduleId => {
+    await game.settings.set(moduleId, "welcomeVersion", "");
+    const { postWelcomeIfDue } = await import(`/modules/${moduleId}/scripts/welcome.mjs`);
+    await postWelcomeIfDue();
+    return game.messages.find(m => m.getFlag(moduleId, "welcome"))?.id;
+  }, MODULE_ID);
+  await capture(gm, "gm-welcome", message(gm, id));
+});
+
 shot("each settings menu", async ({ gm }) => {
   const menus = {
     heroCards: "hero-cards", diceRolling: "dice-rolling", rollRequests: "roll-requests", worldScripts: "world-scripts"

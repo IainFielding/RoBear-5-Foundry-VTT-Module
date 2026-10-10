@@ -726,6 +726,14 @@
 
 :is(.chat-message, .stt-request-popup) .stt-request-sides + .stt-request-summary {
   margin-top: 6px;
+  /* Beside the GM's button, a contest's scores were squeezed until a team's name broke in two. The button wraps onto
+     a line of its own instead. */
+  flex-wrap: wrap;
+}
+
+:is(.chat-message, .stt-request-popup) .stt-request-sides + .stt-request-summary > span {
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 :is(.chat-message, .stt-request-popup) .stt-request-range {

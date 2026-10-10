@@ -232,12 +232,19 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
     const players = this.#actors.filter(a => a.hasPlayerOwner).map(a => a.uuid);
     const draft = foundry.utils.deepClone(RollRequestConfig.#last) ?? {
       mode: "standard",
-      parts: Array.from({ length: CHALLENGE_PARTS }, () => ({ roll: "skill.ath", dc: 15 })),
+      parts: Array.from({ length: CHALLENGE_PARTS }, () => ({ roll: "skill.ath", dc: null })),
       successes: 2,
       range: DIVINE_RANGE.initial,
       rollMode: "public"
     };
-    draft.standard ??= { roll: "d20", dc: 15 };
+    draft.standard ??= { roll: "d20", dc: null };
+    // Every DC starts as the GM's default, blank unless they have set one, so they set a DC only if they want it, here
+    // or later from the card. The rolls carry over from the last request, but not their DCs.
+    const dc = game.settings.get(MODULE_ID, "defaultDC");
+    for ( const part of [draft.standard, ...draft.parts] ) {
+      part.dc = Number.isInteger(dc) ? dc : null;
+      for ( const choice of part.alternatives ?? [] ) delete choice.dc;
+    }
     // How a Team Challenge is scored carries over from the last request, and otherwise starts from the GM's setting.
     if ( !(draft.scoring in SCORING) ) draft.scoring = game.settings.get(MODULE_ID, "teamScoring");
     if ( !(draft.scoring in SCORING) ) draft.scoring = "average";
@@ -487,22 +494,24 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
 
 /**
  * Actors the GM might ask to roll: any asked for by name, those of the selected tokens, the player characters, the
- * members of the party and other groups, the combatants, then the scene's other tokens.
+ * members of the party and other groups, the combatants, then the scene's other tokens. Past those asked for by name,
+ * each group is in order of name, so the list doesn't change with the order the world happens to hold them in.
  * @param {string[]} [uuids]  Actors to offer first, such as the one who played a Divine Intervention card.
  * @returns {Actor5e[]}
  */
 function getCandidates(uuids=[]) {
   const actors = new Map();
   const add = actor => actor && !actors.has(actor.uuid) && actors.set(actor.uuid, actor);
+  const byName = list => list.filter(Boolean).sort((a, b) => a.name.localeCompare(b.name, game.i18n.lang));
   for ( const uuid of uuids ) add(fromUuidSync(uuid));
-  for ( const token of canvas.tokens?.controlled ?? [] ) add(token.actor);
-  for ( const actor of game.actors ) {
-    if ( (actor.type === "character") && actor.hasPlayerOwner ) add(actor);
-  }
-  // The quick picks end with the scene's tokens, so they come last.
-  for ( const pick of getQuickPicks() ) {
-    for ( const uuid of pick.uuids ) add(fromUuidSync(uuid));
-  }
+  byName((canvas.tokens?.controlled ?? []).map(t => t.actor)).forEach(add);
+  byName(game.actors.filter(a => (a.type === "character") && a.hasPlayerOwner)).forEach(add);
+  // Then the members of the groups and the combatants, and the scene's other tokens last.
+  const picks = getQuickPicks();
+  const members = scene => byName(picks.filter(p => (p.id === "scene") === scene)
+    .flatMap(p => p.uuids.map(uuid => fromUuidSync(uuid))));
+  members(false).forEach(add);
+  members(true).forEach(add);
   return [...actors.values()];
 }
 

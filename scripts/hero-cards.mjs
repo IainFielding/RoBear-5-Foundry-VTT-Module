@@ -4,7 +4,7 @@
  */
 
 export const MODULE_ID = "sogrom-table-tools";
-const CARDS_ITEM_ID = "xFVsPIjSASjXaqUO";
+export const CARDS_ITEM_ID = "xFVsPIjSASjXaqUO";
 const CARDS_IDENTIFIER = "hero-cards";
 const DIVINE_CARD_ID = "c4kwzmakUx2o9UFQ";
 const IMAGE_PATH = `modules/${MODULE_ID}/assets/images`;

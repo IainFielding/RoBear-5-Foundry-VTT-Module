@@ -68,6 +68,10 @@
         "Name": "Show the DC to players by default",
         "Hint": "Decides whether players can see the DC by default when you create a roll request. You can override it for any request. Hiding the DC removes it from the chat card."
       },
+      "DefaultDC": {
+        "Name": "DC by default",
+        "Hint": "The DC each roll starts with when you open the request window. Leave it blank for none, so you set a DC only when you want one, there or later from the card."
+      },
       "TeamScoring": {
         "Name": "Team Challenge scoring by default",
         "Hint": "How a Team Challenge's rolls are scored when you open the request window. You can change it for any request."
@@ -87,7 +91,31 @@
       "DeathSavePrompt": {
         "Name": "Automatic Death Save Requests",
         "Hint": "Automatically prompt dying characters to make death saves at the start of their turn, helping combat run more smoothly."
+      },
+      "WelcomeCards": {
+        "Name": "Welcome and What's New Cards",
+        "Hint": "Whisper the GMs a welcome card the first time the module runs in a world, and a short note of what's new after an update that adds features."
       }
+    },
+    "Welcome": {
+      "Heading": "Welcome to Sogrom's Table Tools",
+      "Intro": "Hero Cards, roll requests and gameplay enhancements for D&D 5e. Where to find things:",
+      "Place": {
+        "Cards": "Give out the Hero Cards: drag {cards} from this card onto each character who should have them. It's also in the Items (Sogrom's Table Tools) compendium.",
+        "Play": "Playing a card: players click the Hero Card button under a roll in chat, or play one from the character sheet.",
+        "Requests": "Asking for rolls: the tankard {tankard} in the chat controls, under the chat log, opens the request window. Click it here to try it."
+      },
+      "CardsLink": "Hero Cards",
+      "NewTitle": "New in {version}",
+      "WhatsNewHeading": "What's new in Sogrom's Table Tools {version}",
+      "New": {
+        "DiceSoNice": "Request cards wait for Dice So Nice's dice to land before showing a roll's result.",
+        "Versus": "Team vs Team keeps the NPCs' rolls hidden from players until you click Show NPC rolls on the card.",
+        "DefaultDC": "DCs in the request window start blank. Set your own starting DC with DC by default, under Roll Requests.",
+        "Cards": "This card: a welcome for new worlds, and a short note like it when an update adds features."
+      },
+      "SettingsTitle": "Worth a look before your players start",
+      "Guide": "Read the GM guide"
     },
     "RollKind": {
       "Attack": "Attack",
@@ -306,6 +334,8 @@
         "Shown": "Shown",
         "ShowNPC": "Show NPC roll",
         "NPCShown": "NPC roll shown",
+        "ShowNPCs": "Show NPC rolls",
+        "NPCsShown": "NPC rolls shown",
         "ShownTooltip": "Players can see this. Click to hide it.",
         "HiddenTooltip": "Only you can see this."
       },

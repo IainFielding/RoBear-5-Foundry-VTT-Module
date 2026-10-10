@@ -47,7 +47,7 @@ class SettingsMenu extends HandlebarsApplicationMixin(ApplicationV2) {
     context.settings = this.constructor.SETTINGS.map(key => {
       const setting = game.settings.settings.get(`${MODULE_ID}.${key}`);
       const value = game.settings.get(MODULE_ID, key);
-      // A setting with choices is a dropdown; the others are checkboxes.
+      // A setting with choices is a dropdown, a number a number field, and the others are checkboxes.
       const choices = setting.choices ? Object.entries(setting.choices).map(([choice, label]) => ({
         value: choice, label: game.i18n.localize(label), selected: choice === value
       })) : null;
@@ -57,7 +57,8 @@ class SettingsMenu extends HandlebarsApplicationMixin(ApplicationV2) {
         label: game.i18n.localize(setting.name),
         hint: game.i18n.localize(setting.hint),
         value,
-        choices
+        choices,
+        number: isNumber(setting)
       };
     });
     context.buttons = [{ type: "submit", icon: "fa-solid fa-floppy-disk", label: "SETTINGS.Save" }];
@@ -76,12 +77,25 @@ class SettingsMenu extends HandlebarsApplicationMixin(ApplicationV2) {
   static async #onSubmit(event, form, formData) {
     const values = formData.object;
     for ( const key of this.constructor.SETTINGS ) {
-      const { choices } = game.settings.settings.get(`${MODULE_ID}.${key}`);
-      const value = choices ? values[key] : !!values[key];
+      const setting = game.settings.settings.get(`${MODULE_ID}.${key}`);
+      const { choices } = setting;
+      let value = choices ? values[key] : !!values[key];
+      // A blank number field saves as no value at all.
+      if ( isNumber(setting) ) value = Number.isNumeric(values[key]) ? Number(values[key]) : null;
       if ( choices && !(value in choices) ) continue;
       if ( value !== game.settings.get(MODULE_ID, key) ) await game.settings.set(MODULE_ID, key, value);
     }
   }
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {SettingConfig} setting
+ * @returns {boolean}  Whether the setting holds a number.
+ */
+function isNumber(setting) {
+  return (setting.type === Number) || (setting.type instanceof foundry.data.fields.NumberField);
 }
 
 /* -------------------------------------------- */
@@ -116,7 +130,7 @@ class RollRequestSettings extends SettingsMenu {
   };
 
   /** @override */
-  static SETTINGS = ["showDCDefault", "teamScoring", "attachRolls", "popupPlayers", "popupGM", "deathSavePrompt"];
+  static SETTINGS = ["defaultDC", "showDCDefault", "teamScoring", "attachRolls", "popupPlayers", "popupGM", "deathSavePrompt"];
 }
 
 class WorldScriptSettings extends SettingsMenu {
@@ -127,7 +141,8 @@ class WorldScriptSettings extends SettingsMenu {
   };
 
   /** @override */
-  static SETTINGS = ["bloodiedTint", "fadeUnprepared", "rarityColours", "chatButtonLabels", "oneTabActivities"];
+  static SETTINGS = ["bloodiedTint", "fadeUnprepared", "rarityColours", "chatButtonLabels", "oneTabActivities",
+    "welcomeCards"];
 }
 
 /* -------------------------------------------- */
