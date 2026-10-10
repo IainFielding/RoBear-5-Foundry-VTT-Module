@@ -124,11 +124,11 @@ buttons.
 
 <img src="images/gm-request-window.webp" alt="The Request Rolls window: six kinds of roll, the roll and DC, who rolls, and options" width="520">
 
-1. **Kind of roll.** Pick one of the six kinds described below. The fields below change to suit it, and anything
+1. **Kind of roll.** Pick one of the seven kinds described below. The fields below change to suit it, and anything
    you've filled in carries over when you switch.
 2. **Rolls.** Choose the roll: a plain die (a d20 by default, or a d6, d8, d10, d12 or d100), any skill or tool check,
    ability check, or saving throw. The DC starts blank each time you open the window, or as the **DC by default**
-   setting if you've set one: set one, or leave it blank for none and set it later from the card. A Skill Challenge, and a Team Challenge not scored by its average, need
+   setting if you've set one: set one, or leave it blank for none and set it later from the card. A Skill Challenge, a Party Challenge, and a Team Challenge not scored by its average, need
    one before you can send them.
 3. **Who rolls.** The actors of any tokens you have selected are ticked for you; otherwise the player characters
    are. The list offers the selected tokens, the player characters, the members of your groups, the combatants, and
@@ -155,12 +155,12 @@ buttons.
      player shouldn't know.
 5. **Send Request** posts the request to chat.
 
-**Offering a choice of rolls.** In a Standard Roll, Team Challenge or Skill Challenge, click **+** beside a roll to
+**Offering a choice of rolls.** In a Standard Roll, Team Challenge, Skill Challenge or Party Challenge, click **+** beside a roll to
 let each actor make a different roll instead, such as Athletics or Acrobatics, or Persuasion or Deception. You can
 offer up to four rolls. When a player clicks **Roll**, they're asked which one to make. Hover over a result on the card
 to see which they chose.
 
-In a Standard Roll or Skill Challenge, each choice has a DC of its own, so an easier roll can have a harder DC: for
+In a Standard Roll, Skill Challenge or Party Challenge, each choice has a DC of its own, so an easier roll can have a harder DC: for
 example, Athletics at DC 15 or Acrobatics at DC 10. A new choice starts with the roll's DC. In a Team Challenge,
 the choices share one DC, because the rolls are averaged against it.
 
@@ -200,6 +200,21 @@ players**; players see "Done" once they have finished.
 <img src="images/gm-request-window-challenge.webp" alt="The request window set to Skill Challenge, with three rolls, each with a DC, and Successes Needed: 2 of 3" width="520">
 
 <img src="images/gm-skill-challenge.webp" alt="A Skill Challenge card: Athletics DC 12, Stealth DC 14, Constitution Save DC 13. Aria passed with 15 and 16; Borin failed his first roll and has a Roll button for the second" width="300">
+
+#### Party Challenge
+
+The whole party's skill challenge: everyone makes the same roll in rounds, and each roll is a success or a failure
+for them all. Set **Successes Needed** (4 by default, up to 12) and **Failures to Fail** (3 by default, up to 6). The
+party succeeds as soon as it has enough successes, and fails as soon as it has that many failures.
+
+- Everyone rolls once a round. A new round opens once everyone has rolled in the one before, so no one rolls twice
+  while someone else has yet to roll. Roll for anyone who's away, so the round can finish.
+- The roll needs a DC. Offer a choice of rolls, each with its own DC, to let each character use what suits them.
+- Rolls are counted in the order they're made. One made after the challenge was decided is greyed out and not counted.
+- You see the running tally from the first roll, such as "Successes 2/4 · Failures 1/3". Players see it, and which
+  rolls passed, once you click **Show to players**, which you can do at any point.
+
+A Hero Card played on a roll, or a changed DC, counts the rolls again.
 
 #### Team Challenge
 
@@ -269,8 +284,8 @@ roll. Set the numbers to pick, and send it when you're ready.
 
 **Rolling for NPCs.** Every row has a **Roll** button for you, so you can roll for anyone, including NPCs.
 
-**Changing the DC.** On a Standard Roll, Team Challenge or Skill Challenge card, click the DC to change it, or clear
-it for no DC (each Skill Challenge roll must keep one, as must a Team Challenge not scored by its average). Where each choice has its own DC, click the one to change.
+**Changing the DC.** On a Standard Roll, Team Challenge, Skill Challenge or Party Challenge card, click the DC to change it, or clear
+it for no DC (each Skill Challenge and Party Challenge roll must keep one, as must a Team Challenge not scored by its average). Where each choice has its own DC, click the one to change.
 Rolls already made are scored again against the new DC.
 
 <img src="images/gm-change-dc.webp" alt="The Change DC window, with the DC set to 12" width="340">

@@ -2,9 +2,10 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { actorNames, actorOwners, settingValues } from "./helpers/foundry-shims.mjs";
 import { requestMessage, rollMessage } from "./helpers/messages.mjs";
 import {
-  DIVINE_RANGE, MAX_CHOICES, MODES, createRequest, formatRun, getChallengeState, getChoiceDC, getChoiceLabel, getChoices,
-  getGroupOutcome, getPartLabel, getRequest, getRequestSubtitle, getRequestTitle, getResults, getRowGroup, hasChoiceDCs,
-  isContest, poolTeamRolls, postRequest, validateRequest, withDefaults
+  DIVINE_RANGE, MAX_CHOICES, MODES, PARTY_LIMITS, createRequest, formatRun, getChallengeState, getChoiceDC,
+  getChoiceLabel, getChoices, getGroupOutcome, getPartLabel, getPartyState, getRequest, getRequestSubtitle,
+  getRequestTitle, getResults, getRowGroup, getSlotCount, hasChoiceDCs, isContest, poolTeamRolls, postRequest,
+  validateRequest, withDefaults
 } from "../scripts/roll-requests.mjs";
 
 const entries = rows => rows.map(([uuid, total, natural]) => ({ uuid, total, natural }));
@@ -115,6 +116,111 @@ describe("Skill Challenge progress", () => {
   it("waits on a roll whose dice are still rolling, asking for nothing after it", () => {
     expect(getChallengeState([pass, { rolling: true, success: null }, null], 2))
       .toEqual({ passed: 1, failed: 0, success: null, next: null });
+  });
+});
+
+/* -------------------------------------------- */
+
+describe("Party Challenge", () => {
+  const party = (extra = {}) => ({
+    mode: "party", actors: ["A", "B"], parts: [{ type: "skill", key: "ath", dc: 12 }], successes: 3, failures: 2,
+    rollMode: "public", ...extra
+  });
+  const stateOf = request => getPartyState(request, getResults(requestMessage(request)));
+
+  it("has as many rounds as could be needed to settle it", () => {
+    // Three successes or two failures are reached within four rolls: two rounds of two actors.
+    expect(getSlotCount(party())).toBe(2);
+    expect(getSlotCount(party({ actors: ["A"] }))).toBe(4);
+    expect(getSlotCount(party({ actors: ["A", "B", "C", "D"], successes: 4, failures: 3 }))).toBe(2);
+    expect(getSlotCount(party({ successes: 1, failures: 1 }))).toBe(1);
+  });
+
+  it("counts each roll for the whole party, and opens a round once everyone has rolled in the one before", () => {
+    game.messages = [rollMessage({ actor: "A", total: 13 })];
+    expect(stateOf(party())).toMatchObject({ passed: 1, failed: 0, success: null, round: 0 });
+    game.messages = [...game.messages, rollMessage({ actor: "B", total: 5 })];
+    expect(stateOf(party())).toMatchObject({ passed: 1, failed: 1, success: null, round: 1 });
+    game.messages = [...game.messages, rollMessage({ actor: "A", total: 12, part: 1 }), rollMessage({ actor: "B", total: 20, part: 1 })];
+    expect(stateOf(party())).toMatchObject({ passed: 3, failed: 1, success: true, round: null });
+  });
+
+  it("fails once too many rolls have failed, and counts no roll made after that", () => {
+    const first = rollMessage({ actor: "A", total: 5 });
+    const late = rollMessage({ actor: "B", total: 20 });
+    game.messages = [first, late];
+    const state = stateOf(party({ failures: 1 }));
+    expect(state).toMatchObject({ passed: 0, failed: 1, success: false, round: null });
+    expect([...state.counted]).toEqual([first.id]);
+  });
+
+  it("counts a round's rolls in the order they were made, whatever order the actors are listed in", () => {
+    const b = rollMessage({ actor: "B", total: 5 });
+    const a = rollMessage({ actor: "A", total: 20 });
+    game.messages = [a, b];
+    expect([...stateOf(party({ failures: 1 })).counted]).toEqual([b.id]);
+  });
+
+  it("scores every round against the request's one roll, and ignores a round past the last", () => {
+    const request = party();
+    game.messages = [
+      rollMessage({ actor: "A", total: 12, part: 0 }),
+      rollMessage({ actor: "A", total: 11, part: 1 }),
+      rollMessage({ actor: "A", total: 20, part: 2 }),
+      rollMessage({ actor: "B", total: 20, part: -1 })
+    ];
+    const results = getResults(requestMessage(request));
+    expect(results.get("A").map(r => r?.success)).toEqual([true, false]);
+    expect(results.get("B")).toEqual([null, null]);
+  });
+
+  it("waits on a roll whose dice are still rolling, counting nothing made after it", () => {
+    const rollingRoll = Object.assign(rollMessage({ actor: "A", total: 5 }), { _dice3danimating: true });
+    game.messages = [rollingRoll, rollMessage({ actor: "B", total: 20 })];
+    game.modules = new Map([["dice-so-nice", { active: true }]]);
+    try {
+      expect(stateOf(party())).toMatchObject({ passed: 0, failed: 0, success: null, round: 1 });
+    } finally {
+      delete game.modules;
+    }
+  });
+
+  it("is no state at all for any other kind of request", () => {
+    expect(getPartyState({ mode: "standard", actors: ["A"], parts: [{ type: "d20", dc: 10 }] }, new Map())).toBeNull();
+  });
+
+  it("needs a DC on its roll and each roll offered instead, and counts within its limits", () => {
+    const refusal = (key, data) => game.i18n.format(`STT.Request.Invalid.${key}`, data);
+    const errorFor = request => {
+      try {
+        validateRequest(request);
+      } catch ( err ) {
+        if ( err.constructor !== Error ) throw err;
+        return err.message;
+      }
+      return null;
+    };
+    expect(errorFor(party())).toBeNull();
+    const choice = { type: "skill", key: "ath", dc: 12, alternatives: [{ type: "skill", key: "acr", dc: 15 }] };
+    expect(errorFor(party({ parts: [choice] }))).toBeNull();
+    expect(errorFor(party({ parts: [{ type: "skill", key: "ath", dc: null }] }))).toBe(refusal("PartyDC"));
+    expect(errorFor(party({ parts: [{ ...choice, alternatives: [{ type: "skill", key: "acr", dc: null }] }] })))
+      .toBe(refusal("PartyDC"));
+    expect(errorFor(party({ successes: 0 }))).toBe(refusal("PartySuccesses", { value: 0, ...PARTY_LIMITS.successes }));
+    expect(errorFor(party({ successes: 13 }))).toBe("A Party Challenge needs from 1 to 12 successes, not 13.");
+    expect(errorFor(party({ failures: 7 }))).toBe("A Party Challenge ends at from 1 to 6 failures, not 7.");
+    expect(errorFor(party({ failures: undefined }))).toBe(refusal("PartyFailures", { value: undefined, ...PARTY_LIMITS.failures }));
+  });
+
+  it("starts at four successes before three failures when a macro gives neither", () => {
+    const filled = withDefaults({ mode: "party", actors: ["A"], parts: [{ type: "d20", dc: 10 }] });
+    expect(filled).toMatchObject({ successes: 4, failures: 3 });
+    expect(() => validateRequest(filled)).not.toThrow();
+  });
+
+  it("is titled by its kind, and says under it what the party needs", () => {
+    expect(getRequestTitle(party())).toBe("Party Challenge");
+    expect(getRequestSubtitle(party())).toBe("3 to succeed · 2 to fail");
   });
 });
 
@@ -667,8 +773,8 @@ describe("The group an actor's row is drawn with", () => {
 /* -------------------------------------------- */
 
 describe("Modes and labels", () => {
-  it("offers six modes, two of them contests", () => {
-    expect(Object.keys(MODES)).toEqual(["standard", "team", "challenge", "rolloff", "versus", "divine"]);
+  it("offers seven modes, two of them contests", () => {
+    expect(Object.keys(MODES)).toEqual(["standard", "team", "challenge", "party", "rolloff", "versus", "divine"]);
     expect(Object.keys(MODES).filter(m => isContest({ mode: m }))).toEqual(["rolloff", "versus"]);
   });
 

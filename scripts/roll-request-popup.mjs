@@ -5,7 +5,7 @@
 
 import { MODULE_ID } from "./hero-cards.mjs";
 import {
-  getChallengeState, getRequest, getResults, getRowGroup, isContest, renderActorRow, renderRequestHeader
+  getChallengeState, getPartyState, getRequest, getResults, getRowGroup, isContest, renderActorRow, renderRequestHeader
 } from "./roll-requests.mjs";
 
 const { ApplicationV2 } = foundry.applications.api;
@@ -132,11 +132,14 @@ export function getPopupActors(request) {
 /**
  * @param {ChatMessage5e} message  The request message.
  * @param {string[]} uuids
- * @returns {boolean}  Whether any of these actors still has a roll to make, or one whose dice are still rolling.
+ * @returns {boolean}  Whether any of these actors still has a roll to make, or one whose dice are still rolling. In a
+ *   Party Challenge they have until it is settled, since another round may follow the one they have rolled in.
  */
 export function hasRollsLeft(message, uuids) {
   const request = message.getFlag(MODULE_ID, "request");
   const results = getResults(message);
+  const party = getPartyState(request, results);
+  if ( party ) return !!uuids.length && (party.success === null);
   return uuids.some(uuid => {
     const rolls = results.get(uuid);
     if ( rolls.some(r => r?.rolling) ) return true;
@@ -210,11 +213,12 @@ export default class RollRequestPopup extends ApplicationV2 {
     card.append(renderRequestHeader(this.message, request));
     const list = document.createElement("ul");
     list.className = "stt-request-actors";
+    const party = getPartyState(request, results);
     for ( const uuid of getPopupActors(request) ) {
       // In a contest an actor rolls for their own side.
       const side = isContest(request) ? request.sides.findIndex(s => s.includes(uuid)) : undefined;
       const team = getRowGroup(this.message, request, results, side);
-      list.append(renderActorRow(this.message, request, uuid, results.get(uuid), { team, side }));
+      list.append(renderActorRow(this.message, request, uuid, results.get(uuid), { team, side, party }));
     }
     card.append(list);
     return card;

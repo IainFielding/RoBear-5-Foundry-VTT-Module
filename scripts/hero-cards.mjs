@@ -699,9 +699,11 @@ export function isKnownFailure(message) {
 export function getRollTarget(message, roll) {
   if ( Number.isNumeric(roll.options.target) ) return roll.options.target;
   const { request, part, choice } = message.getFlag(MODULE_ID, "requestRoll") ?? {};
-  const requested = game.messages.get(request)?.getFlag(MODULE_ID, "request")?.parts[part];
-  // The roll chosen from a choice may have a DC of its own. This is getChoiceDC in roll-requests.mjs, which imports
-  // this file, so importing it here would load the two in a cycle.
+  // A Party Challenge's roll is tagged with its round, and every round makes the request's one roll. This is getPart
+  // in roll-requests.mjs, and the roll chosen from a choice may have a DC of its own, which is getChoiceDC there: it
+  // imports this file, so importing them here would load the two in a cycle.
+  const requestData = game.messages.get(request)?.getFlag(MODULE_ID, "request");
+  const requested = requestData?.parts[requestData.mode === "party" ? 0 : part];
   const alternative = (choice > 0) ? requested?.alternatives?.[choice - 1] : null;
   return ((alternative && ("dc" in alternative)) ? alternative.dc : requested?.dc) ?? null;
 }

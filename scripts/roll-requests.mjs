@@ -15,6 +15,8 @@ import RollRequestConfig from "./roll-request-config.mjs";
  * alternatives, of which each actor makes one, and the GM may change its DC from the request card. In a mode with
  * `choiceDCs` too, each alternative has a DC of its own; otherwise, as in a Team Challenge, whose rolls are averaged
  * against one DC, they share the roll's.
+ * A Skill Challenge is each actor's own: three rolls in turn. A Party Challenge is the whole party's: everyone rolls
+ * in rounds, and each roll is a success or a failure for them all.
  */
 export const MODES = {
   standard: {
@@ -35,6 +37,13 @@ export const MODES = {
     label: "STT.Request.Modes.Challenge.Label",
     icon: "fa-solid fa-layer-group",
     hint: "STT.Request.Modes.Challenge.Hint",
+    choices: true,
+    choiceDCs: true
+  },
+  party: {
+    label: "STT.Request.Modes.Party.Label",
+    icon: "fa-solid fa-users-line",
+    hint: "STT.Request.Modes.Party.Hint",
     choices: true,
     choiceDCs: true
   },
@@ -127,6 +136,14 @@ export const VERSUS_PLACES = 1;
  * Number of rolls in a skill challenge.
  */
 export const CHALLENGE_PARTS = 3;
+
+/**
+ * How many successes a Party Challenge can need, and how many failures end it.
+ */
+export const PARTY_LIMITS = {
+  successes: { min: 1, max: 12, initial: 4 },
+  failures: { min: 1, max: 6, initial: 3 }
+};
 
 /**
  * The most rolls an actor may choose between for one part of a request.
@@ -382,11 +399,14 @@ function refreshRequest(message, changes) {
 /**
  * @typedef {object} RollRequest
  * @property {string} mode           Key in MODES.
- * @property {RequestPart[]} parts   One roll, three for a skill challenge, or one for each side of a contest.
+ * @property {RequestPart[]} parts   One roll, three for a skill challenge, or one for each side of a contest. A Party
+ *   Challenge has one, which each actor makes again every round.
  * @property {string[]} actors       Actor UUIDs of everyone rolling.
  * @property {string[][]} [sides]    For a contest, the actor UUIDs on each side.
  * @property {number} [range]        For Divine Intervention, how many consecutive numbers each actor picks.
- * @property {number} successes      Successes a skill challenge needs.
+ * @property {number} successes      Successes a skill challenge needs of its three rolls, or a Party Challenge needs
+ *   from the whole party.
+ * @property {number} [failures]     Failures that end a Party Challenge.
  * @property {string} [scoring]      For a Team Challenge, how its rolls are scored: a key in SCORING. Requests posted
  *   before there was a choice have none, and are averaged.
  * @property {boolean} showDC        Show the DC to players.
@@ -461,6 +481,9 @@ export function getRequest(message) {
 export function withDefaults(request) {
   const defaults = { rollMode: "public", showDC: game.settings.get(MODULE_ID, "showDCDefault") };
   if ( request?.mode === "challenge" ) defaults.successes = 2;
+  if ( request?.mode === "party" ) {
+    Object.assign(defaults, { successes: PARTY_LIMITS.successes.initial, failures: PARTY_LIMITS.failures.initial });
+  }
   if ( request?.mode === "team" ) defaults.scoring = game.settings.get(MODULE_ID, "teamScoring");
   if ( request?.mode === "divine" ) defaults.range = DIVINE_RANGE.initial;
   const filled = { ...defaults, ...request };
@@ -525,6 +548,15 @@ export function validateRequest(request) {
     const { successes } = request;
     check(between(successes, 1, CHALLENGE_PARTS), "STT.Request.Invalid.Successes", { successes, total: CHALLENGE_PARTS });
   }
+  if ( request.mode === "party" ) {
+    const { successes, failures } = PARTY_LIMITS;
+    check(between(request.successes, successes.min, successes.max), "STT.Request.Invalid.PartySuccesses",
+      { value: request.successes, ...successes });
+    check(between(request.failures, failures.min, failures.max), "STT.Request.Invalid.PartyFailures",
+      { value: request.failures, ...failures });
+    // Every roll is a success or a failure for the party, so each needs a DC to be judged against.
+    check(getChoices(parts[0]).every(c => Number.isNumeric(c.dc)), "STT.Request.Invalid.PartyDC");
+  }
   if ( request.mode === "team" ) {
     // Left out, as by a request posted before there was a choice, a team is averaged.
     const scoring = request.scoring ?? "average";
@@ -552,6 +584,31 @@ export function validateRequest(request) {
 function getPartCount(request) {
   if ( isContest(request) ) return 2;
   return request.mode === "challenge" ? CHALLENGE_PARTS : 1;
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {RollRequest} request
+ * @returns {number}  How many rolls each actor may make: one in a contest, a Party Challenge's rounds, otherwise one
+ *   for each of the request's rolls. A Party Challenge is settled within one roll fewer than its successes and
+ *   failures together, so it has as many rounds as give the party that many rolls.
+ */
+export function getSlotCount(request) {
+  if ( isContest(request) ) return 1;
+  if ( request.mode !== "party" ) return request.parts.length;
+  return Math.ceil((request.successes + request.failures - 1) / request.actors.length) || 0;
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {RollRequest} request
+ * @param {number} index  The roll an actor makes: a part, or in a Party Challenge, a round.
+ * @returns {RequestPart|void}  The part it is made for. Every round of a Party Challenge makes its one part again.
+ */
+export function getPart(request, index) {
+  return request.parts[request.mode === "party" ? 0 : index];
 }
 
 /* -------------------------------------------- */
@@ -663,7 +720,9 @@ export function isContest(request) {
  * @returns {string}
  */
 export function getRequestTitle(request) {
-  if ( ["challenge", "divine"].includes(request.mode) || isContest(request) ) return localize(MODES[request.mode].label);
+  if ( ["challenge", "party", "divine"].includes(request.mode) || isContest(request) ) {
+    return localize(MODES[request.mode].label);
+  }
   const part = request.parts[0];
   if ( part.alternatives?.length ) return getChoiceLabel(part);
   const label = getPartLabel(part);
@@ -681,6 +740,9 @@ export function getRequestTitle(request) {
 export function getRequestSubtitle(request, dc=null) {
   if ( request.mode === "challenge" ) {
     return localize("STT.Request.Subtitle.Challenge", { count: request.successes, total: request.parts.length });
+  }
+  if ( request.mode === "party" ) {
+    return localize("STT.Request.Subtitle.Party", { successes: request.successes, failures: request.failures });
   }
   if ( isContest(request) ) return request.parts.map(getPartLabel).join(` ${localize("STT.Request.Versus")} `);
   if ( request.mode === "divine" ) {
@@ -783,7 +845,7 @@ function isRollByOwner(roll, uuid) {
 export function getResults(message) {
   const request = message.getFlag(MODULE_ID, "request");
   const contest = isContest(request);
-  const length = contest ? 1 : request.parts.length;
+  const length = getSlotCount(request);
   const results = new Map(request.actors.map(uuid => [uuid, Array.from({ length }, () => null)]));
   const rolls = getRollMessages(message.id).sort((a, b) => a.timestamp - b.timestamp);
 
@@ -791,14 +853,17 @@ export function getResults(message) {
     // The flag is written by whoever made the roll, so nothing in it is taken on trust.
     const { actor, part, range, choice } = roll.getFlag(MODULE_ID, "requestRoll");
     const first = roll.rolls[0];
-    if ( !results.has(actor) || !first || !Number.isInteger(part) || !(part in request.parts) ) continue;
+    if ( !results.has(actor) || !first || !Number.isInteger(part) ) continue;
+    // In a Party Challenge the roll is tagged with its round, and elsewhere with its part.
+    if ( request.mode === "party" ? (part < 0) || (part >= length) : !(part in request.parts) ) continue;
     if ( contest && !request.sides[part]?.includes(actor) ) continue;
     if ( !isRollByOwner(roll, actor) ) continue;
     const slot = contest ? 0 : part;
     if ( results.get(actor)[slot] ) continue;
-    const choices = getChoices(request.parts[part]).length;
+    const requested = getPart(request, part);
+    const choices = getChoices(requested).length;
     const chosen = (Number.isInteger(choice) && (choice >= 0) && (choice < choices)) ? choice : 0;
-    const dc = getChoiceDC(request.parts[part], chosen);
+    const dc = getChoiceDC(requested, chosen);
     let success = Number.isNumeric(dc) ? first.total >= dc : null;
     // A Divine Intervention roll lands in the numbers picked, which must be as many as the request allows: a wider
     // run, such as 1 to 100, can't succeed.
@@ -877,6 +942,55 @@ export function getChallengeState(results, needed) {
     else failed++;
   }
   return { passed, failed, success: passed >= needed, next: null };
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @typedef {object} PartyState
+ * @property {number} passed          Successes counted so far.
+ * @property {number} failed          Failures counted so far.
+ * @property {boolean|null} success   Null until the challenge is settled.
+ * @property {number|null} round      The round being rolled, or null once the challenge is settled.
+ * @property {Set<string>} counted    The IDs of the roll messages counted. A roll made after the challenge was settled
+ *   isn't.
+ */
+
+/**
+ * Work out where a Party Challenge stands. Its rolls are counted round by round, and within a round in the order they
+ * were made, until enough have succeeded or too many have failed. A round opens once everyone has rolled in the one
+ * before, so no one rolls twice while someone else has yet to roll.
+ * @param {RollRequest} request
+ * @param {Map<string, (PartResult|null)[]>} results
+ * @returns {PartyState|null}  Null for any other kind of request.
+ */
+export function getPartyState(request, results) {
+  if ( request.mode !== "party" ) return null;
+  const rows = request.actors.map(uuid => results.get(uuid) ?? []);
+  const counted = new Set();
+  let passed = 0;
+  let failed = 0;
+  let success = null;
+  let round = null;
+  let waiting = false;
+  for ( let slot = 0; slot < getSlotCount(request); slot++ ) {
+    const made = rows.map(row => row[slot]).filter(Boolean).sort((a, b) => a.message.timestamp - b.message.timestamp);
+    for ( const result of made ) {
+      if ( (success !== null) || waiting ) break;
+      // A roll whose dice are still moving decides nothing yet, and no roll after it is counted until it lands.
+      if ( result.rolling ) {
+        waiting = true;
+        break;
+      }
+      counted.add(result.message.id);
+      if ( result.success ) passed++;
+      else failed++;
+      if ( passed >= request.successes ) success = true;
+      else if ( failed >= request.failures ) success = false;
+    }
+    if ( (round === null) && (made.length < rows.length) ) round = slot;
+  }
+  return { passed, failed, success, round: success === null ? round : null, counted };
 }
 
 /* -------------------------------------------- */
@@ -1121,8 +1235,9 @@ function renderRequest(message, request) {
     return card;
   }
 
-  // A skill challenge lists its rolls, and a standard roll whose choices have DCs of their own lists those.
-  if ( (request.mode === "challenge") || hasChoiceDCs(request, request.parts[0]) ) {
+  // A skill challenge lists its rolls, a Party Challenge its one, and a standard roll whose choices have DCs of their
+  // own lists those.
+  if ( ["challenge", "party"].includes(request.mode) || hasChoiceDCs(request, request.parts[0]) ) {
     const steps = document.createElement(request.mode === "challenge" ? "ol" : "ul");
     steps.className = "stt-request-steps";
     request.parts.forEach((_part, index) => {
@@ -1135,14 +1250,15 @@ function renderRequest(message, request) {
 
   // Players are only shown which rolls were removed from the pool once they can see the summary too.
   const team = getRowGroup(message, request, results);
+  const party = getPartyState(request, results);
   const list = document.createElement("ul");
   list.className = "stt-request-actors";
   for ( const uuid of request.actors ) {
-    list.append(renderActorRow(message, request, uuid, results.get(uuid), { team }));
+    list.append(renderActorRow(message, request, uuid, results.get(uuid), { team, party }));
   }
   card.append(list);
 
-  const summary = renderSummary(message, request, results, team);
+  const summary = renderSummary(message, request, results, team, party);
   if ( summary ) card.append(summary);
   return card;
 }
@@ -1236,8 +1352,9 @@ function renderDCButton(message, request, part, choice=0) {
 export async function changeDC(message, part, choice=0) {
   const request = message.getFlag(MODULE_ID, "request");
   const current = getChoiceDC(request.parts[part], choice);
-  // A skill challenge, and a team scored by its successes, are judged against the DC, so they must keep one.
-  const required = (request.mode === "challenge") || !!SCORING[getScoring(request)].needsDC;
+  // A skill challenge, a Party Challenge, and a team scored by its successes, are judged against the DC, so they must
+  // keep one.
+  const required = ["challenge", "party"].includes(request.mode) || !!SCORING[getScoring(request)].needsDC;
   const { escapeHTML } = foundry.utils;
   const data = await foundry.applications.api.DialogV2.input({
     classes: ["stt-card-dialog", "stt-dc-dialog"],
@@ -1260,7 +1377,8 @@ export async function changeDC(message, part, choice=0) {
   if ( !data || !game.messages.has(message.id) ) return;
   const dc = Number.isNumeric(data.dc) ? Number(data.dc) : null;
   if ( (dc === null) && required ) {
-    ui.notifications.warn(localize(request.mode === "challenge" ? "STT.Request.Config.ChallengeDC" : "STT.Request.Config.ScoringDC"));
+    const key = { challenge: "ChallengeDC", party: "PartyDC" }[request.mode] ?? "ScoringDC";
+    ui.notifications.warn(localize(`STT.Request.Config.${key}`));
     return;
   }
   // Read the request again, in case it changed while the dialog was open.
@@ -1359,9 +1477,10 @@ function setExactTooltip(element, group) {
  * @param {object} [options]
  * @param {GroupOutcome|null} [options.team]  The pooled group this actor belongs to.
  * @param {number} [options.side]             The actor's side in a contest, which is also the part they roll.
+ * @param {PartyState|null} [options.party]   Where the request's Party Challenge stands.
  * @returns {HTMLLIElement}
  */
-export function renderActorRow(message, request, uuid, results, { team=null, side }={}) {
+export function renderActorRow(message, request, uuid, results, { team=null, side, party=null }={}) {
   const actor = fromUuidSync(uuid);
   const challenge = request.mode === "challenge";
   const row = document.createElement("li");
@@ -1374,9 +1493,8 @@ export function renderActorRow(message, request, uuid, results, { team=null, sid
   `;
   const slots = row.querySelector(".stt-request-rolls");
 
-  // Passes and failures are part of a standard roll's or a skill challenge's result, which players see once the GM
-  // shows it.
-  const hideOutcome = ["standard", "challenge"].includes(request.mode) && !game.user.isGM
+  // Passes and failures are part of a standard roll's or a challenge's result, which players see once the GM shows it.
+  const hideOutcome = ["standard", "challenge", "party"].includes(request.mode) && !game.user.isGM
     && !message.getFlag(MODULE_ID, "revealed");
   let next = results.findIndex(r => !r);
   // A challenge's steps after the one that settled it are not counted. They are only rolled when a DC changed after.
@@ -1389,6 +1507,9 @@ export function renderActorRow(message, request, uuid, results, { team=null, sid
     if ( state.success !== null ) settledAt = state.passed + state.failed;
     if ( !hideOutcome ) counted = settledAt;
     if ( (state.success !== null) && !hideOutcome ) row.classList.add(state.success ? "success" : "failure");
+  } else if ( party ) {
+    // The actor rolls in the round being rolled, unless they already have.
+    next = (party.round !== null) && !results[party.round] ? party.round : -1;
   } else if ( results[0]?.visible && (results[0].success !== null) && !team && !hideOutcome ) {
     row.classList.add(results[0].success ? "success" : "failure");
   }
@@ -1408,25 +1529,30 @@ export function renderActorRow(message, request, uuid, results, { team=null, sid
     }
     // Only a DC decides success, so pooled rolls are not marked as passing or failing on their own.
     if ( result ) {
-      const uncounted = slot >= counted;
+      // A Party Challenge's rolls made once it was settled aren't counted either, which players see once it is shown.
+      const late = !!party && (party.success !== null) && !party.counted.has(result.message.id) && !hideOutcome;
+      const uncounted = (slot >= counted) || late;
       const shown = (team || hideOutcome || uncounted) ? { ...result, success: null } : result;
-      const choices = getChoices(request.parts[side ?? slot]);
+      const choices = getChoices(getPart(request, side ?? slot));
       const chosen = choices.length > 1 ? getPartLabel(choices[result.choice] ?? choices[0]) : null;
-      const pill = renderResult(shown, challenge ? slot : null, row, chosen);
+      const pill = renderResult(shown, (challenge || party) ? slot : null, row, chosen);
       if ( uncounted ) {
         pill.classList.add("uncounted");
-        pill.dataset.tooltipText = localize("STT.Request.Result.Uncounted", { result: pill.dataset.tooltipText });
+        pill.dataset.tooltipText = localize(late ? "STT.Request.Result.UncountedParty" : "STT.Request.Result.Uncounted",
+          { result: pill.dataset.tooltipText });
       }
       slots.append(pill);
     }
     else if ( slot === next ) slots.append(renderRollButton(message, request, actor, side ?? slot));
-    else if ( !challenge || (next !== -1) ) slots.append(renderPending());
+    // A Party Challenge's later rounds may never be rolled, so they hold no place on the card.
+    else if ( !party && (!challenge || (next !== -1)) ) slots.append(renderPending());
   });
 
   // Cards and features are played on the latest roll that counts, not on one a changed DC has left uncounted, even
   // before players are shown which that is: a card spent on a roll that doesn't count would be wasted.
   // Nor on one whose dice are still rolling, before anyone can see what it was.
   let latest = results.slice(0, settledAt).findLast(r => r);
+  if ( party && (party.success !== null) ) latest = results.findLast(r => r && party.counted.has(r.message.id));
   if ( latest?.rolling ) latest = null;
   if ( latest && getCardOptions(latest.message).length ) slots.append(createCardButton(latest.message, { compact: true }));
   const indomitable = latest ? createIndomitableButton(latest.message, { compact: true }) : null;
@@ -1654,8 +1780,9 @@ function renderRollButton(message, request, actor, part) {
   const button = document.createElement("button");
   button.type = "button";
   button.className = "stt-request-roll";
-  const choices = getChoices(request.parts[part]);
-  button.dataset.tooltipText = localize("STT.Request.RollTooltip", { roll: getChoiceLabel(request.parts[part]) });
+  const requested = getPart(request, part);
+  const choices = getChoices(requested);
+  button.dataset.tooltipText = localize("STT.Request.RollTooltip", { roll: getChoiceLabel(requested) });
   button.innerHTML = `<i class="fa-solid ${choices.length > 1 ? "fa-list-ul" : "fa-dice-d20"}" inert></i>`;
   button.append(` ${request.mode === "challenge" ? part + 1 : localize("STT.Request.Roll")}`);
   button.addEventListener("click", async event => {
@@ -1664,7 +1791,7 @@ function renderRollButton(message, request, actor, part) {
     button.disabled = true;
     try {
       // With a choice of rolls, the modifier keys are taken from the click that picks one.
-      const picked = choices.length > 1 ? await chooseRoll(actor, request, request.parts[part]) : { choice: 0, event };
+      const picked = choices.length > 1 ? await chooseRoll(actor, request, requested) : { choice: 0, event };
       if ( picked ) await rollForRequest(message, actor, part, picked.event, picked.choice);
     } catch(err) {
       reportError(err);
@@ -1682,11 +1809,31 @@ function renderRollButton(message, request, actor, part) {
  * @param {RollRequest} request
  * @param {Map<string, (PartResult|null)[]>} results
  * @param {GroupOutcome|null} team
+ * @param {PartyState|null} party
  * @returns {HTMLElement|void}
  */
-function renderSummary(message, request, results, team) {
+function renderSummary(message, request, results, team, party) {
   const summary = document.createElement("footer");
   summary.className = "stt-request-summary";
+
+  if ( party ) {
+    // The GM follows the tally from the first roll, and decides when players see it.
+    const revealed = !!message.getFlag(MODULE_ID, "revealed");
+    if ( !revealed && !game.user.isGM ) return;
+    if ( [...results.values()].some(row => row.some(r => r && !r.visible && !r.rolling)) ) {
+      summary.textContent = localize("STT.Request.Team.Hidden");
+      return summary;
+    }
+    summary.append(textElement("span", localize("STT.Request.Party.Tally", {
+      passed: party.passed, successes: request.successes, failed: party.failed, failures: request.failures
+    })));
+    if ( party.success !== null ) {
+      summary.classList.add(party.success ? "success" : "failure");
+      summary.append(textElement("strong", localize(party.success ? "STT.Request.Success" : "STT.Request.Failure")));
+    }
+    if ( game.user.isGM ) summary.append(renderRevealButton(message, revealed));
+    return summary;
+  }
 
   if ( team ) {
     if ( !team.complete ) return;
@@ -1916,7 +2063,7 @@ function renderRivalRevealButton(request, results) {
  * Make one of the requested rolls, tagging its message with the request.
  * @param {ChatMessage5e} message  The request message.
  * @param {Actor5e} actor
- * @param {number} part
+ * @param {number} part            The part to roll, or in a Party Challenge, the round.
  * @param {PointerEvent} event     Its modifier keys let dnd5e's fast-forward keys still apply.
  * @param {number} [choice=0]      Which of the part's choices to roll.
  */
@@ -1926,8 +2073,8 @@ async function rollForRequest(message, actor, part, event, choice=0) {
   const slot = isContest(request) ? 0 : part;
   if ( rolling.has(key) || getResults(message).get(actor.uuid)?.[slot] ) return;
 
-  const roll = getChoices(request.parts[part])[choice];
-  if ( !roll ) return;
+  const roll = getChoices(getPart(request, part) ?? {})[choice];
+  if ( !roll?.type ) return;
   const { type, key: id } = roll;
   // Only the modifier keys are passed on. dnd5e would otherwise treat the request card as the roll's origin.
   const { altKey, ctrlKey, metaKey, shiftKey } = event;
