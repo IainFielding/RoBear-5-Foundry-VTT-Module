@@ -74,7 +74,7 @@
       },
       "TeamScoring": {
         "Name": "Team Challenge scoring by default",
-        "Hint": "How a Team Challenge's rolls are scored when a macro posts one, or opens the request window on one, without saying. You can change it for any request."
+        "Hint": "How a Team Challenge's rolls are scored when you open the request window. You can change it for any request."
       },
       "AttachRolls": {
         "Name": "Attach Rolls to Request Cards",
@@ -206,17 +206,13 @@
           "Label": "Skill Challenge",
           "Hint": "Each actor faces three rolls in turn, and needs enough of them to succeed."
         },
-        "Party": {
-          "Label": "Party Challenge",
-          "Hint": "The party rolls in rounds, and needs enough successes before too many failures."
-        },
         "RollOff": {
           "Label": "Roll-Off",
           "Hint": "Two actors roll against each other, and the higher total wins."
         },
         "Versus": {
           "Label": "Team vs Team",
-          "Hint": "Each team's rolls are averaged, to one decimal place, and the higher average wins."
+          "Hint": "Two teams are averaged like a Team Challenge, to one decimal place, and the higher average wins."
         },
         "Divine": {
           "Label": "Divine Intervention",
@@ -237,7 +233,6 @@
       },
       "Subtitle": {
         "Challenge": "{count} of {total} to succeed",
-        "Party": "{successes} to succeed · {failures} to fail",
         "Divine": "{count} numbers in a row on a d100",
         "DivineOne": "1 number on a d100"
       },
@@ -248,9 +243,6 @@
         "Hidden": "The team's result is hidden.",
         "Average": "Team average {average}{removed}",
         "Removed": " · {count} removed"
-      },
-      "Party": {
-        "Tally": "Successes {passed}/{successes} · Failures {failed}/{failures}"
       },
       "Scoring": {
         "Average": {
@@ -308,8 +300,7 @@
         "Numbered": "Roll {number}: {result}",
         "ClickForDice": "{result}. Click for the dice.",
         "Chosen": "{roll}: {result}",
-        "Uncounted": "Not counted: a changed DC decided the challenge before this roll. {result}",
-        "UncountedParty": "Not counted: the challenge was decided before this roll. {result}"
+        "Uncounted": "Not counted: a changed DC decided the challenge before this roll. {result}"
       },
       "Summary": {
         "Standard": "{count} of {total} succeeded",
@@ -375,10 +366,7 @@
         "Range": "Divine Intervention needs from {min} to {max} numbers to pick, not {range}.",
         "DivineRoll": "Divine Intervention's roll is a d100, not {type}.",
         "DivineActor": "Divine Intervention needs exactly one actor.",
-        "PartySuccesses": "A Party Challenge needs from {min} to {max} successes, not {value}.",
-        "PartyFailures": "A Party Challenge ends at from {min} to {max} failures, not {value}.",
-        "PartyDC": "Each roll in a Party Challenge needs a DC.",
-        "Choices": "Only a Standard Roll, Team Challenge, Skill Challenge or Party Challenge can offer a choice of rolls, and at most {max} to choose from, given as a list of alternatives.",
+        "Choices": "Only a Standard Roll, Team Challenge or Skill Challenge can offer a choice of rolls, and at most {max} to choose from, given as a list of alternatives.",
         "ChoiceDC": "A Team Challenge's rolls are averaged against one DC, so its alternatives can't have DCs of their own.",
         "Scoring": "Unknown way to score a Team Challenge: {scoring}. Use one of: {scorings}.",
         "ScoringDC": "A Team Challenge scored by its successes needs a DC.",
@@ -394,8 +382,6 @@
         "SuccessesNeeded": "Successes Needed",
         "SuccessesOf": "{count} of {total}",
         "ChallengeHint": "An actor stops rolling as soon as they have passed or failed the challenge.",
-        "FailuresToFail": "Failures to Fail",
-        "PartyHint": "Everyone rolls once a round, and each roll is a success or a failure for the whole party. It ends as soon as it has enough of either.",
         "Scoring": "Scoring",
         "ContestHint": "Each side makes its own roll, and the higher result wins.",
         "NumbersToPick": "Numbers to Pick",
@@ -424,7 +410,6 @@
         "BothSides": "No one can be on both sides.",
         "ChooseActor": "Choose at least one actor to roll.",
         "ChallengeDC": "Each roll in a skill challenge needs a DC.",
-        "PartyDC": "The roll in a Party Challenge needs a DC, as does each roll offered instead.",
         "ScoringDC": "This way of scoring a Team Challenge needs a DC.",
         "AddChoice": "Offer another roll to choose instead",
         "RemoveChoice": "Stop offering this roll",

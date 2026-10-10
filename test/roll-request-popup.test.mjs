@@ -74,16 +74,6 @@ describe("When a pop-up has nothing left to roll", () => {
     expect(hasRollsLeft(challenge, ["aria"])).toBe(false);
   });
 
-  it("stays open in a Party Challenge until it is settled, since another round may follow", () => {
-    const party = requestMessage({
-      mode: "party", actors: ["aria", "borin"], parts: [{ type: "d20", dc: 10 }], successes: 2, failures: 2
-    });
-    game.messages = [rollMessage({ actor: "aria", total: 15 })];
-    expect(hasRollsLeft(party, ["aria"])).toBe(true);
-    game.messages = [...game.messages, rollMessage({ actor: "borin", total: 15 })];
-    expect(hasRollsLeft(party, ["aria"])).toBe(false);
-  });
-
   it("counts a contest actor's one roll for their side", () => {
     const rolloff = requestMessage({
       mode: "rolloff", actors: ["aria", "goblin"], sides: [["aria"], ["goblin"]],

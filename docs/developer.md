@@ -80,7 +80,7 @@ message authored by a GM is drawn as a request card, so a player can't forge one
 
 ```ts
 interface RollRequest {
-  mode: "standard" | "team" | "challenge" | "party" | "rolloff" | "versus" | "divine";
+  mode: "standard" | "team" | "challenge" | "rolloff" | "versus" | "divine";
   parts: RequestPart[];      // the rolls: see the table below for how many
   actors: string[];          // actor UUIDs of everyone in the request, each once
   sides?: [string[], string[]]; // contests only: actor UUIDs on each side
@@ -104,9 +104,8 @@ interface RequestPart {
 | `mode` | Window label | `parts` used | `sides` | Notes |
 |---|---|---|---|---|
 | `standard` | Standard Roll | 1 | | Each actor rolls once against the DC. Allows `alternatives`, and a `death` part with none. |
-| `team` | Team Challenge | 1 | | Not offered in the window's picker, where `party` took its place: post it with `createRequest`, or open the window on it with `requestRolls({ mode: "team" })`. Scored by `scoring`. `average`: everyone's totals averaged, rounded down, against the DC; each natural 1 removes the highest roll, each natural 20 the lowest. `half`: succeeds if at least half meet the DC. `leader`: the roll with the highest modifier (total less the kept d20), +1 per other success, −1 per other failure, against the DC. `weakest`: the lowest modifier, +1 per other success. All but `average` need a `dc`. Allows `alternatives`. |
+| `team` | Team Challenge | 1 | | Scored by `scoring`. `average`: everyone's totals averaged, rounded down, against the DC; each natural 1 removes the highest roll, each natural 20 the lowest. `half`: succeeds if at least half meet the DC. `leader`: the roll with the highest modifier (total less the kept d20), +1 per other success, −1 per other failure, against the DC. `weakest`: the lowest modifier, +1 per other success. All but `average` need a `dc`. Allows `alternatives`. |
 | `challenge` | Skill Challenge | 3 | | Three rolls in turn, each with its own DC; `successes` of them needed. Allows `alternatives`. |
-| `party` | Party Challenge | 1 | | The whole party's challenge: everyone makes the roll once a round, and each roll is a success or failure for them all, counted in the order made. It succeeds at `successes` (1–12, default 4) and fails at `failures` (1–6, default 3). A round opens once everyone has rolled in the one before. Needs a `dc`, on the part and on each alternative. Allows `alternatives`. |
 | `rolloff` | Roll-Off | 2 (one per side) | Required, exactly one actor each | Higher total wins. An actor no player owns rolls as a private GM roll until the GM shows it. |
 | `versus` | Team vs Team | 2 (one per side) | Required, at least one actor each | Each side pooled like a Team Challenge, its average rounded down to one decimal place; higher average wins. An actor no player owns rolls as a private GM roll until the GM shows it. |
 | `divine` | Divine Intervention | 1, which must be `d100` | | Exactly one actor. It picks `range` numbers in a row from 1 to 100, then must roll one of them. `dc` is ignored. |
@@ -126,17 +125,17 @@ interface RequestPart {
 The window offers each mode only some dice (Team vs Team offers only `d20`, for example), but `createRequest` accepts
 any of them in any mode except `divine`.
 
-**Alternatives.** In `standard`, `team`, `challenge` and `party`, a part may list up to three `alternatives`, so an actor
+**Alternatives.** In `standard`, `team` and `challenge`, a part may list up to three `alternatives`, so an actor
 chooses between up to four rolls. The roll message records which was made in `requestRoll.choice`.
 
-In `standard`, `challenge` and `party`, an alternative may give a `dc` of its own: a number, or `null` for none. An
+In `standard` and `challenge`, an alternative may give a `dc` of its own: a number, or `null` for none. An
 alternative with no `dc` key shares the part's `dc`, as every alternative used to, so older requests and macros
 score as they did. In `team`, whose rolls are averaged against one DC, an alternative can't give a `dc`. Use
 `getChoiceDC(part, choice)` from `scripts/roll-requests.mjs` if you need the DC a roll was made against; it is internal,
 like the module's other exports.
 
 **Defaults.** `withDefaults` fills in a missing or `null` value for `rollMode` (`"public"`), `showDC` (the
-`showDCDefault` setting), `successes` (`2`, for `challenge`; `4`, for `party`), `failures` (`3`, for `party`), `scoring` (the `teamScoring` setting, for `team`) and
+`showDCDefault` setting), `successes` (`2`, for `challenge`), `scoring` (the `teamScoring` setting, for `team`) and
 `range` (`16`, for `divine`). Nothing else is filled in. A `team` request with no `scoring` on it, such as one posted
 before there was a choice, is averaged.
 
@@ -148,7 +147,7 @@ language), and posts nothing:
 | Problem | Message |
 |---|---|
 | The user isn't a GM | Only a GM can post a roll request. |
-| `mode` isn't one of the seven | Unknown kind of roll request: {mode}. |
+| `mode` isn't one of the six | Unknown kind of roll request: {mode}. |
 | `actors` isn't an array of unique, non-empty strings | A roll request's actors must be a list of actor UUIDs, each named once. |
 | `actors` is empty | A roll request needs at least one actor to roll. |
 | `rollMode` isn't `"public"`, `"gm"` or `"blind"` | Unknown roll visibility: {rollMode}. Use "public", "gm" or "blind". |
@@ -156,9 +155,7 @@ language), and posts nothing:
 | A `rolloff` side has more than one actor | Each side of a Roll-Off needs exactly one actor. |
 | Someone on a side isn't in `actors` | Everyone on a side of a contest must also be in the request's actors. |
 | Fewer `parts` than the mode uses | A roll request is missing a roll. |
-| A `party` request's `successes` not an integer from 1 to 12, or `failures` not one from 1 to 6 | A Party Challenge needs from 1 to 12 successes, not {value}. / A Party Challenge ends at from 1 to 6 failures, not {value}. |
-| A `party` request with no `dc` on its part or on an alternative | Each roll in a Party Challenge needs a DC. |
-| `alternatives` in a mode without choices, three or more of them, or not objects | Only a Standard Roll, Team Challenge, Skill Challenge or Party Challenge can offer a choice of rolls, and at most 4 to choose from, given as a list of alternatives. |
+| `alternatives` in a mode without choices, three or more of them, or not objects | Only a Standard Roll, Team Challenge or Skill Challenge can offer a choice of rolls, and at most 4 to choose from, given as a list of alternatives. |
 | An alternative with a `dc` in a `team` request | A Team Challenge's rolls are averaged against one DC, so its alternatives can't have DCs of their own. |
 | A `team` request's `scoring` isn't one of the four | Unknown way to score a Team Challenge: {scoring}. Use one of: {scorings}. |
 | A `team` request scored by `half`, `leader` or `weakest` with no `dc` | A Team Challenge scored by its successes needs a DC. |
@@ -244,18 +241,6 @@ await createRequest({
 });
 ```
 
-**Party Challenge, five successes before three failures, Athletics at DC 13 or Acrobatics at DC 15:**
-
-```js
-await createRequest({
-  mode: "party",
-  successes: 5,
-  failures: 3,
-  parts: [{ type: "skill", key: "ath", dc: 13, alternatives: [{ type: "skill", key: "acr", dc: 15 }] }],
-  actors: party
-});
-```
-
 **Skill Challenge, all three needed:**
 
 ```js
@@ -337,7 +322,7 @@ them out from its roll messages each time it draws.
 |---|---|---|
 | `requestRoll.request` | `string` | The request message's ID. |
 | `requestRoll.actor` | `string` | The UUID of the actor rolled for. |
-| `requestRoll.part` | `number` | Index into `request.parts`. In a contest this is the side. In a `party` request it is the round, from 0, and every round makes `request.parts[0]`. |
+| `requestRoll.part` | `number` | Index into `request.parts`. In a contest this is the side. |
 | `requestRoll.choice` | `number` | Which of the part's rolls was made: `0` for its own, `1` onwards for an alternative. |
 | `requestRoll.range` | `{ start: number, end: number }` | Divine Intervention only: the numbers picked. |
 

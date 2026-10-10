@@ -80,7 +80,7 @@ can open them, and each setting applies to the whole world.
 |---|---|---|
 | **DC by default** | Blank | The DC each roll starts with when you open the request window. Leave it blank for none; you can still set or change the DC for each request, or later from the card. |
 | **Show the DC to players by default** | Off | Whether **Show DC to Players** starts ticked in the request window. You can still change it for each request. |
-| **Team Challenge scoring by default** | Average of the rolls | How a Team Challenge is scored when a macro posts one, or opens the request window on one, without saying. You can still change it for each request. See [Team Challenge](#team-challenge). |
+| **Team Challenge scoring by default** | Average of the rolls | How a Team Challenge is scored when you open the request window. You can still change it for each request. See [Team Challenge](#team-challenge). |
 | **Attach rolls to the request card** | On | The rolls made for a request show on its card rather than as messages of their own, as D&D 5e does for an item's saves. Click a result to see its dice. |
 | **Pop up roll requests for players** | Off | Opens a window for each player with a character in a request, with a Roll button for each of their characters. |
 | **Pop up roll requests for the GM** | Off | Opens a window for you when a request includes NPCs, or any actor no player owns. |
@@ -124,12 +124,11 @@ buttons.
 
 <img src="images/gm-request-window.webp" alt="The Request Rolls window: six kinds of roll, the roll and DC, who rolls, and options" width="520">
 
-1. **Kind of roll.** Pick one of the six kinds offered: a Standard Roll, Party Challenge, Skill Challenge, Roll-Off,
-   Team vs Team or Divine Intervention, each described below. The fields below change to suit it, and anything
+1. **Kind of roll.** Pick one of the six kinds described below. The fields below change to suit it, and anything
    you've filled in carries over when you switch.
 2. **Rolls.** Choose the roll: a plain die (a d20 by default, or a d6, d8, d10, d12 or d100), any skill or tool check,
    ability check, or saving throw. The DC starts blank each time you open the window, or as the **DC by default**
-   setting if you've set one: set one, or leave it blank for none and set it later from the card. A Skill Challenge, a Party Challenge, and a Team Challenge not scored by its average, need
+   setting if you've set one: set one, or leave it blank for none and set it later from the card. A Skill Challenge, and a Team Challenge not scored by its average, need
    one before you can send them.
 3. **Who rolls.** The actors of any tokens you have selected are ticked for you; otherwise the player characters
    are. The list offers the selected tokens, the player characters, the members of your groups, the combatants, and
@@ -156,12 +155,12 @@ buttons.
      player shouldn't know.
 5. **Send Request** posts the request to chat.
 
-**Offering a choice of rolls.** In a Standard Roll, Team Challenge, Skill Challenge or Party Challenge, click **+** beside a roll to
+**Offering a choice of rolls.** In a Standard Roll, Team Challenge or Skill Challenge, click **+** beside a roll to
 let each actor make a different roll instead, such as Athletics or Acrobatics, or Persuasion or Deception. You can
 offer up to four rolls. When a player clicks **Roll**, they're asked which one to make. Hover over a result on the card
 to see which they chose.
 
-In a Standard Roll, Skill Challenge or Party Challenge, each choice has a DC of its own, so an easier roll can have a harder DC: for
+In a Standard Roll or Skill Challenge, each choice has a DC of its own, so an easier roll can have a harder DC: for
 example, Athletics at DC 15 or Acrobatics at DC 10. A new choice starts with the roll's DC. In a Team Challenge,
 the choices share one DC, because the rolls are averaged against it.
 
@@ -202,26 +201,7 @@ players**; players see "Done" once they have finished.
 
 <img src="images/gm-skill-challenge.webp" alt="A Skill Challenge card: Athletics DC 12, Stealth DC 14, Constitution Save DC 13. Aria passed with 15 and 16; Borin failed his first roll and has a Roll button for the second" width="300">
 
-#### Party Challenge
-
-The whole party's skill challenge: everyone makes the same roll in rounds, and each roll is a success or a failure
-for them all. Set **Successes Needed** (4 by default, up to 12) and **Failures to Fail** (3 by default, up to 6). The
-party succeeds as soon as it has enough successes, and fails as soon as it has that many failures.
-
-- Everyone rolls once a round. A new round opens once everyone has rolled in the one before, so no one rolls twice
-  while someone else has yet to roll. Roll for anyone who's away, so the round can finish.
-- The roll needs a DC. Offer a choice of rolls, each with its own DC, to let each character use what suits them.
-- Rolls are counted in the order they're made. One made after the challenge was decided is greyed out and not counted.
-- You see the running tally from the first roll, such as "Successes 2/4 · Failures 1/3". Players see it, and which
-  rolls passed, once you click **Show to players**, which you can do at any point.
-
-A Hero Card played on a roll, or a changed DC, counts the rolls again.
-
 #### Team Challenge
-
-The request window no longer offers a Team Challenge among its kinds of roll: the Party Challenge took its place. A
-macro can still open the window on one, with `requestRolls({ mode: "team" })`, or post one outright; see the
-[developer guide](developer.md). Team Challenge cards already in chat work as before.
 
 Everyone rolls, and the team gets one result. Choose how it's worked out under **Scoring**:
 
@@ -239,6 +219,8 @@ and its summary shows the working, such as "Aria leads: 21, +1 helped, −2 hind
 
 Only you see the result until you click **Show to players**. A Hero Card played on a roll, or a changed DC, scores the
 team again, so playing Inspiration on a helper can make them the leader.
+
+<img src="images/gm-request-window-team.webp" alt="The request window set to Team Challenge, with an Athletics roll at DC 13 and its Scoring set to Average of the rolls" width="520">
 
 <img src="images/gm-team-challenge.webp" alt="A Team Challenge card: Aria's natural 20 ringed in gold, Borin's 4 greyed out as removed, Goblin 11. Team average 15, 1 removed, Success" width="300">
 
@@ -264,12 +246,13 @@ again.
 #### Team vs Team
 
 Pick a **Players** team and an **NPCs** team, and a roll for each (a d20 by default, or any check, save or tool). Each
-team's rolls are averaged, and the higher average wins. Each natural 1 removes the team's highest roll from its
-average, and each natural 20 its lowest. The averages
+team's rolls are pooled like a Team Challenge, natural 1s and 20s included, and the higher average wins. The averages
 are rounded down to one decimal place, so 12.6 beats 12.3; only averages equal to that place tie.
 
 As in a Roll-Off, each NPC's roll is a private GM roll: players see "?" for the NPCs, and no winner, until you click
 **Show NPC rolls** on the card, and you can hide them again.
+
+<img src="images/gm-request-window-versus.webp" alt="The request window set to Team vs Team, with Aria and Borin on the Players team and the Goblin on the NPCs team, each team rolling a d20" width="520">
 
 <img src="images/gm-versus.webp" alt="A Team vs Team card: Players (Aria 13, Borin 16) average 14, NPCs (Goblin 10) average 10. Players win, and a Show NPC Rolls button" width="300">
 
@@ -290,8 +273,8 @@ roll. Set the numbers to pick, and send it when you're ready.
 
 **Rolling for NPCs.** Every row has a **Roll** button for you, so you can roll for anyone, including NPCs.
 
-**Changing the DC.** On a Standard Roll, Team Challenge, Skill Challenge or Party Challenge card, click the DC to change it, or clear
-it for no DC (each Skill Challenge and Party Challenge roll must keep one, as must a Team Challenge not scored by its average). Where each choice has its own DC, click the one to change.
+**Changing the DC.** On a Standard Roll, Team Challenge or Skill Challenge card, click the DC to change it, or clear
+it for no DC (each Skill Challenge roll must keep one, as must a Team Challenge not scored by its average). Where each choice has its own DC, click the one to change.
 Rolls already made are scored again against the new DC.
 
 <img src="images/gm-change-dc.webp" alt="The Change DC window, with the DC set to 12" width="340">

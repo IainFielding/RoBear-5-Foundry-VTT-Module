@@ -6,13 +6,6 @@ All notable changes to Sogrom's Table Tools.
 
 ### Roll requests
 
-- **Party Challenge, a skill challenge for the whole party.** Everyone makes the roll once a round, and each roll is
-  a success or a failure for them all: the party succeeds at **Successes Needed** (4 by default) and fails at
-  **Failures to Fail** (3 by default). A new round opens once everyone has rolled in the one before. The GM sees the
-  running tally, and shows it to players when they choose.
-- **Party Challenge takes Team Challenge's place in the request window.** The window offers six kinds of roll again.
-  A macro can still post a Team Challenge, or open the window on one with `requestRolls({ mode: "team" })`, and Team
-  Challenge cards already in chat work as before.
 - **Blind GM Roll.** A third **Roll Visibility**, beside Public and Private GM Roll: only the GM sees the results,
   for a roll such as Perception, Insight or Stealth whose result the player shouldn't know.
 - **A public roll with its DC shown starts shown.** In a Standard Roll with **Show DC to Players** ticked, players

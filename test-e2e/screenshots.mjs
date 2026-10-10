@@ -390,12 +390,18 @@ shot("the request window", async ({ gm }) => {
   await capture(gm, "gm-request-choices", app.locator(".stt-request-parts"));
   await app.locator('[data-action="close"]').click();
 
-  for ( const mode of ["challenge", "rolloff", "divine"] ) {
+  for ( const mode of ["team", "challenge", "rolloff", "versus", "divine"] ) {
     app = await openWindow(gm, mode);
+    if ( mode === "team" ) {
+      await app.locator('select[name$=".roll"]').first().selectOption("skill.ath");
+      await app.locator('input[name$=".dc"]').first().fill("13");
+    }
     if ( mode === "rolloff" ) {
       await app.locator(".stt-request-side").nth(0).locator("label", { hasText: "Aria" }).click();
       await app.locator(".stt-request-side").nth(1).locator("label", { hasText: "Goblin" }).click();
     }
+    // The player characters are ticked on the Players team already.
+    if ( mode === "versus" ) await app.locator(".stt-request-side").nth(1).locator("label", { hasText: "Goblin" }).click();
     await capture(gm, `gm-request-window-${mode}`, app);
     await app.locator('[data-action="close"]').click();
     await app.waitFor({ state: "detached", timeout: 5000 });

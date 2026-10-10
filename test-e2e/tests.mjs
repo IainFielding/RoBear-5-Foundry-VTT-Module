@@ -143,13 +143,7 @@ async function openWindow(gm) {
  * @param {string} mode
  */
 async function chooseMode(app, mode) {
-  // A mode the window doesn't offer, a Team Challenge, is one a macro opens the window on.
-  const tile = app.locator(`.stt-request-mode:has(input[value="${mode}"])`);
-  if ( await tile.count() ) await tile.click();
-  else {
-    await app.page().evaluate(({ moduleId, mode }) => game.modules.get(moduleId).api.requestRolls({ mode }),
-      { moduleId: MODULE_ID, mode });
-  }
+  await app.locator(`.stt-request-mode:has(input[value="${mode}"])`).click();
   await app.locator(`.stt-request-mode:has(input[value="${mode}"]:checked)`).waitFor({ timeout: 5000 });
   await app.page().waitForTimeout(300);
 }
@@ -189,7 +183,7 @@ test("the request window shows each mode's own fields", async ({ gm }) => {
   const app = await openWindow(gm);
   try {
     let form = await readWindow(app);
-    assertEqual(form.modes, ["standard", "party", "challenge", "rolloff", "versus", "divine"], "modes");
+    assertEqual(form.modes, ["standard", "team", "challenge", "rolloff", "versus", "divine"], "modes");
     assertEqual(form.checkedMode, "standard", "starting mode");
     assertEqual(form.rollSelects.length, 1, "standard roll pickers");
     assertEqual(form.rollValues, ["d20"], "standard roll to start with");
@@ -205,12 +199,6 @@ test("the request window shows each mode's own fields", async ({ gm }) => {
     assertEqual(form.rollSelects.length, 3, "skill challenge roll pickers");
     assertEqual(form.dcInputs, ["", "", ""], "skill challenge DCs, blank to start with");
     assertEqual(form.successes, true, "successes needed");
-
-    await chooseMode(app, "party");
-    form = await readWindow(app);
-    assertEqual([form.rollSelects.length, form.dcInputs], [1, [""]], "party challenge roll picker and DC");
-    assertEqual(await app.evaluate(el => ["successes", "failures"].map(k => el.querySelector(`input[name="party.${k}"]`)?.value)),
-      ["4", "3"], "party challenge successes and failures");
 
     await chooseMode(app, "rolloff");
     form = await readWindow(app);
@@ -493,8 +481,6 @@ test("quick picks: a macro can open the window with a group ticked", async ({ gm
     await app.waitFor({ timeout: 10_000 });
     const form = await readWindow(app);
     assertEqual(form.checkedMode, "team", "the mode the macro asked for");
-    assertEqual(form.modes, ["standard", "party", "team", "challenge", "rolloff", "versus", "divine"],
-      "modes, with the Team Challenge offered while the window is on it");
     assertEqual(form.actors.filter(a => a.checked).map(a => a.name), ["Goblin"], "who the macro asked for");
   } finally {
     await tearDownPartyAndCombat(gm, setup);
@@ -799,46 +785,6 @@ test("roll-off: other dice can be set against each other, such as a d8 against a
   assertEqual([borin.total, borin.formula], [3, "1d12"], "Borin's d12");
   const card = await waitForCard(player, id, c => c.summary, "the winner");
   assertEqual(card.summary, "Aria 7 · Borin 3 Aria wins", "summary, with no NPC to hide");
-});
-
-/* -------------------------------------------- */
-/*  Party Challenge                             */
-/* -------------------------------------------- */
-
-test("party challenge: everyone rolls in rounds until the party has enough successes", async (ctx) => {
-  const { gm, player, ids } = ctx;
-  const id = await postRequest(ctx, {
-    mode: "party", parts: [athletics(10)], actors: [ids.aria, ids.borin], successes: 3, failures: 2
-  });
-  let card = await readCard(player, id);
-  assertEqual([card.title, card.subtitle], ["Party Challenge", "3 to succeed · 2 to fail"], "heading");
-  assertEqual(card.rows.map(r => r.rollButtons), [1, 1], "one Roll button each to start");
-
-  await forceDice(player, [d20(15)]);
-  await clickRoll(player, id, "Aria", { fastForward: true });
-  card = await waitForCard(player, id, c => row(c, "Aria").results.length === 1, "Aria's first roll");
-  assertEqual([row(card, "Aria").rollButtons, row(card, "Borin").rollButtons], [0, 1],
-    "Roll buttons while Borin has yet to roll in the round");
-
-  await forceDice(player, [d20(2)]);
-  await clickRoll(player, id, "Borin", { fastForward: true });
-  card = await waitForCard(gm, id, c => c.summary?.includes("Failures 1/2"), "the GM's tally after a round");
-  assertEqual(card.summary, "Successes 1/3 · Failures 1/2 Show to players", "the GM's tally after a round");
-  card = await waitForCard(player, id, c => row(c, "Aria").rollButtons === 1, "the second round to open");
-  assertEqual(card.summary, null, "the player's tally before it is shown");
-
-  await forceDice(player, [d20(15), d20(16)]);
-  await clickRoll(player, id, "Aria", { fastForward: true });
-  await waitForCard(player, id, c => row(c, "Aria").results.length === 2, "Aria's second roll");
-  await clickRoll(player, id, "Borin", { fastForward: true });
-  card = await waitForCard(gm, id, c => c.summaryClasses.includes("success"), "the party to succeed");
-  assertEqual(card.summary, "Successes 3/3 · Failures 1/2 Success Show to players", "the GM's summary");
-  card = await waitForCard(player, id, c => row(c, "Borin").results.length === 2, "Borin's second roll");
-  assertEqual(card.rows.map(r => r.rollButtons), [0, 0], "Roll buttons once the challenge is settled");
-
-  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-reveal`).click();
-  card = await waitForCard(player, id, c => c.summary, "the player's summary once shown");
-  assertEqual(card.summary, "Successes 3/3 · Failures 1/2 Success", "the player's summary once shown");
 });
 
 /* -------------------------------------------- */
