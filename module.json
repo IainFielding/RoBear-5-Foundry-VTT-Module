@@ -46,6 +46,13 @@
     "scripts/settings-menus.mjs",
     "scripts/welcome.mjs"
   ],
+  "media": [
+    {
+      "type": "setup",
+      "url": "modules/sogrom-table-tools/assets/card-window.webp",
+      "loop": false
+    }
+  ],
   "socket": true,
   "languages": [
     {
