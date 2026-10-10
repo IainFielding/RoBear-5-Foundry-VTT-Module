@@ -403,7 +403,8 @@ export async function createRequest(request) {
 /**
  * Post a roll request to chat, as createRequest does, with other flags of the module's set on its message too.
  * @param {RollRequest} request
- * @param {object} [flags]  Other flags under the module's scope, such as `revealed`.
+ * @param {object} [flags]  Other flags under the module's scope, such as `revealed`. A request whose result is open
+ *   starts shown unless `revealed` is given.
  * @returns {Promise<ChatMessage5e>}
  * @throws {Error}  If the request can't be rolled: see validateRequest.
  */
@@ -414,11 +415,23 @@ export async function postRequest(request, flags={}) {
   validateRequest(request);
   // Only the rolls the mode uses are kept: the card would otherwise offer a Roll button for each extra one.
   request.parts = request.parts.slice(0, getPartCount(request));
+  if ( isOpenResult(request) ) flags = { revealed: true, ...flags };
   return ChatMessage.create({
     speaker: { alias: "Sogrom's Table Tools" },
     content: `<p>${foundry.utils.escapeHTML(getRequestTitle(request))}</p>`,
     flags: { [MODULE_ID]: { ...flags, request } }
   });
+}
+
+/* -------------------------------------------- */
+
+/**
+ * @param {RollRequest} request
+ * @returns {boolean}  Whether players can work out the request's result for themselves, so there is nothing to hold
+ *   back until the GM shows it: a public Standard Roll with its DC shown.
+ */
+export function isOpenResult(request) {
+  return (request.mode === "standard") && !!request.showDC && (request.rollMode === "public");
 }
 
 /* -------------------------------------------- */

@@ -399,7 +399,7 @@
         "NoActors": "Select tokens, or give players characters, to choose who rolls.",
         "Options": "Options",
         "ShowDC": "Show DC to Players",
-        "ShowDCHint": "Unticked, players see \"DC ?\" on the card. The DC still reaches their Foundry with the request, so this keeps the table honest rather than keeping a secret.",
+        "ShowDCHint": "Unticked, players see \"DC ?\" on the card. The DC still reaches their Foundry with the request, so this keeps the table honest rather than keeping a secret. Ticked, a public Standard Roll shows players who passed straight away.",
         "Visibility": "Roll Visibility",
         "Public": "Public",
         "Private": "Private GM Roll",

@@ -540,6 +540,18 @@ describe("Posting a request", () => {
     expect(posted.content).toBe("<p>Death Save</p>");
   });
 
+  it("starts a public Standard Roll with its DC shown as shown, since players can work its result out", async () => {
+    const revealed = async (request, flags) => (await postRequest({
+      mode: "standard", actors: ["A"], parts: [{ type: "d20", dc: 10 }], ...request
+    }, flags)).flags["sogrom-table-tools"].revealed;
+    expect(await revealed({ showDC: true })).toBe(true);
+    expect(await revealed({ showDC: false })).toBeUndefined();
+    expect(await revealed({ showDC: true, rollMode: "gm" })).toBeUndefined();
+    expect(await revealed({ showDC: true, mode: "team" })).toBeUndefined();
+    // Whoever posts it can still start it hidden.
+    expect(await revealed({ showDC: true }, { revealed: false })).toBe(false);
+  });
+
   it("refuses a request that can't be rolled, posting nothing", async () => {
     let posted = false;
     globalThis.ChatMessage = { create: async () => (posted = true) };

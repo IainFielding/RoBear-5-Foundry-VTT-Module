@@ -567,6 +567,25 @@ test("standard roll: the summary is hidden from players until the GM shows it", 
   await waitForCard(player, id, c => !c.summary, "the summary to be hidden again");
 });
 
+test("standard roll: a public roll with its DC shown starts shown, and the GM can hide it", async (ctx) => {
+  const { gm, player, ids } = ctx;
+  const id = await gm.eval(async ({ moduleId, aria }) => (await game.modules.get(moduleId).api.createRequest({
+    mode: "standard", parts: [{ type: "skill", key: "ath", dc: 12 }], actors: [aria], showDC: true
+  })).id, { moduleId: MODULE_ID, aria: ids.aria });
+  await waitForCard(player, id, c => row(c, "Aria"), "the request");
+  await forceDice(player, [d20(5)]);
+  await clickRoll(player, id, "Aria", { fastForward: true });
+
+  let card = await waitForCard(player, id, c => c.summary, "the player's summary, shown from the start");
+  assertEqual([card.summary, row(card, "Aria").classes], ["0 of 1 succeeded", ["failure"]], "the player's card");
+  card = await waitForCard(gm, id, c => c.reveal, "the GM's reveal button");
+  assertEqual(card.reveal, "Shown", "the GM's reveal button");
+
+  await gm.page.locator(`#chat .chat-log [data-message-id="${id}"] .stt-request-reveal`).click();
+  card = await waitForCard(player, id, c => !c.summary, "the summary to be hidden");
+  assertEqual(row(card, "Aria").classes, [], "the player's row once hidden");
+});
+
 test("standard roll: a hidden DC stays off the card and off the player's roll", async (ctx) => {
   const { gm, player, ids } = ctx;
   const id = await postRequest(ctx, { mode: "standard", parts: [athletics(12)], actors: [ids.aria], showDC: false });

@@ -149,7 +149,7 @@ buttons.
    is running and no NPCs are selected, the NPCs' side starts with the hostile combatants.
 4. **Options.**
    - **Show DC to Players.** Unticked, players see "DC ?" on the card, and the DC is kept off their rolls so D&D 5e
-     doesn't show them success or failure.
+     doesn't show them success or failure. Ticked, a public Standard Roll shows players who passed straight away.
    - **Roll Visibility.** **Public**, or **Private GM Roll**, where each player sees only their own results.
 5. **Send Request** posts the request to chat.
 
@@ -171,8 +171,11 @@ and on the buttons they choose from, or "DC ?" if you're keeping the DC hidden.
 
 #### Standard Roll
 
-Each actor rolls once against the DC. You see straight away who passed and how many succeeded. Players don't, until
-you click **Show to players**, and you can hide it again.
+Each actor rolls once, against a DC if you set one. You see straight away who passed and how many succeeded. Players
+don't, until you click **Show to players**, and you can hide it again.
+
+A public roll with **Show DC to Players** ticked starts already shown, since players can see the DC and the totals
+for themselves. Click **Shown** to hide it.
 
 <table>
 <tr><th>What you see</th><th>What players see</th></tr>

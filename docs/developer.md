@@ -307,7 +307,7 @@ them out from its roll messages each time it draws.
 | Flag | Type | Written by | Meaning |
 |---|---|---|---|
 | `request` | `RollRequest` | `createRequest`, or the window | The request, with defaults filled in. Only honoured on a GM's message. Changing the DC from the card rewrites `request.parts[n].dc`, or an alternative's `dc`. |
-| `revealed` | `boolean` | The GM's **Show to players** button | Whether players see the results and summary. Unset means hidden. A death save request is posted with it set. |
+| `revealed` | `boolean` | The GM's **Show to players** button | Whether players see the results and summary. Unset means hidden. A death save request is posted with it set, as is a public `standard` request with `showDC`, whose result players can work out for themselves. |
 | `deathSave` | `{ actor: string, combat: string, round: number }` | `death-saves.mjs` | Marks a death save request posted at the start of a turn: the actor's UUID, and the combat and round it was posted for, so a turn started again posts no second request. |
 
 ### On a Divine Intervention note
