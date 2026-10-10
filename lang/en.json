@@ -196,7 +196,7 @@
       "Modes": {
         "Standard": {
           "Label": "Standard Roll",
-          "Hint": "Each actor rolls once against the DC."
+          "Hint": "Each actor rolls once, against a DC if you set one."
         },
         "Team": {
           "Label": "Team Challenge",
