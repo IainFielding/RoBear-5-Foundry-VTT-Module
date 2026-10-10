@@ -114,6 +114,11 @@ export const DICE = {
 };
 
 /**
+ * Decimal places a Team vs Team side's average is rounded down to, so close averages are told apart, not tied.
+ */
+export const VERSUS_PLACES = 1;
+
+/**
  * Number of rolls in a skill challenge.
  */
 export const CHALLENGE_PARTS = 3;
@@ -862,10 +867,11 @@ export function getChallengeState(results, needed) {
  * Pool a team's rolls. Each natural 1 removes the highest remaining roll, and each natural 20 the lowest. Where there
  * are too many to leave any roll behind, 1s and 20s cancel out in pairs first, and at least one roll is always kept.
  * @param {{ uuid: string, total: number, natural: number }[]} entries  One per actor.
+ * @param {number} [places=0]  Decimal places the average is rounded down to.
  * @returns {{ average: number, exact: number, removed: Map<string, string> }}
  *   The average rounded down, the exact average, and why each removed actor's roll was removed.
  */
-export function poolTeamRolls(entries) {
+export function poolTeamRolls(entries, places=0) {
   if ( !entries.length ) return { average: NaN, exact: NaN, removed: new Map() };
   const sorted = [...entries].sort((a, b) => a.total - b.total);
   const fumbles = entries.filter(e => e.natural === 1);
@@ -889,8 +895,10 @@ export function poolTeamRolls(entries) {
   });
 
   const pool = sorted.filter(e => !removed.has(e.uuid));
-  const exact = pool.reduce((sum, e) => sum + e.total, 0) / pool.length;
-  return { average: Math.floor(exact), exact, removed };
+  const sum = pool.reduce((total, e) => total + e.total, 0);
+  // Scaled before dividing, so an average that is exact to that many places isn't rounded down past itself.
+  const scale = 10 ** places;
+  return { average: Math.floor((sum * scale) / pool.length) / scale, exact: sum / pool.length, removed };
 }
 
 /* -------------------------------------------- */
@@ -918,12 +926,13 @@ export function poolTeamRolls(entries) {
  * @param {{ uuid: string, total: number, natural: number }[]} entries  One per actor.
  * @param {string} [scoring="average"]  A key in SCORING.
  * @param {number|null} [dc]
+ * @param {number} [places=0]  Decimal places an average is rounded down to.
  * @returns {TeamScore}
  */
-export function scoreTeam(entries, scoring="average", dc=null) {
+export function scoreTeam(entries, scoring="average", dc=null, places=0) {
   const hasDC = Number.isNumeric(dc);
   if ( !SCORING[scoring]?.needsDC || !hasDC || !entries.length ) {
-    const { average, exact, removed } = poolTeamRolls(entries);
+    const { average, exact, removed } = poolTeamRolls(entries, places);
     return { scoring: "average", score: average, exact, removed, notes: new Map(), success: hasDC ? average >= dc : null };
   }
   const passed = entries.filter(e => e.total >= dc).length;
@@ -982,9 +991,10 @@ export function scoreTeam(entries, scoring="average", dc=null) {
  * @param {object} [options]
  * @param {string} [options.scoring="average"]  How a team is scored: a key in SCORING.
  * @param {number|null} [options.dc]            The DC a team's rolls are judged against.
+ * @param {number} [options.places=0]           Decimal places a team's average is rounded down to.
  * @returns {GroupOutcome}
  */
-export function getGroupOutcome(uuids, results, pooled, { scoring="average", dc=null }={}) {
+export function getGroupOutcome(uuids, results, pooled, { scoring="average", dc=null, places=0 }={}) {
   const none = { removed: new Map(), notes: new Map() };
   // A group with no one in it never has a result.
   if ( !uuids?.length ) return { complete: false, hidden: false, ...none };
@@ -995,7 +1005,7 @@ export function getGroupOutcome(uuids, results, pooled, { scoring="average", dc=
   if ( !complete || hidden ) return { complete, hidden, ...none };
   if ( !pooled ) return { complete, hidden, score: entries[0].result.total, ...none };
   const rolls = entries.map(({ uuid, result }) => ({ uuid, total: result.total, natural: result.natural }));
-  return { complete, hidden, ...scoreTeam(rolls, scoring, dc) };
+  return { complete, hidden, ...scoreTeam(rolls, scoring, dc, places) };
 }
 
 /* -------------------------------------------- */
@@ -1009,7 +1019,9 @@ export function getGroupOutcome(uuids, results, pooled, { scoring="average", dc=
  * @returns {GroupOutcome|null}  Null when the request's rolls are not pooled.
  */
 export function getRowGroup(message, request, results, side) {
-  if ( request.mode === "versus" ) return getGroupOutcome(request.sides[side], results, true);
+  if ( request.mode === "versus" ) {
+    return getGroupOutcome(request.sides[side], results, true, { places: VERSUS_PLACES });
+  }
   if ( request.mode !== "team" ) return null;
   const team = getGroupOutcome(request.actors, results, true, { scoring: getScoring(request), dc: request.parts[0].dc });
   // Which rolls a natural 1 or 20 took out of the pool, and what each roll did for the team, are part of the result, so
@@ -1253,7 +1265,7 @@ export async function changeDC(message, part, choice=0) {
  */
 function renderContest(card, message, request, results) {
   const pooled = request.mode === "versus";
-  const groups = request.sides.map(uuids => getGroupOutcome(uuids, results, pooled));
+  const groups = request.sides.map(uuids => getGroupOutcome(uuids, results, pooled, { places: VERSUS_PLACES }));
   const settled = groups.every(isSettled);
   const [a, b] = groups.map(g => g.score);
   const winner = !settled ? undefined : (a > b ? 0 : (b > a ? 1 : null));

@@ -212,7 +212,7 @@
         },
         "Versus": {
           "Label": "Team vs Team",
-          "Hint": "Two teams are averaged like a Team Challenge, and the higher average wins."
+          "Hint": "Two teams are averaged like a Team Challenge, to one decimal place, and the higher average wins."
         },
         "Divine": {
           "Label": "Divine Intervention",

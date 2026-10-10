@@ -239,7 +239,8 @@ again.
 #### Team vs Team
 
 Pick a **Players** team and an **NPCs** team, and a roll for each (a d20 by default, or any check, save or tool). Each
-team's rolls are pooled like a Team Challenge, natural 1s and 20s included, and the higher average wins.
+team's rolls are pooled like a Team Challenge, natural 1s and 20s included, and the higher average wins. The averages
+are rounded down to one decimal place, so 12.6 beats 12.3; only averages equal to that place tie.
 
 As in a Roll-Off, each NPC's roll is a private GM roll: players see "?" for the NPCs, and no winner, until you click
 **Show NPC rolls** on the card, and you can hide them again.

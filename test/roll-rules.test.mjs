@@ -66,6 +66,15 @@ describe("Team Challenge pooling", () => {
     expect(poolTeamRolls(entries([["A", 25, 20]]))).toMatchObject({ average: 25, removed: new Map() });
   });
 
+  it("rounds the average down to the decimal places asked for, as Team vs Team does to one", () => {
+    const rolls = entries([["A", 12, 8], ["B", 15, 11], ["C", 11, 5]]);
+    expect(poolTeamRolls(rolls).average).toBe(12);
+    expect(poolTeamRolls(rolls, 1).average).toBe(12.6);
+    // An average already exact to one place stays as it is.
+    expect(poolTeamRolls(entries([["A", 12, 8], ["B", 11, 5]]), 1).average).toBe(11.5);
+    expect(poolTeamRolls(entries([["A", 8, 8], ["B", 9, 9], ["C", 7, 7], ["D", 9, 9], ["E", 8, 8]]), 1).average).toBe(8.2);
+  });
+
   it("ignores rolls without a d20, such as a d100", () => {
     expect(poolTeamRolls(entries([["A", 1, undefined], ["B", 20, undefined]])).removed.size).toBe(0);
   });
@@ -591,6 +600,12 @@ describe("Group outcomes", () => {
   it("never settles a side with no one on it", () => {
     expect(getGroupOutcome([], new Map(), true)).toMatchObject({ complete: false, hidden: false });
     expect(getGroupOutcome([], new Map(), false).score).toBeUndefined();
+  });
+
+  it("tells close Team vs Team averages apart, rounding each down to one decimal place", () => {
+    const sides = results({ A: roll(12, 8), B: roll(15, 11), C: roll(11, 5), D: roll(12, 8) });
+    const score = uuids => getGroupOutcome(uuids, sides, true, { places: 1 }).score;
+    expect([score(["A", "B", "C"]), score(["D"])]).toEqual([12.6, 12]);
   });
 
   it("scores a team by its pooled average, with the 1 and 20 rule", () => {
