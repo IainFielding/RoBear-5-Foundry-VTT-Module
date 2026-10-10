@@ -186,7 +186,8 @@ export default class RollRequestConfig extends HandlebarsApplicationMixin(Applic
 
     const choice = (actor, index, checked) => ({ index, name: actor.name, img: actor.img, checked });
     return Object.assign(context, {
-      modes: Object.entries(MODES).map(([value, m]) => ({
+      // A hidden mode is only offered while the window is on it, as when a macro opened it there.
+      modes: Object.entries(MODES).filter(([value, m]) => !m.hidden || (value === draft.mode)).map(([value, m]) => ({
         value, icon: m.icon, label: localize(m.label), hint: localize(m.hint), checked: value === draft.mode
       })),
       rows,

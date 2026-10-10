@@ -774,7 +774,9 @@ describe("The group an actor's row is drawn with", () => {
 
 describe("Modes and labels", () => {
   it("offers seven modes, two of them contests", () => {
-    expect(Object.keys(MODES)).toEqual(["standard", "team", "challenge", "party", "rolloff", "versus", "divine"]);
+    expect(Object.keys(MODES)).toEqual(["standard", "party", "team", "challenge", "rolloff", "versus", "divine"]);
+    // The Party Challenge took the Team Challenge's place in the request window, which a macro can still post.
+    expect(Object.keys(MODES).filter(m => MODES[m].hidden)).toEqual(["team"]);
     expect(Object.keys(MODES).filter(m => isContest({ mode: m }))).toEqual(["rolloff", "versus"]);
   });
 

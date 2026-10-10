@@ -80,7 +80,7 @@ can open them, and each setting applies to the whole world.
 |---|---|---|
 | **DC by default** | Blank | The DC each roll starts with when you open the request window. Leave it blank for none; you can still set or change the DC for each request, or later from the card. |
 | **Show the DC to players by default** | Off | Whether **Show DC to Players** starts ticked in the request window. You can still change it for each request. |
-| **Team Challenge scoring by default** | Average of the rolls | How a Team Challenge is scored when you open the request window. You can still change it for each request. See [Team Challenge](#team-challenge). |
+| **Team Challenge scoring by default** | Average of the rolls | How a Team Challenge is scored when a macro posts one, or opens the request window on one, without saying. You can still change it for each request. See [Team Challenge](#team-challenge). |
 | **Attach rolls to the request card** | On | The rolls made for a request show on its card rather than as messages of their own, as D&D 5e does for an item's saves. Click a result to see its dice. |
 | **Pop up roll requests for players** | Off | Opens a window for each player with a character in a request, with a Roll button for each of their characters. |
 | **Pop up roll requests for the GM** | Off | Opens a window for you when a request includes NPCs, or any actor no player owns. |
@@ -124,7 +124,8 @@ buttons.
 
 <img src="images/gm-request-window.webp" alt="The Request Rolls window: six kinds of roll, the roll and DC, who rolls, and options" width="520">
 
-1. **Kind of roll.** Pick one of the seven kinds described below. The fields below change to suit it, and anything
+1. **Kind of roll.** Pick one of the six kinds offered: a Standard Roll, Party Challenge, Skill Challenge, Roll-Off,
+   Team vs Team or Divine Intervention, each described below. The fields below change to suit it, and anything
    you've filled in carries over when you switch.
 2. **Rolls.** Choose the roll: a plain die (a d20 by default, or a d6, d8, d10, d12 or d100), any skill or tool check,
    ability check, or saving throw. The DC starts blank each time you open the window, or as the **DC by default**
@@ -218,6 +219,10 @@ A Hero Card played on a roll, or a changed DC, counts the rolls again.
 
 #### Team Challenge
 
+The request window no longer offers a Team Challenge among its kinds of roll: the Party Challenge took its place. A
+macro can still open the window on one, with `requestRolls({ mode: "team" })`, or post one outright; see the
+[developer guide](developer.md). Team Challenge cards already in chat work as before.
+
 Everyone rolls, and the team gets one result. Choose how it's worked out under **Scoring**:
 
 | Scoring | How the team's result is worked out |
@@ -259,7 +264,8 @@ again.
 #### Team vs Team
 
 Pick a **Players** team and an **NPCs** team, and a roll for each (a d20 by default, or any check, save or tool). Each
-team's rolls are pooled like a Team Challenge, natural 1s and 20s included, and the higher average wins. The averages
+team's rolls are averaged, and the higher average wins. Each natural 1 removes the team's highest roll from its
+average, and each natural 20 its lowest. The averages
 are rounded down to one decimal place, so 12.6 beats 12.3; only averages equal to that place tie.
 
 As in a Roll-Off, each NPC's roll is a private GM roll: players see "?" for the NPCs, and no winner, until you click

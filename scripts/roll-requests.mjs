@@ -15,6 +15,8 @@ import RollRequestConfig from "./roll-request-config.mjs";
  * alternatives, of which each actor makes one, and the GM may change its DC from the request card. In a mode with
  * `choiceDCs` too, each alternative has a DC of its own; otherwise, as in a Team Challenge, whose rolls are averaged
  * against one DC, they share the roll's.
+ * A `hidden` mode isn't offered in the request window, where the Party Challenge took the Team Challenge's place. A
+ * macro can still post one, or open the window on it, and its cards are drawn as ever.
  * A Skill Challenge is each actor's own: three rolls in turn. A Party Challenge is the whole party's: everyone rolls
  * in rounds, and each roll is a success or a failure for them all.
  */
@@ -27,23 +29,24 @@ export const MODES = {
     choices: true,
     choiceDCs: true
   },
+  party: {
+    label: "STT.Request.Modes.Party.Label",
+    icon: "fa-solid fa-users-line",
+    hint: "STT.Request.Modes.Party.Hint",
+    choices: true,
+    choiceDCs: true
+  },
   team: {
     label: "STT.Request.Modes.Team.Label",
     icon: "fa-solid fa-people-group",
     hint: "STT.Request.Modes.Team.Hint",
-    choices: true
+    choices: true,
+    hidden: true
   },
   challenge: {
     label: "STT.Request.Modes.Challenge.Label",
     icon: "fa-solid fa-layer-group",
     hint: "STT.Request.Modes.Challenge.Hint",
-    choices: true,
-    choiceDCs: true
-  },
-  party: {
-    label: "STT.Request.Modes.Party.Label",
-    icon: "fa-solid fa-users-line",
-    hint: "STT.Request.Modes.Party.Hint",
     choices: true,
     choiceDCs: true
   },

@@ -143,7 +143,13 @@ async function openWindow(gm) {
  * @param {string} mode
  */
 async function chooseMode(app, mode) {
-  await app.locator(`.stt-request-mode:has(input[value="${mode}"])`).click();
+  // A mode the window doesn't offer, a Team Challenge, is one a macro opens the window on.
+  const tile = app.locator(`.stt-request-mode:has(input[value="${mode}"])`);
+  if ( await tile.count() ) await tile.click();
+  else {
+    await app.page().evaluate(({ moduleId, mode }) => game.modules.get(moduleId).api.requestRolls({ mode }),
+      { moduleId: MODULE_ID, mode });
+  }
   await app.locator(`.stt-request-mode:has(input[value="${mode}"]:checked)`).waitFor({ timeout: 5000 });
   await app.page().waitForTimeout(300);
 }
@@ -183,7 +189,7 @@ test("the request window shows each mode's own fields", async ({ gm }) => {
   const app = await openWindow(gm);
   try {
     let form = await readWindow(app);
-    assertEqual(form.modes, ["standard", "team", "challenge", "party", "rolloff", "versus", "divine"], "modes");
+    assertEqual(form.modes, ["standard", "party", "challenge", "rolloff", "versus", "divine"], "modes");
     assertEqual(form.checkedMode, "standard", "starting mode");
     assertEqual(form.rollSelects.length, 1, "standard roll pickers");
     assertEqual(form.rollValues, ["d20"], "standard roll to start with");
@@ -487,6 +493,8 @@ test("quick picks: a macro can open the window with a group ticked", async ({ gm
     await app.waitFor({ timeout: 10_000 });
     const form = await readWindow(app);
     assertEqual(form.checkedMode, "team", "the mode the macro asked for");
+    assertEqual(form.modes, ["standard", "party", "team", "challenge", "rolloff", "versus", "divine"],
+      "modes, with the Team Challenge offered while the window is on it");
     assertEqual(form.actors.filter(a => a.checked).map(a => a.name), ["Goblin"], "who the macro asked for");
   } finally {
     await tearDownPartyAndCombat(gm, setup);
