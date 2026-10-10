@@ -2,7 +2,7 @@
 
 All notable changes to Sogrom's Table Tools.
 
-## 1.1.0
+## 1.0.1
 
 ### Dice rolling
 
@@ -10,6 +10,11 @@ All notable changes to Sogrom's Table Tools.
   initiative order, above any higher total, and one whose roll shows a natural 1 goes last. Each keeps the initiative
   it rolled, shown in gold or red in the combat tracker. On by default; turn it off with **Natural 1s and 20s on
   initiative**, under **Dice Rolling**.
+
+### Fixes
+
+- **A natural 20 in chat no longer halves the frame rate.** Its gold ring is now still, and its glow breathes without
+  the browser redrawing it on every frame.
 
 ## 1.0.0
 

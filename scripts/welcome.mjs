@@ -41,7 +41,7 @@ export const WHATS_NEW = [
     ]
   },
   {
-    version: "1.1.0",
+    version: "1.0.1",
     lines: [
       "STT.Welcome.New.NaturalInitiative"
     ]
