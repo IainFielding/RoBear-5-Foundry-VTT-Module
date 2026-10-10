@@ -4,6 +4,11 @@ All notable changes to Sogrom's Table Tools.
 
 ## 0.1.1
 
+### Licence
+
+- **Now under the MIT License.** The code and the module's own content can be reused, changed and shared. The card
+  art, made from licensed stock images, and the fonts keep their own terms, set out in LICENSE.
+
 ### Welcome card
 
 - **A welcome card for GMs.** The first time the module runs in a world, the GMs are whispered a card saying where

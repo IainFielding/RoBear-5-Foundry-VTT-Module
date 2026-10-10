@@ -1,66 +1,53 @@
-Sogrom's Table Tools — Freeware License
-Copyright (c) 2026 Iain Fielding. All rights reserved.
+MIT License
 
-This software (the "Module") is provided free of charge for personal use.
-By downloading, installing, or using the Module you agree to the terms below.
+Copyright (c) 2026 Iain Fielding
 
-1. PERMITTED USE
-   You may download, install, and use the Module in Foundry Virtual
-   Tabletop for your own games, free of charge, for as long as you like.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-2. RESTRICTIONS
-   Except where required by applicable law, you may NOT, without the prior
-   written permission of the copyright holder:
-     a) copy, reproduce, or republish the Module or its source code, in
-        whole or in part;
-     b) modify, adapt, translate, or create derivative works based on it;
-     c) distribute, share, host, mirror, or make the Module available to
-        others through any channel other than the author's official
-        release; or
-     d) sell, sublicense, rent, or otherwise commercialise the Module or
-        any part of it.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-   DISTRIBUTION VIA FOUNDRY VTT IS EXPRESSLY PERMITTED. The copyright holder
-   grants Foundry Gaming, LLC and the official Foundry Virtual Tabletop
-   package directory (and the package management system it operates) the
-   right to list, host, and distribute the Module to end users, and grants
-   end users the right to install and update the Module through that system
-   and from the author's official manifest URL. This activity is not
-   "distribution" for the purposes of the restrictions in this clause.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
-3. RESERVATION OF RIGHTS
-   All rights not expressly granted above are reserved by the copyright
-   holder. No ownership or intellectual-property rights are transferred to
-   you by this license.
+-------------------------------------------------------------------------------
 
-4. NO WARRANTY
-   THE MODULE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-   FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
+THIRD-PARTY CONTENT
 
-5. LIMITATION OF LIABILITY
-   IN NO EVENT SHALL THE AUTHOR OR COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM,
-   DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR
-   OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE MODULE OR THE
-   USE OR OTHER DEALINGS IN THE MODULE.
+The MIT License above covers the module's code and its own content, including
+its journals, items and spells. It does not cover the following, which keep
+their own terms.
 
-6. THIRD-PARTY CONTENT
+Card artwork (assets/images, and the art in the module's journal)
+   The card artwork is the author's own design, made from images licensed
+   from Adobe Stock and Pexels, and contains no AI-generated imagery. Those
+   images remain the property of their creators and are not licensed under
+   the MIT License. You may use the artwork only as part of this module; you
+   may not extract it for use elsewhere. docs/art-sources.md lists the
+   source of each card.
+
+Fonts (assets/fonts)
+   Cinzel and Spectral are licensed under the SIL Open Font License 1.1. See
+   assets/fonts/OFL-Cinzel.txt and assets/fonts/OFL-Spectral.txt.
+
+Dungeons & Dragons
    Dungeons & Dragons and D&D are trademarks of Wizards of the Coast. This
-   Module is an unofficial, fan-made tool and is not affiliated with,
+   module is an unofficial, fan-made tool and is not affiliated with,
    endorsed, or sponsored by Wizards of the Coast. It requires the D&D 5e
    system to be installed in your Foundry VTT installation.
 
-   The card artwork is the author's own design, made from images licensed
-   from Adobe Stock and Pexels, and contains no AI-generated imagery. Those
-   images remain the property of their creators. They are not covered by the
-   copyright notice above, and this license grants you no rights in them
-   beyond using them as part of the Module.
-
-   The Module's journals, items and spells are the author's own work,
+RoBear-E
+   The module's journals, items and spells are the author's own work,
    inspired by Captain RoBear's RoBear-E campaign
-   (https://www.youtube.com/channel/UCktEYryPmattKzrpo0_kGzA). The Module is
+   (https://www.youtube.com/channel/UCktEYryPmattKzrpo0_kGzA). The module is
    not affiliated with, or endorsed by, the campaign's creators.
-
-For permissions beyond the scope of this license — including reuse,
-modification, or redistribution — please contact the author:
-Iain Fielding · https://iainfielding.com

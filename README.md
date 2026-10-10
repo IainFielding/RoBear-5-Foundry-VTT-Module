@@ -110,4 +110,4 @@ Made by **Sogrom** ([@IainFielding](https://github.com/IainFielding)).
 
 ## Licence
 
-Free for personal use. See [LICENSE](LICENSE).
+MIT. The card art and fonts keep their own terms: see [LICENSE](LICENSE).
